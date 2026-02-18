@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider, useApp } from './context/AppContext';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useApp } from './context/AppContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -13,10 +13,18 @@ import QueueManagement from './pages/admin/QueueManagement';
 
 function ProtectedRoute({ children, allowedRole }) {
     const { currentUser } = useApp();
+
     if (!currentUser) return <Navigate to="/login" replace />;
+
     if (allowedRole && currentUser.role !== allowedRole) {
-        return <Navigate to={currentUser.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+        return (
+            <Navigate
+                to={currentUser.role === 'admin' ? '/admin' : '/dashboard'}
+                replace
+            />
+        );
     }
+
     return children;
 }
 
@@ -25,11 +33,24 @@ function AppRoutes() {
 
     return (
         <Routes>
-            {/* Public */}
-            <Route path="/login" element={currentUser ? <Navigate to={currentUser.role === 'admin' ? '/admin' : '/dashboard'} replace /> : <Login />} />
-            <Route path="/register" element={currentUser ? <Navigate to={currentUser.role === 'admin' ? '/admin' : '/dashboard'} replace /> : <Register />} />
+            <Route
+                path="/login"
+                element={
+                    currentUser
+                        ? <Navigate to={currentUser.role === 'admin' ? '/admin' : '/dashboard'} replace />
+                        : <Login />
+                }
+            />
 
-            {/* Student Routes */}
+            <Route
+                path="/register"
+                element={
+                    currentUser
+                        ? <Navigate to={currentUser.role === 'admin' ? '/admin' : '/dashboard'} replace />
+                        : <Register />
+                }
+            />
+
             <Route element={<ProtectedRoute allowedRole="student"><Layout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/join-queue" element={<JoinQueue />} />
@@ -37,25 +58,17 @@ function AppRoutes() {
                 <Route path="/history" element={<History />} />
             </Route>
 
-            {/* Admin Routes */}
             <Route element={<ProtectedRoute allowedRole="admin"><Layout /></ProtectedRoute>}>
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/services" element={<ServiceManagement />} />
                 <Route path="/admin/queues" element={<QueueManagement />} />
             </Route>
 
-            {/* Default redirect */}
             <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
     );
 }
 
 export default function App() {
-    return (
-        <BrowserRouter>
-            <AppProvider>
-                <AppRoutes />
-            </AppProvider>
-        </BrowserRouter>
-    );
+    return <AppRoutes />;
 }
