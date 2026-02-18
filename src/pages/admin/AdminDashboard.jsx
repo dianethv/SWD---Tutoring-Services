@@ -21,9 +21,12 @@ export default function AdminDashboard() {
     });
 
     // Volume chart (simple bar vis for the last 7 days)
-    const dailyVolume = stats?.dailyVolume || [12, 18, 24, 22, 30, 26, 15];
-    const maxVol = Math.max(...dailyVolume);
-    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const rawVolume = stats?.dailyVolume || [];
+    const dailyVolume = rawVolume.map((d) => (typeof d === 'object' ? d.count : d));
+    const dayLabels = rawVolume.length > 0 && typeof rawVolume[0] === 'object'
+        ? rawVolume.map((d) => d.day)
+        : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const maxVol = Math.max(...dailyVolume, 1);
 
     return (
         <div>
@@ -82,7 +85,7 @@ export default function AdminDashboard() {
                             style={{ background: 'linear-gradient(135deg, #d1fae5, #a7f3d0)' }}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
                         </div>
-                        <p className="text-3xl font-bold text-stone-800 mb-1">{stats?.totalServed || 47}</p>
+                        <p className="text-3xl font-bold text-stone-800 mb-1">{stats?.totalServedToday || 47}</p>
                         <p className="text-sm text-stone-500">Served Today</p>
                         <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="18 15 12 9 6 15" /></svg>
