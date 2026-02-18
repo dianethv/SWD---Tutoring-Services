@@ -2,8 +2,7 @@ import { useApp } from '../../context/AppContext';
 import { Link } from 'react-router-dom';
 
 export default function AdminDashboard() {
-    const { services, queue, toggleService, adminStats } = useApp();
-    const stats = adminStats;
+    const { services, queueEntries: queue, toggleService, stats } = useApp();
 
     const activeStudents = queue.filter((q) => q.status === 'waiting' || q.status === 'almost_ready').length;
     const openServices = services.filter((s) => s.isOpen).length;
