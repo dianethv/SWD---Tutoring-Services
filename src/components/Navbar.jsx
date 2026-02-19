@@ -6,6 +6,7 @@ export default function Navbar({ onMenuToggle }) {
     const { currentUser, logout, getUnreadCount, getUserNotifications, markNotificationRead, markAllNotificationsRead } = useApp();
     const [showNotifs, setShowNotifs] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
+    const [searchQuery, setSearchQuery] = useState(''); // <-- Added for search bar
     const notifRef = useRef(null);
     const profileRef = useRef(null);
     const navigate = useNavigate();
@@ -25,6 +26,16 @@ export default function Navbar({ onMenuToggle }) {
         logout();
         navigate('/login');
     };
+
+    
+       // --- Search handler --- newly added
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (searchQuery.trim() !== '') {
+            navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
+        }
+    };
+
 
     const getInitials = (name) =>
         name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || '?';
@@ -93,6 +104,22 @@ export default function Navbar({ onMenuToggle }) {
                             className="w-full px-4 py-2 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                         />
                     </div>
+                 {/* Search Bar (Desktop) */}
+                <form onSubmit={handleSearch} className="flex-1 max-w-md mx-6 flex">
+                    <input
+                        type="text"
+                        placeholder="Search services..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="flex-1 px-4 py-2 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                    <button
+                        type="submit"
+                        className="ml-2 px-3 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
+                    >
+                        Search
+                    </button>
+                </form>
                 {/* Right side */}
                 <div className="flex items-center gap-2">
                     {/* Notifications */}
