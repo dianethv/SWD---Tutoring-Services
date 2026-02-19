@@ -25,10 +25,7 @@ export default function Navbar({ onMenuToggle }) {
         logout();
         navigate('/login');
     };
-
     
-
-
     const getInitials = (name) =>
         name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || '?';
 
