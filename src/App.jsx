@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useApp } from './context/AppContext';
 import Layout from './components/Layout';
@@ -12,7 +11,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import ServiceManagement from './pages/admin/ServiceManagement';
 import QueueManagement from './pages/admin/QueueManagement';
 
-function ProtectedRoute({ children, allowedRole }) {
+function ProtectedRoute({ children, allowedRole }) 
     const { currentUser } = useApp();
 
     if (!currentUser) return <Navigate to="/login" replace />;
@@ -27,7 +26,6 @@ function ProtectedRoute({ children, allowedRole }) {
     }
 
     return children;
-=======
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider, useApp } from './context/AppContext'
 import Layout from './components/Layout'
@@ -48,13 +46,11 @@ function ProtectedRoute({ children, allowedRole }) {
     return <Navigate to={currentUser.role === 'admin' ? '/admin' : '/dashboard'} replace />
   }
   return children
->>>>>>> 102435e875ff614b9ff0ad1207d7496655eb04df
 }
 
 function AppRoutes() {
   const { currentUser } = useApp()
 
-<<<<<<< HEAD
     return (
         <Routes>
             <Route
@@ -95,7 +91,6 @@ function AppRoutes() {
 
 export default function App() {
     return <AppRoutes />;
-=======
   return (
     <Routes>
       <Route
@@ -145,5 +140,4 @@ export default function App() {
       </AppProvider>
     </BrowserRouter>
   )
->>>>>>> 102435e875ff614b9ff0ad1207d7496655eb04df
 }
