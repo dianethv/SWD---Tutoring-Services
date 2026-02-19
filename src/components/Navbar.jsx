@@ -97,14 +97,6 @@ export default function Navbar({ onMenuToggle }) {
                     </Link>
                 </div>
                  {/* Search Bar (Desktop) */}
-                    <div className="flex-1 max-w-md mx-6 hidden md:block">
-                        <input
-                            type="text"
-                            placeholder="Search services..."
-                            className="w-full px-4 py-2 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                        />
-                    </div>
-                 {/* Search Bar (Desktop) */}
                 <form onSubmit={handleSearch} className="flex-1 max-w-md mx-6 flex">
                     <input
                         type="text"
