@@ -6,15 +6,11 @@ export default function ServiceManagement() {
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({
-        name: '',
-        description: '',
-        expectedDuration: '',
-        priorityLevel: 'medium',
-        icon: '📚',
-        category: '',
+        name: '', description: '', expectedDuration: '', priorityLevel: 'medium', icon: '📚', category: '',
     });
     const [errors, setErrors] = useState({});
     const [successMsg, setSuccessMsg] = useState('');
+    const [hoveredCard, setHoveredCard] = useState(null);
 
     const icons = ['📐', '💻', '✍️', '⚛️', '📊', '🧪', '🔬', '📚', '🎨', '🧮', '🌐', '📝'];
 
@@ -35,12 +31,7 @@ export default function ServiceManagement() {
         const errs = validate();
         setErrors(errs);
         if (Object.keys(errs).length > 0) return;
-
-        const data = {
-            ...formData,
-            expectedDuration: Number(formData.expectedDuration),
-        };
-
+        const data = { ...formData, expectedDuration: Number(formData.expectedDuration) };
         if (editingId) {
             updateService(editingId, data);
             setSuccessMsg('Service updated successfully!');
@@ -48,7 +39,6 @@ export default function ServiceManagement() {
             createService(data);
             setSuccessMsg('Service created successfully!');
         }
-
         resetForm();
         setTimeout(() => setSuccessMsg(''), 3000);
     };
@@ -56,12 +46,9 @@ export default function ServiceManagement() {
     const startEdit = (service) => {
         setEditingId(service.id);
         setFormData({
-            name: service.name,
-            description: service.description,
+            name: service.name, description: service.description,
             expectedDuration: service.expectedDuration.toString(),
-            priorityLevel: service.priorityLevel,
-            icon: service.icon,
-            category: service.category,
+            priorityLevel: service.priorityLevel, icon: service.icon, category: service.category,
         });
         setShowForm(true);
         setErrors({});
@@ -79,112 +66,176 @@ export default function ServiceManagement() {
         if (errors[field]) setErrors({ ...errors, [field]: '' });
     };
 
+    // Style tokens
+    const card = { background: '#fff', border: '1px solid #e7e5e4', borderRadius: '16px', overflow: 'hidden', transition: 'all 0.2s ease' };
+    const heading = { fontFamily: "'Outfit', sans-serif", fontSize: '24px', fontWeight: 700, color: '#1c1917', margin: '0 0 6px 0' };
+    const labelStyle = { display: 'block', fontSize: '13px', fontWeight: 600, color: '#44403c', marginBottom: '6px' };
+    const inputStyle = (hasError) => ({
+        width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '13px',
+        border: `1px solid ${hasError ? '#fca5a5' : '#e7e5e4'}`, background: '#fafaf9',
+        outline: 'none', transition: 'border 0.15s', boxSizing: 'border-box',
+    });
+    const priorityColors = {
+        low: { bg: '#dbeafe', color: '#2563eb', border: '#93c5fd' },
+        medium: { bg: '#fef3c7', color: '#d97706', border: '#fde68a' },
+        high: { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+    };
+
+    const openCount = services.filter(s => s.isOpen).length;
+    const closedCount = services.length - openCount;
+
     return (
-        <div className="animate-fade-in-up">
-            <div className="flex items-center justify-between mb-8">
+        <div>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
                 <div>
-                    <h1 className="text-2xl font-bold text-stone-800 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>
-                        Service Management
-                    </h1>
-                    <p className="text-stone-500">Create and edit tutoring services offered to students.</p>
+                    <h1 style={heading}>Service Management</h1>
+                    <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>Create and edit tutoring services offered to students.</p>
                 </div>
                 <button
                     onClick={() => { resetForm(); setShowForm(!showForm); }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 cursor-pointer border-none"
-                    style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}
+                    style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '8px',
+                        padding: '10px 22px', borderRadius: '12px', border: 'none',
+                        background: 'linear-gradient(135deg, #C8102E, #E8384F)',
+                        color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(200,16,46,0.25)', transition: 'opacity 0.15s',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                     id="create-service-btn"
                 >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                    New Service
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                    {showForm ? 'Close Form' : 'New Service'}
                 </button>
+            </div>
+
+            {/* Summary pills */}
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
+                <span style={{
+                    padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
+                    background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a',
+                }}>
+                    ✅ {openCount} Open
+                </span>
+                <span style={{
+                    padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
+                    background: '#f5f5f4', border: '1px solid #e7e5e4', color: '#78716c',
+                }}>
+                    ⏸️ {closedCount} Closed
+                </span>
+                <span style={{
+                    padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
+                    background: '#fef2f2', border: '1px solid #fecaca', color: '#C8102E',
+                }}>
+                    📋 {services.length} Total
+                </span>
             </div>
 
             {/* Success toast */}
             {successMsg && (
-                <div className="fixed top-20 right-4 z-50 p-4 rounded-2xl bg-green-50 border border-green-200 text-green-800 text-sm font-medium shadow-lg toast-enter flex items-center gap-2">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-                    {successMsg}
+                <div style={{
+                    position: 'fixed', top: '80px', right: '16px', zIndex: 50,
+                    padding: '14px 20px', borderRadius: '14px',
+                    background: '#f0fdf4', border: '1px solid #bbf7d0',
+                    color: '#166534', fontSize: '13px', fontWeight: 600,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                }}>
+                    ✅ {successMsg}
                 </div>
             )}
 
             {/* Create / Edit Form */}
             {showForm && (
-                <div className="bg-white rounded-2xl border border-stone-200 p-6 mb-8 animate-fade-in-up">
-                    <h2 className="text-lg font-bold text-stone-800 mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>
-                        {editingId ? 'Edit Service' : 'Create New Service'}
+                <div style={{ ...card, padding: '28px', marginBottom: '28px' }}>
+                    <div style={{ height: '3px', background: 'linear-gradient(90deg, #C8102E, #E8384F)', margin: '-28px -28px 24px -28px', borderRadius: '16px 16px 0 0' }} />
+                    <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '18px', fontWeight: 700, color: '#1c1917', margin: '0 0 20px 0' }}>
+                        {editingId ? '✏️ Edit Service' : '➕ Create New Service'}
                     </h2>
 
                     <form onSubmit={handleSubmit} noValidate>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                             <div>
-                                <label htmlFor="service-name" className="block text-sm font-medium text-stone-700 mb-1.5">
-                                    Service Name <span className="text-red-500">*</span>
+                                <label htmlFor="service-name" style={labelStyle}>
+                                    Service Name <span style={{ color: '#dc2626' }}>*</span>
                                 </label>
                                 <input id="service-name" type="text" placeholder="e.g., Calculus Help"
                                     value={formData.name} onChange={(e) => updateField('name', e.target.value)} maxLength={100}
-                                    className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all ${errors.name ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
-                                    style={{ background: '#fafaf9' }} />
-                                <div className="flex justify-between mt-1">
-                                    {errors.name ? <p className="text-xs text-red-600">{errors.name}</p> : <span />}
-                                    <span className="text-xs text-stone-400">{formData.name.length}/100</span>
+                                    style={inputStyle(errors.name)} />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                    {errors.name ? <span style={{ fontSize: '11px', color: '#dc2626' }}>{errors.name}</span> : <span />}
+                                    <span style={{ fontSize: '11px', color: '#a8a29e' }}>{formData.name.length}/100</span>
                                 </div>
                             </div>
-
                             <div>
-                                <label htmlFor="service-category" className="block text-sm font-medium text-stone-700 mb-1.5">
-                                    Category <span className="text-red-500">*</span>
+                                <label htmlFor="service-category" style={labelStyle}>
+                                    Category <span style={{ color: '#dc2626' }}>*</span>
                                 </label>
                                 <input id="service-category" type="text" placeholder="e.g., Mathematics"
                                     value={formData.category} onChange={(e) => updateField('category', e.target.value)}
-                                    className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all ${errors.category ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
-                                    style={{ background: '#fafaf9' }} />
-                                {errors.category && <p className="mt-1 text-xs text-red-600">{errors.category}</p>}
+                                    style={inputStyle(errors.category)} />
+                                {errors.category && <span style={{ fontSize: '11px', color: '#dc2626', marginTop: '4px', display: 'block' }}>{errors.category}</span>}
                             </div>
                         </div>
 
-                        <div className="mb-4">
-                            <label htmlFor="service-description" className="block text-sm font-medium text-stone-700 mb-1.5">
-                                Description <span className="text-red-500">*</span>
+                        <div style={{ marginBottom: '16px' }}>
+                            <label htmlFor="service-description" style={labelStyle}>
+                                Description <span style={{ color: '#dc2626' }}>*</span>
                             </label>
                             <textarea id="service-description" placeholder="Describe what students will get help with..."
                                 value={formData.description} onChange={(e) => updateField('description', e.target.value)} rows={3}
-                                className={`w-full px-4 py-2.5 rounded-xl border text-sm resize-none transition-all ${errors.description ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
-                                style={{ background: '#fafaf9' }} />
-                            {errors.description && <p className="mt-1 text-xs text-red-600">{errors.description}</p>}
+                                style={{ ...inputStyle(errors.description), resize: 'none' }} />
+                            {errors.description && <span style={{ fontSize: '11px', color: '#dc2626', marginTop: '4px', display: 'block' }}>{errors.description}</span>}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '20px' }}>
                             <div>
-                                <label htmlFor="service-duration" className="block text-sm font-medium text-stone-700 mb-1.5">
-                                    Expected Duration (min) <span className="text-red-500">*</span>
+                                <label htmlFor="service-duration" style={labelStyle}>
+                                    Expected Duration (min) <span style={{ color: '#dc2626' }}>*</span>
                                 </label>
                                 <input id="service-duration" type="number" placeholder="25" min="1" max="120"
                                     value={formData.expectedDuration} onChange={(e) => updateField('expectedDuration', e.target.value)}
-                                    className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all ${errors.expectedDuration ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
-                                    style={{ background: '#fafaf9' }} />
-                                {errors.expectedDuration && <p className="mt-1 text-xs text-red-600">{errors.expectedDuration}</p>}
+                                    style={inputStyle(errors.expectedDuration)} />
+                                {errors.expectedDuration && <span style={{ fontSize: '11px', color: '#dc2626', marginTop: '4px', display: 'block' }}>{errors.expectedDuration}</span>}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1.5">Priority Level</label>
-                                <div className="flex gap-2">
-                                    {['low', 'medium', 'high'].map((p) => (
-                                        <button key={p} type="button" onClick={() => updateField('priorityLevel', p)}
-                                            className={`flex-1 px-3 py-2.5 rounded-xl text-xs font-semibold border cursor-pointer transition-all capitalize ${formData.priorityLevel === p ? `priority-${p}` : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300'
-                                                }`}>
-                                            {p}
-                                        </button>
-                                    ))}
+                                <label style={labelStyle}>Priority Level</label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    {['low', 'medium', 'high'].map((p) => {
+                                        const colors = priorityColors[p];
+                                        const isActive = formData.priorityLevel === p;
+                                        return (
+                                            <button key={p} type="button" onClick={() => updateField('priorityLevel', p)}
+                                                style={{
+                                                    flex: 1, padding: '10px 12px', borderRadius: '10px',
+                                                    fontSize: '12px', fontWeight: 600, textTransform: 'capitalize',
+                                                    cursor: 'pointer', transition: 'all 0.15s',
+                                                    background: isActive ? colors.bg : '#fff',
+                                                    color: isActive ? colors.color : '#78716c',
+                                                    border: `1px solid ${isActive ? colors.border : '#e7e5e4'}`,
+                                                }}>
+                                                {p}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1.5">Icon</label>
-                                <div className="flex flex-wrap gap-1.5">
+                                <label style={labelStyle}>Icon</label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                                     {icons.map((icon) => (
                                         <button key={icon} type="button" onClick={() => updateField('icon', icon)}
-                                            className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg cursor-pointer border transition-all ${formData.icon === icon ? 'border-red-400 bg-red-50 shadow-sm' : 'border-stone-200 bg-white hover:border-stone-300'
-                                                }`}>
+                                            style={{
+                                                width: '36px', height: '36px', borderRadius: '8px',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontSize: '18px', cursor: 'pointer', transition: 'all 0.15s',
+                                                background: formData.icon === icon ? '#fef2f2' : '#fff',
+                                                border: `1px solid ${formData.icon === icon ? '#fecaca' : '#e7e5e4'}`,
+                                                boxShadow: formData.icon === icon ? '0 0 0 2px rgba(200,16,46,0.15)' : 'none',
+                                            }}>
                                             {icon}
                                         </button>
                                     ))}
@@ -192,15 +243,29 @@ export default function ServiceManagement() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 pt-2">
-                            <button type="submit"
-                                className="px-6 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 cursor-pointer border-none"
-                                style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}
-                                id="save-service-btn">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '8px', borderTop: '1px solid #f5f5f4' }}>
+                            <button type="submit" id="save-service-btn"
+                                style={{
+                                    padding: '10px 24px', borderRadius: '10px', border: 'none',
+                                    background: 'linear-gradient(135deg, #C8102E, #E8384F)',
+                                    color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                                    transition: 'opacity 0.15s',
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                            >
                                 {editingId ? 'Save Changes' : 'Create Service'}
                             </button>
                             <button type="button" onClick={resetForm}
-                                className="px-6 py-2.5 rounded-xl border border-stone-300 text-stone-600 text-sm font-semibold hover:bg-stone-50 transition-colors cursor-pointer bg-white">
+                                style={{
+                                    padding: '10px 24px', borderRadius: '10px',
+                                    border: '1px solid #e7e5e4', background: '#fff',
+                                    color: '#57534e', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                                    transition: 'background 0.15s',
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = '#fafaf9'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+                            >
                                 Cancel
                             </button>
                         </div>
@@ -209,39 +274,91 @@ export default function ServiceManagement() {
             )}
 
             {/* Services Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger-children">
-                {services.map((s) => (
-                    <div key={s.id} className="bg-white rounded-2xl border border-stone-200 p-5 card-hover animate-fade-in-up">
-                        <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-start gap-3">
-                                <span className="text-3xl">{s.icon}</span>
-                                <div>
-                                    <h3 className="font-bold text-stone-800">{s.name}</h3>
-                                    <p className="text-xs text-stone-500">{s.category}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                {services.map((s) => {
+                    const pColors = priorityColors[s.priorityLevel] || priorityColors.medium;
+                    const isHovered = hoveredCard === s.id;
+                    return (
+                        <div key={s.id}
+                            style={{
+                                ...card,
+                                position: 'relative',
+                                transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+                                boxShadow: isHovered ? '0 8px 24px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
+                            }}
+                            onMouseEnter={() => setHoveredCard(s.id)}
+                            onMouseLeave={() => setHoveredCard(null)}
+                        >
+                            {/* Accent top strip */}
+                            <div style={{ height: '3px', background: s.isOpen ? 'linear-gradient(90deg, #16a34a, #4ade80)' : '#d6d3d1' }} />
+
+                            <div style={{ padding: '22px' }}>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '14px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                        <div style={{
+                                            width: '48px', height: '48px', borderRadius: '12px',
+                                            background: s.isOpen ? '#f0fdf4' : '#f5f5f4',
+                                            border: `1px solid ${s.isOpen ? '#bbf7d0' : '#e7e5e4'}`,
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            fontSize: '24px',
+                                        }}>
+                                            {s.icon}
+                                        </div>
+                                        <div>
+                                            <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '16px', fontWeight: 700, color: '#1c1917', margin: 0 }}>{s.name}</h3>
+                                            <p style={{ fontSize: '12px', color: '#78716c', margin: '2px 0 0 0' }}>{s.category}</p>
+                                        </div>
+                                    </div>
+                                    <span style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: '5px',
+                                        padding: '4px 12px', borderRadius: '16px', fontSize: '11px', fontWeight: 700,
+                                        background: s.isOpen ? '#f0fdf4' : '#f5f5f4',
+                                        color: s.isOpen ? '#16a34a' : '#78716c',
+                                        border: `1px solid ${s.isOpen ? '#bbf7d0' : '#e7e5e4'}`,
+                                    }}>
+                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.isOpen ? '#16a34a' : '#a8a29e' }} />
+                                        {s.isOpen ? 'Open' : 'Closed'}
+                                    </span>
                                 </div>
+
+                                <p style={{ fontSize: '13px', color: '#57534e', lineHeight: 1.6, margin: '0 0 16px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                    {s.description}
+                                </p>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
+                                    <span style={{
+                                        padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 600,
+                                        background: '#fafaf9', border: '1px solid #e7e5e4', color: '#57534e',
+                                    }}>
+                                        ⏱ ~{s.expectedDuration} min
+                                    </span>
+                                    <span style={{
+                                        padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 600,
+                                        textTransform: 'capitalize',
+                                        background: pColors.bg, color: pColors.color, border: `1px solid ${pColors.border}`,
+                                    }}>
+                                        {s.priorityLevel}
+                                    </span>
+                                </div>
+
+                                <button onClick={() => startEdit(s)} id={`edit-service-${s.id}`}
+                                    style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                                        padding: '8px 18px', borderRadius: '10px',
+                                        border: '1px solid #e7e5e4', background: '#fff', color: '#57534e',
+                                        fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                                        transition: 'all 0.15s',
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.background = '#fafaf9'; e.currentTarget.style.borderColor = '#d6d3d1'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e7e5e4'; }}
+                                >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z" /></svg>
+                                    Edit Service
+                                </button>
                             </div>
-                            <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${s.isOpen ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-stone-100 text-stone-500 border border-stone-200'
-                                }`}>
-                                {s.isOpen ? 'Open' : 'Closed'}
-                            </span>
                         </div>
-
-                        <p className="text-sm text-stone-600 mb-3 leading-relaxed line-clamp-2">{s.description}</p>
-
-                        <div className="flex items-center gap-3 mb-4 text-xs text-stone-500">
-                            <span>~{s.expectedDuration} min</span>
-                            <span>•</span>
-                            <span className={`px-2 py-0.5 rounded-md font-medium priority-${s.priorityLevel}`}>{s.priorityLevel}</span>
-                        </div>
-
-                        <button onClick={() => startEdit(s)}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-stone-200 text-stone-600 text-sm font-medium hover:bg-stone-50 transition-colors cursor-pointer bg-white"
-                            id={`edit-service-${s.id}`}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z" /></svg>
-                            Edit
-                        </button>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

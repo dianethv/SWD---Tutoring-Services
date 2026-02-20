@@ -5,240 +5,252 @@ export default function QueueStatus() {
   const { services, getUserActiveQueues, getEstimatedWait, leaveQueue } = useApp();
   const activeQueues = getUserActiveQueues();
 
-  const Page = ({ children }) => (
-    <div className="animate-fade-in-up w-full max-w-6xl mx-auto px-6 sm:px-8">
-      {children}
-    </div>
-  );
+  const heading = { fontFamily: "'Outfit', sans-serif", fontSize: '24px', fontWeight: 700, color: '#1c1917', margin: '0 0 6px 0' };
+  const card = { background: '#fff', border: '1px solid #e7e5e4', borderRadius: '16px', overflow: 'hidden' };
 
+  /* ── Empty State ─────────────────────────────── */
   if (activeQueues.length === 0) {
     return (
-      <Page>
-        <div className="mb-8">
-          <h1
-            className="text-2xl font-bold text-stone-800 mb-1"
-            style={{ fontFamily: 'Outfit, sans-serif' }}
+      <div>
+        <div style={{ marginBottom: '32px' }}>
+          <h1 style={heading}>Queue Status</h1>
+          <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>Track your current position in active queues.</p>
+        </div>
+
+        <div style={{
+          ...card, textAlign: 'center', padding: '64px 24px',
+          background: 'linear-gradient(180deg, #fff 0%, #fafaf9 100%)',
+        }}>
+          <div style={{ fontSize: '56px', marginBottom: '16px' }}>🎯</div>
+          <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '20px', fontWeight: 700, color: '#1c1917', margin: '0 0 8px 0' }}>
+            You're not in any queues
+          </h2>
+          <p style={{ fontSize: '14px', color: '#78716c', margin: '0 0 28px 0', maxWidth: '340px', marginLeft: 'auto', marginRight: 'auto' }}>
+            Ready to get help? Join a tutoring session to get started.
+          </p>
+          <Link
+            to="/join-queue"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '12px 28px', borderRadius: '12px',
+              background: 'linear-gradient(135deg, #C8102E, #E8384F)',
+              color: '#fff', fontSize: '14px', fontWeight: 600,
+              textDecoration: 'none', boxShadow: '0 4px 14px rgba(200,16,46,0.3)',
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
           >
-            Queue Status
-          </h1>
-          <p className="text-stone-500">Track your current position in active queues.</p>
+            ➕ Join a Session
+          </Link>
         </div>
-
-        <div className="py-16 bg-white rounded-2xl border border-stone-200 text-center">
-          <div className="text-5xl mb-4">🎯</div><h2
-  className="text-xl font-bold text-stone-800 mb-2"
-  style={{ fontFamily: 'Outfit, sans-serif' }}
->
-  You're not in any queues
-</h2>
-
-<p className="text-stone-500 mb-6 text-sm">
-  Ready to get help? Join a tutoring session to get started.
-</p>
-
-<Link
-  to="/join-queue"
-  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-3xl text-white text-sm font-semibold no-underline transition-all hover:opacity-90"
-  style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}
->
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="8" x2="12" y2="16" />
-    <line x1="8" y1="12" x2="16" y2="12" />
-  </svg>
-  Join a Session
-</Link>
-        </div>
-      </Page>
+      </div>
     );
   }
 
+  /* ── Active Queues ───────────────────────────── */
   return (
-    <Page>
-      <div className="mb-8">
-        <h1
-          className="text-2xl font-bold text-stone-800 mb-1"
-          style={{ fontFamily: 'Outfit, sans-serif' }}
-        >
-          Queue Status
-        </h1>
-        <p className="text-stone-500">Live updates for your active queues.</p>
+    <div>
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={heading}>Queue Status</h1>
+        <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>Live updates for your active queues.</p>
       </div>
 
-      <div className="space-y-6 stagger-children">
+      {/* Summary pill */}
+      <div style={{
+        display: 'inline-flex', alignItems: 'center', gap: '8px',
+        padding: '8px 18px', borderRadius: '20px',
+        background: '#fef2f2', border: '1px solid #fecaca',
+        fontSize: '13px', fontWeight: 600, color: '#C8102E',
+        marginBottom: '24px',
+      }}>
+        🔴 {activeQueues.length} active queue{activeQueues.length > 1 ? 's' : ''}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {activeQueues.map((q) => {
           const service = services.find((s) => s.id === q.serviceId);
           const eta = getEstimatedWait(q.serviceId, q.position);
           const progressPct = Math.max(10, 100 - (q.position - 1) * 25);
-          const isAlmostReady = q.position <= 2;
           const isNext = q.position === 1;
+          const isAlmostReady = q.position <= 2;
+          const minAgo = Math.round((Date.now() - new Date(q.joinedAt).getTime()) / 60000);
+
+          // Color scheme based on urgency
+          const accent = isNext ? '#16a34a' : isAlmostReady ? '#ea580c' : '#C8102E';
+          const accentLight = isNext ? '#f0fdf4' : isAlmostReady ? '#fff7ed' : '#fef2f2';
+          const accentBorder = isNext ? '#bbf7d0' : isAlmostReady ? '#fed7aa' : '#fecaca';
+          const statusText = isNext ? "You're next!" : isAlmostReady ? 'Almost your turn' : 'Waiting';
+          const statusEmoji = isNext ? '🟢' : isAlmostReady ? '🟠' : '🔴';
+
+          const steps = [
+            { label: 'Joined', done: true },
+            { label: 'Waiting', done: q.position <= 3 },
+            { label: 'Almost Ready', done: q.position <= 2 },
+            { label: 'Your Turn', done: q.position === 1 },
+          ];
 
           return (
-            <div
-              key={q.id}
-              className="bg-white rounded-2xl border border-stone-200 overflow-hidden animate-fade-in-up"
-            >
-              {/* Header strip */}
-              <div
-                className="h-1.5"
-                style={{
-                  background: isNext
-                    ? 'linear-gradient(90deg, #3b82f6, #60a5fa)'
-                    : isAlmostReady
-                    ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
-                    : 'linear-gradient(90deg, #C8102E, #E8384F)',
-                }}
-              />
+            <div key={q.id} style={{ ...card, position: 'relative' }}>
+              {/* Top accent strip */}
+              <div style={{
+                height: '4px',
+                background: `linear-gradient(90deg, ${accent}, ${accent}99)`,
+              }} />
 
-              <div className="p-6">
-                {/* Top Row */}
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-start gap-4">
-                    <span className="text-4xl">{service?.icon}</span>
+              <div style={{ padding: '28px' }}>
+                {/* Service header */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{
+                      width: '56px', height: '56px', borderRadius: '14px',
+                      background: accentLight, border: `1px solid ${accentBorder}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '28px',
+                    }}>
+                      {service?.icon}
+                    </div>
                     <div>
-                      <h2
-                        className="text-lg font-bold text-stone-800"
-                        style={{ fontFamily: 'Outfit, sans-serif' }}
-                      >
+                      <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '18px', fontWeight: 700, color: '#1c1917', margin: 0 }}>
                         {service?.name}
                       </h2>
-                      <p className="text-sm text-stone-500 mt-0.5">{service?.category}</p>
+                      <p style={{ fontSize: '13px', color: '#78716c', margin: '4px 0 0 0' }}>{service?.category}</p>
                       {q.notes && (
-                        <p className="text-xs text-stone-400 mt-1 italic">"{q.notes}"</p>
+                        <p style={{ fontSize: '12px', color: '#a8a29e', margin: '6px 0 0 0', fontStyle: 'italic' }}>"{q.notes}"</p>
                       )}
                     </div>
                   </div>
 
-                  <div
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
-                    style={{
-                      background: isNext ? '#eff6ff' : isAlmostReady ? '#fffbeb' : '#f0fdf4',
-                      border: `1px solid ${
-                        isNext ? '#bfdbfe' : isAlmostReady ? '#fde68a' : '#bbf7d0'
-                      }`,
-                    }}
-                  >
-                    <span className={`status-dot ${isNext ? 'almost-ready' : 'waiting'}`} />
-                    <span
-                      className="text-xs font-semibold"
-                      style={{
-                        color: isNext ? '#2563eb' : isAlmostReady ? '#d97706' : '#16a34a',
-                      }}
-                    >
-                      {isNext ? "You're next!" : isAlmostReady ? 'Almost your turn' : 'Waiting'}
-                    </span>
+                  {/* Status badge */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '6px 16px', borderRadius: '20px',
+                    background: accentLight, border: `1px solid ${accentBorder}`,
+                    fontSize: '12px', fontWeight: 700, color: accent,
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {statusEmoji} {statusText}
                   </div>
                 </div>
 
-                {/* Position & ETA Cards */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="text-center p-4 rounded-xl bg-stone-50">
-                    <p className="text-xs text-stone-500 mb-1 uppercase tracking-wide font-medium">
+                {/* Stat cards — Position, ETA, Joined */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '24px' }}>
+                  {/* Position */}
+                  <div style={{
+                    textAlign: 'center', padding: '20px 16px', borderRadius: '14px',
+                    background: `linear-gradient(135deg, ${accentLight}, #fff)`,
+                    border: `1px solid ${accentBorder}`,
+                  }}>
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px 0' }}>
                       Position
                     </p>
-                    <p
-                      className="text-4xl font-bold"
-                      style={{ color: isNext ? '#2563eb' : '#C8102E' }}
-                    >
+                    <p style={{ fontSize: '36px', fontWeight: 800, color: accent, margin: 0, lineHeight: 1, fontFamily: "'Outfit', sans-serif" }}>
                       #{q.position}
                     </p>
                   </div>
 
-                  <div className="text-center p-4 rounded-xl bg-stone-50">
-                    <p className="text-xs text-stone-500 mb-1 uppercase tracking-wide font-medium">
+                  {/* Est. Wait */}
+                  <div style={{
+                    textAlign: 'center', padding: '20px 16px', borderRadius: '14px',
+                    background: 'linear-gradient(135deg, #fafaf9, #fff)',
+                    border: '1px solid #e7e5e4',
+                  }}>
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px 0' }}>
                       Est. Wait
                     </p>
-                    <p className="text-4xl font-bold text-stone-800">{eta > 0 ? eta : '<1'}</p>
-                    <p className="text-xs text-stone-500 mt-0.5">minutes</p>
+                    <p style={{ fontSize: '36px', fontWeight: 800, color: '#1c1917', margin: 0, lineHeight: 1, fontFamily: "'Outfit', sans-serif" }}>
+                      {eta > 0 ? eta : '<1'}
+                    </p>
+                    <p style={{ fontSize: '11px', color: '#78716c', margin: '6px 0 0 0' }}>minutes</p>
                   </div>
 
-                  <div className="text-center p-4 rounded-xl bg-stone-50">
-                    <p className="text-xs text-stone-500 mb-1 uppercase tracking-wide font-medium">
+                  {/* Joined */}
+                  <div style={{
+                    textAlign: 'center', padding: '20px 16px', borderRadius: '14px',
+                    background: 'linear-gradient(135deg, #fafaf9, #fff)',
+                    border: '1px solid #e7e5e4',
+                  }}>
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px 0' }}>
                       Joined
                     </p>
-                    <p className="text-lg font-bold text-stone-800">
-                      {new Date(q.joinedAt).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                    <p style={{ fontSize: '18px', fontWeight: 700, color: '#1c1917', margin: 0, lineHeight: 1 }}>
+                      {new Date(q.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
-                    <p className="text-xs text-stone-500 mt-0.5">
-                      {Math.round((Date.now() - new Date(q.joinedAt).getTime()) / 60000)} min ago
-                    </p>
+                    <p style={{ fontSize: '11px', color: '#78716c', margin: '6px 0 0 0' }}>{minAgo} min ago</p>
                   </div>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-stone-600">Progress</span>
-                    <span
-                      className="text-xs font-semibold"
-                      style={{ color: isNext ? '#2563eb' : '#C8102E' }}
-                    >
-                      {Math.round(progressPct)}%
-                    </span>
+                {/* Progress bar */}
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#57534e' }}>Progress</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: accent }}>{Math.round(progressPct)}%</span>
                   </div>
-
-                  <div className="h-3 bg-stone-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-1000 ease-out"
-                      style={{
-                        width: `${progressPct}%`,
-                        background: isNext
-                          ? 'linear-gradient(90deg, #3b82f6, #60a5fa)'
-                          : isAlmostReady
-                          ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
-                          : 'linear-gradient(90deg, #C8102E, #E8384F, #E8384F)',
-                      }}
-                    />
+                  <div style={{ height: '10px', background: '#f5f5f4', borderRadius: '8px', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%', borderRadius: '8px',
+                      width: `${progressPct}%`,
+                      background: `linear-gradient(90deg, ${accent}, ${accent}cc)`,
+                      transition: 'width 1s ease-out',
+                    }} />
                   </div>
                 </div>
 
-                {/* Timeline / Steps */}
-                <div className="flex items-center justify-between px-2 mb-6">
-                  {['Joined', 'Waiting', 'Almost Ready', 'Your Turn'].map((step, i) => {
-                    const isComplete =
-                      i === 0 ||
-                      (i === 1 && q.position <= 3) ||
-                      (i === 2 && q.position <= 2) ||
-                      (i === 3 && q.position === 1);
-
-                    return (
-                      <div key={step} className="flex flex-col items-center gap-1.5">
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
-                            isComplete
-                              ? 'bg-red-500 border-red-500 text-white'
-                              : 'bg-white border-stone-300 text-stone-400'
-                          }`}
-                        >
-                          {isComplete ? '✓' : i + 1}
+                {/* Timeline steps */}
+                <div style={{
+                  display: 'flex', alignItems: 'flex-start',
+                  marginBottom: '28px', padding: '20px', borderRadius: '14px',
+                  background: '#fafaf9', border: '1px solid #f0eeee',
+                }}>
+                  {steps.map((step, i) => (
+                    <div key={step.label} style={{ display: 'contents' }}>
+                      {/* Step circle + label */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '36px', height: '36px', borderRadius: '50%',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: step.done ? '16px' : '14px',
+                          background: step.done ? accent : '#fff',
+                          color: step.done ? '#fff' : '#a8a29e',
+                          border: step.done ? 'none' : '2px solid #d6d3d1',
+                          fontWeight: 700,
+                          boxShadow: step.done ? `0 2px 8px ${accent}44` : 'none',
+                          transition: 'all 0.3s',
+                          flexShrink: 0,
+                        }}>
+                          {step.done ? '✓' : i + 1}
                         </div>
-                        <span
-                          className={`text-xs font-medium ${
-                            isComplete ? 'text-red-700' : 'text-stone-400'
-                          }`}
-                        >
-                          {step}
+                        <span style={{
+                          fontSize: '11px', fontWeight: 600,
+                          color: step.done ? accent : '#a8a29e',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {step.label}
                         </span>
                       </div>
-                    );
-                  })}
+                      {/* Connector line between circles */}
+                      {i < steps.length - 1 && (
+                        <div style={{
+                          flex: 1, height: '2px', marginTop: '17px',
+                          background: steps[i + 1].done ? accent : '#e7e5e4',
+                          transition: 'background 0.3s',
+                        }} />
+                      )}
+                    </div>
+                  ))}
                 </div>
 
-                {/* Leave button */}
+                {/* Leave queue button */}
                 <button
                   onClick={() => leaveQueue(q.id)}
-                  className="w-full py-2.5 rounded-xl border-2 border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition-colors cursor-pointer"
-                  id={`leave-queue-status-${q.id}`}
+                  style={{
+                    width: '100%', padding: '12px', borderRadius: '12px',
+                    border: '2px solid #fecaca', background: '#fef2f2', color: '#991b1b',
+                    fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#fee2e2'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#fef2f2'}
                 >
                   Leave Queue
                 </button>
@@ -247,6 +259,6 @@ export default function QueueStatus() {
           );
         })}
       </div>
-    </Page>
+    </div>
   );
 }

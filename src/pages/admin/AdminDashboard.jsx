@@ -2,7 +2,12 @@ import { useApp } from '../../context/AppContext';
 import { Link } from 'react-router-dom';
 
 export default function AdminDashboard() {
-    const { services, queueEntries: queue, toggleService, stats } = useApp();
+    const { currentUser, services, queueEntries: queue, toggleService, stats } = useApp();
+
+    const getDisplayName = () => {
+        const parts = currentUser?.name?.split(' ') || [];
+        return parts.length >= 3 ? `${parts[0]} ${parts[parts.length - 1]}` : currentUser?.name || 'Admin';
+    };
 
     const activeStudents = queue.filter((q) => q.status === 'waiting' || q.status === 'almost_ready').length;
     const openServices = services.filter((s) => s.isOpen).length;
@@ -26,13 +31,8 @@ export default function AdminDashboard() {
         : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const maxVol = Math.max(...dailyVolume, 1);
 
-    // Shared style tokens (matching student dashboard)
-    const card = {
-        background: '#fff',
-        border: '1px solid #e7e5e4',
-        borderRadius: '16px',
-        padding: '24px',
-    };
+    // Shared style tokens
+    const card = { background: '#fff', border: '1px solid #e7e5e4', borderRadius: '16px', padding: '24px' };
     const sectionGap = { marginBottom: '32px' };
     const heading = { fontFamily: "'Outfit', sans-serif", fontSize: '18px', fontWeight: 700, color: '#1c1917', margin: 0 };
     const subtext = { fontSize: '13px', color: '#78716c', marginTop: '4px' };
@@ -42,44 +42,77 @@ export default function AdminDashboard() {
         <div>
             {/* ── Welcome Banner ─────────────────────────────── */}
             <div style={{
-                ...sectionGap,
-                borderRadius: '16px',
-                padding: '36px 32px',
-                background: 'linear-gradient(135deg, #C8102E, #960C22 60%, #6B0A1A)',
+                borderRadius: '20px',
+                padding: '48px 40px',
+                background: 'linear-gradient(135deg, #C8102E 0%, #A60F26 50%, #7A0B1C 100%)',
                 position: 'relative',
                 overflow: 'hidden',
+                marginBottom: '40px',
             }}>
-                <div style={{ position: 'relative', zIndex: 1, maxWidth: '520px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6ee7b7' }} />
-                        <span style={{ fontSize: '13px', fontWeight: 500, color: '#fecdd3' }}>Admin Dashboard</span>
+                {/* floating glow orbs — same as student dashboard */}
+                <div className="glow-orb" style={{
+                    position: 'absolute', top: '-80px', right: '-80px',
+                    width: '260px', height: '260px', borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.08)',
+                }} />
+                <div className="glow-orb" style={{
+                    position: 'absolute', bottom: '-60px', left: '30%',
+                    width: '180px', height: '180px', borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.06)',
+                    animationDelay: '2s',
+                }} />
+
+                <div style={{ position: 'relative', zIndex: 1, maxWidth: '600px' }}>
+                    <div className="fade-up" style={{ marginBottom: '14px' }}>
+                        <span style={{
+                            fontSize: '12px', fontWeight: 600, letterSpacing: '0.08em',
+                            textTransform: 'uppercase', color: '#fecdd3',
+                        }}>
+                            Admin Dashboard • Control Center
+                        </span>
                     </div>
-                    <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '28px', fontWeight: 700, color: '#fff', lineHeight: 1.3, margin: '0 0 10px 0' }}>
-                        {getGreeting()}, Admin 🛠️
+
+                    <h1 className="fade-up" style={{
+                        fontFamily: "'Outfit', sans-serif", fontSize: '32px', fontWeight: 700,
+                        color: '#fff', margin: '0 0 12px 0', lineHeight: 1.25,
+                    }}>
+                        {getGreeting()}, {getDisplayName()} 🛠️
                     </h1>
-                    <p style={{ fontSize: '15px', color: '#fecdd3', lineHeight: 1.6, margin: '0 0 24px 0' }}>
+
+                    <p className="fade-up-delay" style={{
+                        fontSize: '15px', color: '#fee2e2', lineHeight: 1.6, margin: '0 0 28px 0',
+                    }}>
                         {activeStudents > 0
                             ? `${activeStudents} student${activeStudents > 1 ? 's' : ''} currently waiting across ${openServices} open service${openServices > 1 ? 's' : ''}. Keep things moving!`
                             : 'All queues are clear right now. A great time to review services and prepare for upcoming sessions.'}
                     </p>
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+
+                    <div className="fade-up-delay" style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
                         <Link to="/admin/queues" style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '8px',
-                            padding: '10px 20px', borderRadius: '10px',
-                            background: '#fff', color: '#960C22', fontSize: '13px', fontWeight: 600, textDecoration: 'none',
-                        }}>
+                            padding: '12px 22px', borderRadius: '12px',
+                            background: '#fff', color: '#960C22', fontSize: '14px', fontWeight: 600,
+                            textDecoration: 'none', transition: 'all 0.2s ease',
+                        }}
+                            onMouseEnter={(e) => (e.target.style.transform = 'scale(1.03)')}
+                            onMouseLeave={(e) => (e.target.style.transform = 'scale(1)')}
+                        >
                             Manage Queues
                         </Link>
                         <Link to="/admin/services" style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '8px',
-                            padding: '10px 20px', borderRadius: '10px',
-                            background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: '13px', fontWeight: 600,
-                            textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)',
-                        }}>
+                            padding: '12px 22px', borderRadius: '12px',
+                            background: 'rgba(255,255,255,0.18)', color: '#fff', fontSize: '14px', fontWeight: 600,
+                            textDecoration: 'none', backdropFilter: 'blur(6px)',
+                            border: '1px solid rgba(255,255,255,0.25)', transition: 'all 0.2s ease',
+                        }}
+                            onMouseEnter={(e) => (e.target.style.background = 'rgba(255,255,255,0.28)')}
+                            onMouseLeave={(e) => (e.target.style.background = 'rgba(255,255,255,0.18)')}
+                        >
                             Edit Services
                         </Link>
                     </div>
                 </div>
+
+                {/* Decorative */}
                 <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
                 <div style={{ position: 'absolute', bottom: '-60px', right: '80px', width: '140px', height: '140px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
                 <div style={{ position: 'absolute', top: '20px', right: '28px', fontSize: '48px', opacity: 0.15, userSelect: 'none' }}>📊</div>

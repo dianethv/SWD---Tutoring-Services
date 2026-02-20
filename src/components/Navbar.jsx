@@ -171,7 +171,7 @@ export default function Navbar({ onMenuToggle }) {
                                 style={{ background: currentUser?.role === 'admin' ? 'linear-gradient(135deg, #960C22, #C8102E)' : 'linear-gradient(135deg, #C8102E, #E8384F)' }}>
                                 {currentUser ? getInitials(currentUser.name) : '?'}
                             </div>
-                            <span className="text-sm font-medium text-stone-700 hidden sm:block">{currentUser?.name?.split(' ')[0]}</span>
+                            <span className="text-sm font-medium text-stone-700 hidden sm:block">{(() => { const parts = currentUser?.name?.split(' ') || []; return parts.length >= 3 ? `${parts[0]} ${parts[parts.length - 1]}` : parts[0] || ''; })()}</span>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-stone-400">
                                 <polyline points="6 9 12 15 18 9" />
                             </svg>

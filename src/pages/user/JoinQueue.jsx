@@ -25,42 +25,49 @@ export default function JoinQueue() {
 
     const handleLeave = (serviceId) => {
         const entry = getUserQueueEntry(serviceId);
-        if (entry) {
-            leaveQueue(entry.id);
-        }
+        if (entry) leaveQueue(entry.id);
     };
 
+    // Shared tokens
+    const card = { background: '#fff', border: '1px solid #e7e5e4', borderRadius: '16px', padding: '24px' };
+    const heading = { fontFamily: "'Outfit', sans-serif", fontSize: '18px', fontWeight: 700, color: '#1c1917', margin: 0 };
+
     return (
-        <div className="animate-fade-in-up">
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-stone-800 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>
+        <div>
+            {/* Header */}
+            <div style={{ marginBottom: '32px' }}>
+                <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '24px', fontWeight: 700, color: '#1c1917', margin: '0 0 6px 0' }}>
                     Join a Queue
                 </h1>
-                <p className="text-stone-500">Select a tutoring service below to get in line.</p>
+                <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>Select a tutoring service below to get in line.</p>
             </div>
 
+            {/* Toast Notifications */}
             {joinSuccess && (
-                <div className="fixed top-20 right-4 z-50 p-4 rounded-2xl bg-green-50 border border-green-200 text-green-800 text-sm font-medium shadow-lg flex items-center gap-2">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <polyline points="22 4 12 14.01 9 11.01" />
-                    </svg>
-                    Successfully joined the queue!
+                <div style={{
+                    position: 'fixed', top: '80px', right: '16px', zIndex: 50,
+                    padding: '14px 20px', borderRadius: '14px',
+                    background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534',
+                    fontSize: '13px', fontWeight: 500, boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                }}>
+                    ✅ Successfully joined the queue!
                 </div>
             )}
-
             {joinError && (
-                <div className="fixed top-20 right-4 z-50 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium shadow-lg flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="15" y1="9" x2="9" y2="15" />
-                        <line x1="9" y1="9" x2="15" y2="15" />
-                    </svg>
-                    {joinError}
+                <div style={{
+                    position: 'fixed', top: '80px', right: '16px', zIndex: 50,
+                    padding: '14px 20px', borderRadius: '14px',
+                    background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b',
+                    fontSize: '13px', fontWeight: 500, boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                }}>
+                    ❌ {joinError}
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Services Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
                 {services.map((service) => {
                     const queueLength = getQueueForService(service.id).length;
                     const userEntry = getUserQueueEntry(service.id);
@@ -69,111 +76,166 @@ export default function JoinQueue() {
                     const isSelected = selectedService === service.id;
 
                     return (
-                        <div
-                            key={service.id}
-                            className={`bg-white rounded-2xl border transition-all ${isSelected ? 'border-red-300 shadow-md ring-1 ring-red-100' : 'border-stone-200 hover:shadow-sm'} ${!service.isOpen ? 'opacity-60' : ''}`}
-                        >
-                            <div className="p-5">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="flex items-start gap-3">
-                                        <span className="text-3xl">{service.icon}</span>
-                                        <div>
-                                            <h3 className="font-bold text-stone-800">{service.name}</h3>
-                                            <p className="text-xs text-stone-500 mt-0.5">{service.category}</p>
-                                        </div>
+                        <div key={service.id} style={{
+                            ...card,
+                            opacity: service.isOpen ? 1 : 0.55,
+                            border: isSelected ? '2px solid #C8102E' : '1px solid #e7e5e4',
+                            boxShadow: isSelected ? '0 0 0 3px rgba(200,16,46,0.1)' : 'none',
+                            transition: 'all 0.2s ease',
+                            position: 'relative',
+                            overflow: 'hidden',
+                        }}>
+                            {/* Service Header */}
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '14px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                    <div style={{
+                                        width: '48px', height: '48px', borderRadius: '12px',
+                                        background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: '24px', flexShrink: 0,
+                                    }}>
+                                        {service.icon}
                                     </div>
-                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${service.isOpen ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-stone-100 text-stone-500 border border-stone-200'}`}>
-                                        {service.isOpen ? 'Open' : 'Closed'}
-                                    </span>
-                                </div>
-
-                                <p className="text-sm text-stone-600 mb-4 leading-relaxed">{service.description}</p>
-
-                                <div className="flex items-center gap-4 mb-4 text-xs text-stone-500">
-                                    <span className="flex items-center gap-1.5">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <circle cx="12" cy="12" r="10" />
-                                            <polyline points="12 6 12 12 16 14" />
-                                        </svg>
-                                        ~{service.expectedDuration} min/session
-                                    </span>
-                                    <span className="flex items-center gap-1.5">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                            <circle cx="9" cy="7" r="4" />
-                                        </svg>
-                                        {queueLength} in queue
-                                    </span>
-                                </div>
-
-                                <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 mb-4">
                                     <div>
-                                        <p className="font-bold text-stone-700">Estimated wait: {eta > 0 ? `~${eta} min` : 'No wait!'}</p>
-                                        {/* <p className="font-bold text-stone-800">{eta > 0 ? `~${eta} min` : 'No wait!'}</p> */}
+                                        <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#1c1917', margin: 0 }}>{service.name}</h3>
+                                        <p style={{ fontSize: '12px', color: '#78716c', margin: '3px 0 0 0' }}>{service.category}</p>
                                     </div>
                                 </div>
+                                <span style={{
+                                    padding: '4px 10px', borderRadius: '8px',
+                                    fontSize: '11px', fontWeight: 600,
+                                    background: service.isOpen ? '#f0fdf4' : '#f5f5f4',
+                                    color: service.isOpen ? '#16a34a' : '#78716c',
+                                    border: service.isOpen ? '1px solid #bbf7d0' : '1px solid #e7e5e4',
+                                    whiteSpace: 'nowrap',
+                                }}>
+                                    {service.isOpen ? '● Open' : '● Closed'}
+                                </span>
+                            </div>
 
-                                {isSelected && !isInQueue && service.isOpen && (
-                                    <div className="mb-4">
-                                        <label className="block text-xs font-medium text-stone-600 mb-1.5">
-                                            What do you need help with? (optional)
-                                        </label>
-                                        <textarea
-                                            value={notes}
-                                            onChange={(e) => setNotes(e.target.value)}
-                                            placeholder="e.g., Integration by parts, Chapter 5 problems..."
-                                            rows={2}
-                                            className="w-full px-3 py-2 rounded-xl border border-stone-300 text-sm resize-none hover:border-stone-400"
-                                            style={{ background: '#fafaf9' }}
-                                        />
-                                        <div className="mt-2">
-                                            <label className="block text-xs font-medium text-stone-600 mb-1.5">Priority</label>
-                                            <div className="flex gap-2">
-                                                {['normal', 'high'].map((p) => (
-                                                    <button
-                                                        key={p}
-                                                        type="button"
-                                                        onClick={() => setPriority(p)}
-                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${priority === p ? 'bg-red-50 border-red-300 text-red-700' : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300'}`}
-                                                    >
-                                                        {p === 'high' ? '🔥 Urgent (exam soon)' : '📝 Normal'}
-                                                    </button>
-                                                ))}
-                                            </div>
+                            {/* Description */}
+                            <p style={{ fontSize: '13px', color: '#57534e', lineHeight: 1.6, margin: '0 0 16px 0' }}>
+                                {service.description}
+                            </p>
+
+                            {/* Meta row */}
+                            <div style={{ display: 'flex', gap: '20px', marginBottom: '16px', fontSize: '12px', color: '#78716c' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    🕐 ~{service.expectedDuration} min
+                                </span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    👥 {queueLength} in queue
+                                </span>
+                            </div>
+
+                            {/* Estimated Wait Bar */}
+                            <div style={{
+                                padding: '14px 16px', borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #fafaf9, #f5f5f4)',
+                                border: '1px solid #e7e5e4',
+                                marginBottom: '16px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            }}>
+                                <span style={{ fontSize: '12px', color: '#78716c', fontWeight: 500 }}>Estimated wait</span>
+                                <span style={{ fontSize: '15px', fontWeight: 700, color: eta > 0 ? '#C8102E' : '#16a34a' }}>
+                                    {eta > 0 ? `~${eta} min` : 'No wait!'}
+                                </span>
+                            </div>
+
+                            {/* Expand: notes + priority */}
+                            {isSelected && !isInQueue && service.isOpen && (
+                                <div style={{ marginBottom: '16px', padding: '16px', borderRadius: '12px', background: '#fafaf9', border: '1px solid #f0eeee' }}>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#44403c', marginBottom: '8px' }}>
+                                        What do you need help with? (optional)
+                                    </label>
+                                    <textarea
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        placeholder="e.g., Integration by parts, Chapter 5 problems..."
+                                        rows={2}
+                                        style={{
+                                            width: '100%', padding: '10px 14px', borderRadius: '10px',
+                                            border: '1px solid #d6d3d1', fontSize: '13px', resize: 'none',
+                                            background: '#fff', boxSizing: 'border-box',
+                                            outline: 'none', fontFamily: 'inherit',
+                                        }}
+                                    />
+                                    <div style={{ marginTop: '12px' }}>
+                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#44403c', marginBottom: '8px' }}>Priority</label>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            {['normal', 'high'].map((p) => (
+                                                <button
+                                                    key={p}
+                                                    type="button"
+                                                    onClick={() => setPriority(p)}
+                                                    style={{
+                                                        padding: '6px 14px', borderRadius: '8px',
+                                                        fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                                                        border: priority === p ? '1px solid #C8102E' : '1px solid #d6d3d1',
+                                                        background: priority === p ? '#fef2f2' : '#fff',
+                                                        color: priority === p ? '#C8102E' : '#57534e',
+                                                        transition: 'all 0.15s',
+                                                    }}
+                                                >
+                                                    {p === 'high' ? '🔥 Urgent' : '📝 Normal'}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
-                                )}
+                                </div>
+                            )}
 
-                                {service.isOpen ? (
-                                    isInQueue ? (
-                                        <button
-                                            onClick={() => handleLeave(service.id)}
-                                            className="w-full py-2.5 rounded-xl border-2 border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition-colors"
-                                        >
-                                            Leave Queue
-                                        </button>
-                                    ) : isSelected ? (
-                                        <button
-                                            onClick={() => handleJoin(service.id)}
-                                            className="w-full py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 border-none"
-                                            style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}
-                                        >
-                                            Join Queue
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => setSelectedService(service.id)}
-                                            className="w-full py-2.5 rounded-xl border-2 border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition-colors"
-                                        >
-                                            Select Service
-                                        </button>
-                                    )
-                                ) : (
-                                    <button disabled className="w-full py-2.5 rounded-xl bg-stone-100 text-stone-400 text-sm font-semibold cursor-not-allowed border-none">
-                                        Currently Closed
+                            {/* Action Button */}
+                            {service.isOpen ? (
+                                isInQueue ? (
+                                    <button
+                                        onClick={() => handleLeave(service.id)}
+                                        style={{
+                                            width: '100%', padding: '12px', borderRadius: '12px',
+                                            border: '2px solid #fecaca', background: '#fef2f2', color: '#991b1b',
+                                            fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = '#fee2e2'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = '#fef2f2'}
+                                    >
+                                        Leave Queue
                                     </button>
-                                )}
-                            </div>
+                                ) : isSelected ? (
+                                    <button
+                                        onClick={() => handleJoin(service.id)}
+                                        style={{
+                                            width: '100%', padding: '12px', borderRadius: '12px',
+                                            border: 'none', background: 'linear-gradient(135deg, #C8102E, #E8384F)',
+                                            color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                                            transition: 'all 0.15s', boxShadow: '0 4px 12px rgba(200,16,46,0.25)',
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                    >
+                                        Join Queue →
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => setSelectedService(service.id)}
+                                        style={{
+                                            width: '100%', padding: '12px', borderRadius: '12px',
+                                            border: '1px solid #e7e5e4', background: '#fff', color: '#44403c',
+                                            fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+                                        }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.background = '#fafaf9'; e.currentTarget.style.borderColor = '#C8102E'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e7e5e4'; }}
+                                    >
+                                        Select Service
+                                    </button>
+                                )
+                            ) : (
+                                <button disabled style={{
+                                    width: '100%', padding: '12px', borderRadius: '12px',
+                                    border: 'none', background: '#f5f5f4', color: '#a8a29e',
+                                    fontSize: '13px', fontWeight: 600, cursor: 'not-allowed',
+                                }}>
+                                    Currently Closed
+                                </button>
+                            )}
                         </div>
                     );
                 })}
