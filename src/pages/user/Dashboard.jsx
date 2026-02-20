@@ -35,48 +35,140 @@ export default function Dashboard() {
     return (
         <div>
             {/* ── Welcome Banner ─────────────────────────────── */}
-            <div style={{
-                ...sectionGap,
-                borderRadius: '16px',
-                padding: '36px 32px',
-                background: 'linear-gradient(135deg, #C8102E, #960C22 60%, #6B0A1A)',
-                position: 'relative',
-                overflow: 'hidden',
-            }}>
-                <div style={{ position: 'relative', zIndex: 1, maxWidth: '520px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6ee7b7' }} />
-                        <span style={{ fontSize: '13px', fontWeight: 500, color: '#fecdd3' }}>Tutoring Center — Open Now</span>
-                    </div>
-                    <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '28px', fontWeight: 700, color: '#fff', lineHeight: 1.3, margin: '0 0 10px 0' }}>
-                        {getGreeting()}, {currentUser?.name?.split(' ')[0]} 👋
-                    </h1>
-                    <p style={{ fontSize: '15px', color: '#fecdd3', lineHeight: 1.6, margin: '0 0 24px 0' }}>
-                        {activeQueues.length > 0
-                            ? `You're in ${activeQueues.length} queue${activeQueues.length > 1 ? 's' : ''} right now. Check your status or browse more services.`
-                            : `Browse available tutoring services and hop in a queue. We'll notify you when it's your turn.`}
-                    </p>
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                        <Link to="/join-queue" style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '8px',
-                            padding: '10px 20px', borderRadius: '10px',
-                            background: '#fff', color: '#960C22', fontSize: '13px', fontWeight: 600, textDecoration: 'none',
-                        }}>
-                            + Join a Queue
-                        </Link>
-                        {activeQueues.length > 0 && (
-                            <Link to="/queue-status" style={{
-                                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                                padding: '10px 20px', borderRadius: '10px',
-                                background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: '13px', fontWeight: 600,
-                                textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)',
-                            }}>
-                                Check My Status
-                            </Link>
-                        )}
-                    </div>
-                </div>
-                {/* Decorative */}
+            <div
+  style={{
+    borderRadius: '20px',
+    padding: '48px 40px',
+    background:
+      'linear-gradient(135deg, #C8102E 0%, #A60F26 50%, #7A0B1C 100%)',
+    position: 'relative',
+    overflow: 'hidden',
+    marginBottom: '40px',
+  }}
+>
+  {/* floating glow */}
+  <div
+    className="glow-orb"
+    style={{
+      position: 'absolute',
+      top: '-80px',
+      right: '-80px',
+      width: '260px',
+      height: '260px',
+      borderRadius: '50%',
+      background: 'rgba(255,255,255,0.08)',
+    }}
+  />
+  <div
+    className="glow-orb"
+    style={{
+      position: 'absolute',
+      bottom: '-60px',
+      left: '30%',
+      width: '180px',
+      height: '180px',
+      borderRadius: '50%',
+      background: 'rgba(255,255,255,0.06)',
+      animationDelay: '2s',
+    }}
+  />
+
+  <div style={{ position: 'relative', zIndex: 1, maxWidth: '600px' }}>
+    <div className="fade-up" style={{ marginBottom: '14px' }}>
+      <span
+        style={{
+          fontSize: '12px',
+          fontWeight: 600,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: '#fecdd3',
+        }}
+      >
+        Tutoring Center • Open Now
+      </span>
+    </div>
+
+    <h1
+      className="fade-up"
+      style={{
+        fontFamily: "'Outfit', sans-serif",
+        fontSize: '32px',
+        fontWeight: 700,
+        color: '#fff',
+        margin: '0 0 12px 0',
+        lineHeight: 1.25,
+      }}
+    >
+      {getGreeting()},{' '}
+      <span style={{ color: '#fff', opacity: 0.95 }}>
+        {currentUser?.name?.split(' ')[0]}
+      </span>{' '}
+      👋
+    </h1>
+
+    <p
+      className="fade-up-delay"
+      style={{
+        fontSize: '15px',
+        color: '#fee2e2',
+        lineHeight: 1.6,
+        margin: '0 0 28px 0',
+      }}
+    >
+      {activeQueues.length > 0
+        ? `You're in ${activeQueues.length} queue${
+            activeQueues.length > 1 ? 's' : ''
+          }. We'll notify you before your turn.`
+        : `Browse available tutoring services and hop in a queue. We'll notify you when it's your turn.`}
+    </p>
+    <div className="fade-up-delay" style={{ display: 'flex', gap: '14px' }}>
+      <Link
+        to="/join-queue"
+        style={{
+          padding: '12px 22px',
+          borderRadius: '12px',
+          background: '#fff',
+          color: '#960C22',
+          fontSize: '14px',
+          fontWeight: 600,
+          textDecoration: 'none',
+          transition: 'all 0.2s ease',
+        }}
+        onMouseEnter={(e) => (e.target.style.transform = 'scale(1.03)')}
+        onMouseLeave={(e) => (e.target.style.transform = 'scale(1)')}
+      >
+        Join a Queue
+      </Link>
+
+      {activeQueues.length > 0 && (
+        <Link
+          to="/queue-status"
+          style={{
+            padding: '12px 22px',
+            borderRadius: '12px',
+            background: 'rgba(255,255,255,0.18)',
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: 600,
+            textDecoration: 'none',
+            backdropFilter: 'blur(6px)',
+            border: '1px solid rgba(255,255,255,0.25)',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) =>
+            (e.target.style.background = 'rgba(255,255,255,0.28)')
+          }
+          onMouseLeave={(e) =>
+            (e.target.style.background = 'rgba(255,255,255,0.18)')
+          }
+        >
+          View Live Tracking
+        </Link>
+      )}
+    </div>
+  </div>
+
+    {/* Decorative */}
                 <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
                 <div style={{ position: 'absolute', bottom: '-60px', right: '80px', width: '140px', height: '140px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
                 <div style={{ position: 'absolute', top: '20px', right: '28px', fontSize: '48px', opacity: 0.15, userSelect: 'none' }}>🐾</div>
