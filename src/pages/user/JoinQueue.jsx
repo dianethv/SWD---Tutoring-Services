@@ -64,7 +64,7 @@ export default function JoinQueue() {
 
                     return (
                         <div key={service.id}
-                            className={`bg-white rounded-2xl border transition-all animate-fade-in-up ${isSelected ? 'border-teal-300 shadow-md ring-1 ring-red-100' : 'border-stone-200 card-hover'
+                            className={`bg-white rounded-2xl border transition-all animate-fade-in-up ${isSelected ? 'border-red-300 shadow-md ring-1 ring-red-100' : 'border-stone-200 card-hover'
                                 } ${!service.isOpen ? 'opacity-60' : ''}`}
                         >
                             <div className="p-5">
@@ -132,7 +132,7 @@ export default function JoinQueue() {
                                                 {['normal', 'high'].map((p) => (
                                                     <button key={p} type="button" onClick={() => setPriority(p)}
                                                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer transition-all ${priority === p
-                                                                ? p === 'high' ? 'bg-red-50 border-red-300 text-red-700' : 'bg-red-50 border-teal-300 text-red-700'
+                                                                ? p === 'high' ? 'bg-red-50 border-red-300 text-red-700' : 'bg-red-50 border-red-300 text-red-700'
                                                                 : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300'
                                                             }`}>
                                                         {p === 'high' ? '🔥 Urgent (exam soon)' : '📝 Normal'}

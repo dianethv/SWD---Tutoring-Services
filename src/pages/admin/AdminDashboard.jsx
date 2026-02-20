@@ -20,7 +20,7 @@ export default function AdminDashboard() {
         return { ...s, inQueue };
     });
 
-    // Volume chart (simple bar vis for the last 7 days)
+    // Volume chart data
     const rawVolume = stats?.dailyVolume || [];
     const dailyVolume = rawVolume.map((d) => (typeof d === 'object' ? d.count : d));
     const dayLabels = rawVolume.length > 0 && typeof rawVolume[0] === 'object'
@@ -28,149 +28,145 @@ export default function AdminDashboard() {
         : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const maxVol = Math.max(...dailyVolume, 1);
 
+    // Shared style tokens (matching student dashboard)
+    const card = {
+        background: '#fff',
+        border: '1px solid #e7e5e4',
+        borderRadius: '16px',
+        padding: '24px',
+    };
+    const sectionGap = { marginBottom: '32px' };
+    const heading = { fontFamily: "'Outfit', sans-serif", fontSize: '18px', fontWeight: 700, color: '#1c1917', margin: 0 };
+    const subtext = { fontSize: '13px', color: '#78716c', marginTop: '4px' };
+    const linkStyle = { fontSize: '13px', color: '#C8102E', fontWeight: 600, textDecoration: 'none' };
+
     return (
         <div>
-            {/* ── Hero Section ─────────────────────────────────── */}
-            <div className="rounded-3xl p-8 md:p-10 mb-10 relative overflow-hidden animate-fade-in-up"
-                style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #4c1d95 100%)' }}>
-                <div className="relative z-10 max-w-xl">
-                    <p className="text-purple-200 text-sm font-medium mb-2 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-purple-300 animate-pulse-soft" />
-                        Admin Dashboard
-                    </p>
-                    <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>
+            {/* ── Welcome Banner ─────────────────────────────── */}
+            <div style={{
+                ...sectionGap,
+                borderRadius: '16px',
+                padding: '36px 32px',
+                background: 'linear-gradient(135deg, #C8102E, #960C22 60%, #6B0A1A)',
+                position: 'relative',
+                overflow: 'hidden',
+            }}>
+                <div style={{ position: 'relative', zIndex: 1, maxWidth: '520px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6ee7b7' }} />
+                        <span style={{ fontSize: '13px', fontWeight: 500, color: '#fecdd3' }}>Admin Dashboard</span>
+                    </div>
+                    <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '28px', fontWeight: 700, color: '#fff', lineHeight: 1.3, margin: '0 0 10px 0' }}>
                         {getGreeting()}, Admin 🛠️
                     </h1>
-                    <p className="text-purple-200 text-base leading-relaxed mb-6 max-w-lg">
+                    <p style={{ fontSize: '15px', color: '#fecdd3', lineHeight: 1.6, margin: '0 0 24px 0' }}>
                         {activeStudents > 0
                             ? `${activeStudents} student${activeStudents > 1 ? 's' : ''} currently waiting across ${openServices} open service${openServices > 1 ? 's' : ''}. Keep things moving!`
                             : 'All queues are clear right now. A great time to review services and prepare for upcoming sessions.'}
                     </p>
-                    <div className="flex flex-wrap gap-3">
-                        <Link to="/admin/queues"
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-purple-700 text-sm font-semibold no-underline hover:bg-purple-50 transition-colors">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <Link to="/admin/queues" style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '8px',
+                            padding: '10px 20px', borderRadius: '10px',
+                            background: '#fff', color: '#960C22', fontSize: '13px', fontWeight: 600, textDecoration: 'none',
+                        }}>
                             Manage Queues
                         </Link>
-                        <Link to="/admin/services"
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/15 backdrop-blur text-white text-sm font-semibold no-underline border border-white/20 hover:bg-white/25 transition-colors">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+                        <Link to="/admin/services" style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '8px',
+                            padding: '10px 20px', borderRadius: '10px',
+                            background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: '13px', fontWeight: 600,
+                            textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)',
+                        }}>
                             Edit Services
                         </Link>
                     </div>
                 </div>
-                <div className="absolute -top-10 -right-10 w-64 h-64 rounded-full bg-white/5" />
-                <div className="absolute -bottom-16 right-20 w-40 h-40 rounded-full bg-white/5" />
-                <div className="absolute top-6 right-8 text-6xl opacity-20 select-none">📊</div>
+                {/* Decorative */}
+                <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
+                <div style={{ position: 'absolute', bottom: '-60px', right: '80px', width: '140px', height: '140px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
+                <div style={{ position: 'absolute', top: '20px', right: '28px', fontSize: '48px', opacity: 0.15, userSelect: 'none' }}>📊</div>
             </div>
 
             {/* ── Key Metrics ──────────────────────────────────── */}
-            <div className="mb-10">
-                <h2 className="text-lg font-bold text-stone-800 mb-5" style={{ fontFamily: 'Outfit, sans-serif' }}>
-                    Today's Snapshot
-                </h2>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 stagger-children">
-                    <div className="bg-white rounded-2xl p-6 border border-stone-200 card-hover animate-fade-in-up">
-                        <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                            style={{ background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
+            <div style={sectionGap}>
+                <h2 style={heading}>Today's Snapshot</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                    {[
+                        { label: 'Students in Queue', value: activeStudents, bg: '#dbeafe', iconColor: '#3b82f6', extra: `across ${openServices} active services`, icon: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></> },
+                        { label: 'Served Today', value: stats?.totalServedToday || 47, bg: '#d1fae5', iconColor: '#059669', extra: '↑ 12% vs yesterday', icon: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></> },
+                        { label: 'Avg Wait Time', value: `${stats?.avgWaitTime || 14}m`, bg: '#fef3c7', iconColor: '#d97706', extra: 'Peak: 2–4 PM', icon: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></> },
+                        { label: 'No-Show Rate', value: `${stats?.noShowRate || 8}%`, bg: '#fce7f3', iconColor: '#db2777', extra: `${stats?.noShows || 4} students today`, icon: <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></> },
+                    ].map((stat) => (
+                        <div key={stat.label} style={card}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: stat.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stat.iconColor} strokeWidth="2">{stat.icon}</svg>
+                            </div>
+                            <p style={{ fontSize: '28px', fontWeight: 700, color: '#1c1917', margin: '0 0 2px 0', lineHeight: 1 }}>{stat.value}</p>
+                            <p style={{ fontSize: '13px', color: '#78716c', margin: 0 }}>{stat.label}</p>
+                            <p style={{ fontSize: '11px', color: '#a8a29e', marginTop: '8px', margin: '8px 0 0 0' }}>{stat.extra}</p>
                         </div>
-                        <p className="text-3xl font-bold text-stone-800 mb-1">{activeStudents}</p>
-                        <p className="text-sm text-stone-500">Students in Queue</p>
-                        <p className="text-xs text-stone-400 mt-2">across {openServices} active services</p>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-6 border border-stone-200 card-hover animate-fade-in-up">
-                        <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                            style={{ background: 'linear-gradient(135deg, #d1fae5, #a7f3d0)' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-                        </div>
-                        <p className="text-3xl font-bold text-stone-800 mb-1">{stats?.totalServedToday || 47}</p>
-                        <p className="text-sm text-stone-500">Served Today</p>
-                        <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="18 15 12 9 6 15" /></svg>
-                            12% vs yesterday
-                        </p>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-6 border border-stone-200 card-hover animate-fade-in-up">
-                        <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                            style={{ background: 'linear-gradient(135deg, #fef3c7, #fde68a)' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                        </div>
-                        <p className="text-3xl font-bold text-stone-800 mb-1">{stats?.avgWaitTime || 14}m</p>
-                        <p className="text-sm text-stone-500">Avg Wait Time</p>
-                        <p className="text-xs text-stone-400 mt-2">Peak: 2:00 PM – 4:00 PM</p>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-6 border border-stone-200 card-hover animate-fade-in-up">
-                        <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                            style={{ background: 'linear-gradient(135deg, #fce7f3, #fbcfe8)' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#db2777" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-                        </div>
-                        <p className="text-3xl font-bold text-stone-800 mb-1">{stats?.noShowRate || 8}%</p>
-                        <p className="text-sm text-stone-500">No-Show Rate</p>
-                        <p className="text-xs text-stone-400 mt-2">{stats?.noShows || 4} students today</p>
-                    </div>
+                    ))}
                 </div>
             </div>
 
-            {/* ── Activity Chart + Service Breakdown ─────────── */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-10">
+            {/* ── Weekly Volume + Service Load ─────────────────── */}
+            <div style={{ ...sectionGap, display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
                 {/* Volume Chart */}
-                <div className="xl:col-span-2 bg-white rounded-2xl border border-stone-200 p-6">
-                    <div className="flex items-center justify-between mb-6">
+                <div style={card}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
                         <div>
-                            <h3 className="font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>Weekly Volume</h3>
-                            <p className="text-xs text-stone-500 mt-0.5">Students served per day this week</p>
+                            <h3 style={heading}>Weekly Volume</h3>
+                            <p style={subtext}>Students served per day this week</p>
                         </div>
-                        <div className="text-right">
-                            <p className="text-2xl font-bold text-stone-800">{dailyVolume.reduce((a, b) => a + b, 0)}</p>
-                            <p className="text-xs text-stone-500">total this week</p>
+                        <div style={{ textAlign: 'right' }}>
+                            <p style={{ fontSize: '22px', fontWeight: 700, color: '#1c1917', margin: 0 }}>{dailyVolume.reduce((a, b) => a + b, 0)}</p>
+                            <p style={{ fontSize: '12px', color: '#78716c', margin: '2px 0 0 0' }}>total this week</p>
                         </div>
                     </div>
-                    <div className="flex items-end justify-between gap-3" style={{ height: '200px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px', height: '180px' }}>
                         {dailyVolume.map((val, i) => (
-                            <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-                                <span className="text-xs font-semibold text-stone-700">{val}</span>
-                                <div
-                                    className="w-full rounded-xl transition-all duration-500"
-                                    style={{
-                                        height: `${(val / maxVol) * 100}%`,
-                                        minHeight: '16px',
-                                        background: i === new Date().getDay() - 1
-                                            ? 'linear-gradient(180deg, #7c3aed, #a78bfa)'
-                                            : 'linear-gradient(180deg, #e9d5ff, #ddd6fe)',
-                                    }}
-                                />
-                                <span className="text-xs text-stone-500 font-medium">{dayLabels[i]}</span>
+                            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', height: '100%', justifyContent: 'flex-end' }}>
+                                <span style={{ fontSize: '12px', fontWeight: 600, color: '#44403c' }}>{val}</span>
+                                <div style={{
+                                    width: '100%',
+                                    borderRadius: '10px',
+                                    height: `${(val / maxVol) * 100}%`,
+                                    minHeight: '16px',
+                                    background: i === new Date().getDay() - 1
+                                        ? 'linear-gradient(180deg, #C8102E, #E8384F)'
+                                        : 'linear-gradient(180deg, #fecdd3, #fecaca)',
+                                    transition: 'all 0.5s ease',
+                                }} />
+                                <span style={{ fontSize: '11px', color: '#78716c', fontWeight: 500 }}>{dayLabels[i]}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Service Breakdown */}
-                <div className="bg-white rounded-2xl border border-stone-200 p-6">
-                    <h3 className="font-bold text-stone-800 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>Service Load</h3>
-                    <p className="text-xs text-stone-500 mb-6">Current queue by service</p>
-                    <div className="space-y-5">
+                {/* Service Load */}
+                <div style={card}>
+                    <h3 style={{ ...heading, marginBottom: '4px' }}>Service Load</h3>
+                    <p style={{ ...subtext, marginBottom: '20px' }}>Current queue by service</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                         {serviceStats.sort((a, b) => b.inQueue - a.inQueue).map((s) => {
                             const maxQ = Math.max(...serviceStats.map((x) => x.inQueue), 1);
                             return (
                                 <div key={s.id}>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2.5">
-                                            <span className="text-lg">{s.icon}</span>
-                                            <span className="text-sm font-medium text-stone-700 truncate" style={{ maxWidth: '140px' }}>{s.name}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <span style={{ fontSize: '18px' }}>{s.icon}</span>
+                                            <span style={{ fontSize: '13px', fontWeight: 500, color: '#44403c', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                                         </div>
-                                        <span className="text-sm font-bold text-stone-800">{s.inQueue}</span>
+                                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#1c1917' }}>{s.inQueue}</span>
                                     </div>
-                                    <div className="h-2.5 bg-stone-100 rounded-full overflow-hidden">
-                                        <div className="h-full rounded-full transition-all duration-700"
-                                            style={{
-                                                width: s.inQueue > 0 ? `${(s.inQueue / maxQ) * 100}%` : '0%',
-                                                background: s.isOpen ? 'linear-gradient(90deg, #7c3aed, #a78bfa)' : '#d1d5db',
-                                            }} />
+                                    <div style={{ height: '8px', background: '#f5f5f4', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <div style={{
+                                            height: '100%', borderRadius: '4px',
+                                            width: s.inQueue > 0 ? `${(s.inQueue / maxQ) * 100}%` : '0%',
+                                            background: s.isOpen ? 'linear-gradient(90deg, #C8102E, #E8384F)' : '#d1d5db',
+                                            transition: 'width 0.7s ease',
+                                        }} />
                                     </div>
                                 </div>
                             );
@@ -180,71 +176,81 @@ export default function AdminDashboard() {
             </div>
 
             {/* ── Services Table ───────────────────────────────── */}
-            <div className="mb-10">
-                <div className="flex items-center justify-between mb-5">
-                    <div>
-                        <h2 className="text-lg font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>
-                            Services Overview
-                        </h2>
-                        <p className="text-sm text-stone-500 mt-1">{services.length} total services configured</p>
-                    </div>
-                    <Link to="/admin/services"
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-50 text-purple-700 text-sm font-semibold no-underline hover:bg-purple-100 transition-colors border border-purple-200">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
-                        Add Service
-                    </Link>
+            <div style={sectionGap}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <h2 style={heading}>Services Overview</h2>
+                    <Link to="/admin/services" style={linkStyle}>Manage services →</Link>
                 </div>
-                <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                <p style={subtext}>{services.length} total services configured</p>
+                <div style={{ ...card, padding: 0, overflow: 'hidden', marginTop: '16px' }}>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', fontSize: '14px', borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr className="bg-stone-50 border-b border-stone-200">
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-stone-500 uppercase tracking-wider">Service</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-stone-500 uppercase tracking-wider">Category</th>
-                                    <th className="text-center px-6 py-4 text-xs font-semibold text-stone-500 uppercase tracking-wider">Duration</th>
-                                    <th className="text-center px-6 py-4 text-xs font-semibold text-stone-500 uppercase tracking-wider">In Queue</th>
-                                    <th className="text-center px-6 py-4 text-xs font-semibold text-stone-500 uppercase tracking-wider">Status</th>
-                                    <th className="text-center px-6 py-4 text-xs font-semibold text-stone-500 uppercase tracking-wider">Toggle</th>
+                                <tr style={{ background: '#fafaf9', borderBottom: '1px solid #e7e5e4' }}>
+                                    <th style={{ textAlign: 'left', padding: '14px 24px', fontSize: '11px', fontWeight: 600, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Service</th>
+                                    <th style={{ textAlign: 'left', padding: '14px 24px', fontSize: '11px', fontWeight: 600, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category</th>
+                                    <th style={{ textAlign: 'center', padding: '14px 24px', fontSize: '11px', fontWeight: 600, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</th>
+                                    <th style={{ textAlign: 'center', padding: '14px 24px', fontSize: '11px', fontWeight: 600, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.05em' }}>In Queue</th>
+                                    <th style={{ textAlign: 'center', padding: '14px 24px', fontSize: '11px', fontWeight: 600, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
+                                    <th style={{ textAlign: 'center', padding: '14px 24px', fontSize: '11px', fontWeight: 600, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Toggle</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-stone-100">
+                            <tbody>
                                 {services.map((s) => {
                                     const inQueue = queue.filter((q) => q.serviceId === s.id && (q.status === 'waiting' || q.status === 'almost_ready')).length;
                                     return (
-                                        <tr key={s.id} className="hover:bg-stone-50 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-stone-50 text-xl">{s.icon}</div>
+                                        <tr key={s.id} style={{ borderBottom: '1px solid #f5f5f4', transition: 'background 0.15s' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.background = '#fafaf9'}
+                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                                            <td style={{ padding: '16px 24px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafaf9', fontSize: '20px' }}>{s.icon}</div>
                                                     <div>
-                                                        <p className="font-semibold text-stone-800">{s.name}</p>
-                                                        <p className="text-xs text-stone-500 mt-0.5 truncate" style={{ maxWidth: '200px' }}>{s.description}</p>
+                                                        <p style={{ fontWeight: 600, color: '#1c1917', margin: 0, fontSize: '14px' }}>{s.name}</p>
+                                                        <p style={{ fontSize: '12px', color: '#78716c', margin: '2px 0 0 0', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.description}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-stone-600">{s.category}</td>
-                                            <td className="px-6 py-4 text-center text-stone-600">{s.expectedDuration} min</td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold ${inQueue > 0 ? 'bg-purple-50 text-purple-700' : 'bg-stone-50 text-stone-400'
-                                                    }`}>
+                                            <td style={{ padding: '16px 24px', color: '#57534e', fontSize: '13px' }}>{s.category}</td>
+                                            <td style={{ padding: '16px 24px', textAlign: 'center', color: '#57534e', fontSize: '13px' }}>{s.expectedDuration} min</td>
+                                            <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                                                <span style={{
+                                                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                                    width: '32px', height: '32px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
+                                                    background: inQueue > 0 ? '#fef2f2' : '#fafaf9',
+                                                    color: inQueue > 0 ? '#C8102E' : '#a8a29e',
+                                                }}>
                                                     {inQueue}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${s.isOpen ? 'bg-green-50 text-green-700' : 'bg-stone-100 text-stone-500'
-                                                    }`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${s.isOpen ? 'bg-green-500' : 'bg-stone-400'}`} />
+                                            <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                                                <span style={{
+                                                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                                                    padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
+                                                    background: s.isOpen ? '#f0fdf4' : '#f5f5f4',
+                                                    color: s.isOpen ? '#16a34a' : '#78716c',
+                                                }}>
+                                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.isOpen ? '#16a34a' : '#a8a29e' }} />
                                                     {s.isOpen ? 'Open' : 'Closed'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-center">
+                                            <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                                                 <button
                                                     onClick={() => toggleService(s.id)}
-                                                    className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer border-none ${s.isOpen ? 'bg-green-500' : 'bg-stone-300'
-                                                        }`}
+                                                    style={{
+                                                        position: 'relative', width: '44px', height: '24px', borderRadius: '12px',
+                                                        background: s.isOpen ? '#16a34a' : '#d6d3d1',
+                                                        border: 'none', cursor: 'pointer', transition: 'background 0.2s',
+                                                    }}
                                                     title={s.isOpen ? 'Close service' : 'Open service'}
                                                 >
-                                                    <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${s.isOpen ? 'left-6' : 'left-0.5'
-                                                        }`} />
+                                                    <span style={{
+                                                        position: 'absolute', top: '2px',
+                                                        left: s.isOpen ? '22px' : '2px',
+                                                        width: '20px', height: '20px', borderRadius: '50%',
+                                                        background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                                                        transition: 'left 0.2s ease',
+                                                    }} />
                                                 </button>
                                             </td>
                                         </tr>
@@ -256,25 +262,18 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* ── Quick Tips for Admins ─────────────────────────── */}
-            <div className="rounded-2xl border border-purple-200 bg-purple-50/50 p-6 md:p-8 animate-fade-in-up">
-                <div className="flex items-start gap-4">
-                    <div className="text-3xl flex-shrink-0">🎯</div>
+            {/* ── Tips ───────────────────────────────────────── */}
+            <div style={{
+                borderRadius: '16px', border: '1px solid #fecaca', background: '#fffbeb', padding: '28px',
+            }}>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                    <span style={{ fontSize: '28px', flexShrink: 0 }}>🎯</span>
                     <div>
-                        <h3 className="font-bold text-purple-900 mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>Management Tips</h3>
-                        <ul className="text-sm text-purple-800 space-y-2 leading-relaxed">
-                            <li className="flex items-start gap-2">
-                                <span className="text-purple-400 mt-1">•</span>
-                                <span><strong>Monitor no-shows</strong> — consider sending reminders or adjusting queue timing during peak hours.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="text-purple-400 mt-1">•</span>
-                                <span><strong>Balance load</strong> — if one service is backed up, consider temporarily closing others to redirect tutors.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="text-purple-400 mt-1">•</span>
-                                <span><strong>Review weekly volume</strong> — use the chart above to identify demand patterns and schedule tutors accordingly.</span>
-                            </li>
+                        <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: '#78350f', margin: '0 0 10px 0', fontSize: '15px' }}>Management Tips</h3>
+                        <ul style={{ margin: 0, padding: 0, listStyle: 'none', fontSize: '13px', color: '#92400e', lineHeight: 1.7 }}>
+                            <li style={{ marginBottom: '6px' }}>• <strong>Monitor no-shows</strong> — consider sending reminders or adjusting queue timing during peak hours.</li>
+                            <li style={{ marginBottom: '6px' }}>• <strong>Balance load</strong> — if one service is backed up, consider temporarily closing others to redirect tutors.</li>
+                            <li>• <strong>Review weekly volume</strong> — use the chart above to identify demand patterns and schedule tutors.</li>
                         </ul>
                     </div>
                 </div>
