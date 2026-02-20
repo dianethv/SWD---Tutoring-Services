@@ -45,12 +45,12 @@ export default function Login() {
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                padding: '48px',
+                padding: '64px 72px',
                 position: 'relative',
                 overflow: 'hidden',
                 background: 'linear-gradient(160deg, #C8102E, #960C22 40%, #6B0A1A)',
             }} className="hidden lg:flex lg:w-1/2">
-                <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '460px' }}>
+                <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '480px', width: '100%' }}>
                     {/* Big logo + title */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '20px' }}>
                         <div style={{
@@ -139,7 +139,7 @@ export default function Login() {
                                 placeholder="you@university.edu"
                                 value={formData.email}
                                 onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErrors({ ...errors, email: '' }); }}
-                                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all ${errors.email ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'
+                                className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.email ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'
                                     }`}
                                 style={{ background: '#fafaf9' }}
                             />
@@ -156,7 +156,7 @@ export default function Login() {
                                 placeholder="••••••••"
                                 value={formData.password}
                                 onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setErrors({ ...errors, password: '' }); }}
-                                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all ${errors.password ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'
+                                className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.password ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'
                                     }`}
                                 style={{ background: '#fafaf9' }}
                             />
