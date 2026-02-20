@@ -220,6 +220,20 @@ h6 {
 }
 
 /* ── Form styling ───────────────────────────────────── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+select,
+textarea {
+  font-size: 1rem;
+  line-height: 1.5;
+  min-height: 46px;
+}
+
 input:focus,
 select:focus,
 textarea:focus {

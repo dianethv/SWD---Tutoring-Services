@@ -49,10 +49,10 @@ export default function Register() {
     return (
         <div className="min-h-screen flex" style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fafaf9 50%, #fffbeb 100%)' }}>
             {/* Left panel */}
-            <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden"
-                style={{ background: 'linear-gradient(160deg, #C8102E, #960C22 40%, #6B0A1A)' }}>
+            <div className="hidden lg:flex lg:w-1/2 flex-col justify-between relative overflow-hidden"
+                style={{ background: 'linear-gradient(160deg, #C8102E, #960C22 40%, #6B0A1A)', padding: '64px 72px' }}>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-16">
+                    <div className="flex items-center gap-3 mb-12">
                         <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl"
                             style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}>
                             🐾
@@ -88,8 +88,8 @@ export default function Register() {
             </div>
 
             {/* Right panel - form */}
-            <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-                <div className="w-full max-w-md animate-fade-in-up">
+            <div className="flex-1 flex items-center justify-center p-6 lg:p-16">
+                <div className="w-full max-w-lg animate-fade-in-up">
                     <div className="lg:hidden flex items-center gap-2.5 mb-8">
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
                             style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}>
@@ -102,67 +102,80 @@ export default function Register() {
                     <p className="text-stone-500 mb-8">Start getting help faster today</p>
 
                     {serverError && (
-                        <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+                        <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
                             {serverError}
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} noValidate>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-name">Full name</label>
-                            <input id="register-name" type="text" placeholder="Jordan Rivera"
-                                value={formData.name} onChange={(e) => updateField('name', e.target.value)}
-                                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all ${errors.name ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
-                                style={{ background: '#fafaf9' }} />
-                            {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+                        {/* Personal Info Section */}
+                        <div className="bg-white rounded-2xl border border-stone-200 p-6 mb-5">
+                            <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-4">Personal Information</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-name">Full name</label>
+                                    <input id="register-name" type="text" placeholder="Jordan Rivera"
+                                        value={formData.name} onChange={(e) => updateField('name', e.target.value)}
+                                        className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.name ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
+                                        style={{ background: '#fafaf9' }} />
+                                    {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-email">Email address</label>
+                                    <input id="register-email" type="email" placeholder="you@university.edu"
+                                        value={formData.email} onChange={(e) => updateField('email', e.target.value)}
+                                        className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.email ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
+                                        style={{ background: '#fafaf9' }} />
+                                    {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-email">Email address</label>
-                            <input id="register-email" type="email" placeholder="you@university.edu"
-                                value={formData.email} onChange={(e) => updateField('email', e.target.value)}
-                                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all ${errors.email ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
-                                style={{ background: '#fafaf9' }} />
-                            {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
+                        {/* Security Section */}
+                        <div className="bg-white rounded-2xl border border-stone-200 p-6 mb-5">
+                            <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-4">Security</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-password">Password</label>
+                                    <input id="register-password" type="password" placeholder="Min. 6 characters"
+                                        value={formData.password} onChange={(e) => updateField('password', e.target.value)}
+                                        className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.password ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
+                                        style={{ background: '#fafaf9' }} />
+                                    {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-confirm">Confirm password</label>
+                                    <input id="register-confirm" type="password" placeholder="Re-enter password"
+                                        value={formData.confirmPassword} onChange={(e) => updateField('confirmPassword', e.target.value)}
+                                        className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.confirmPassword ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
+                                        style={{ background: '#fafaf9' }} />
+                                    {errors.confirmPassword && <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>}
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-password">Password</label>
-                            <input id="register-password" type="password" placeholder="Min. 6 characters"
-                                value={formData.password} onChange={(e) => updateField('password', e.target.value)}
-                                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all ${errors.password ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
-                                style={{ background: '#fafaf9' }} />
-                            {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
-                        </div>
-
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-confirm">Confirm password</label>
-                            <input id="register-confirm" type="password" placeholder="Re-enter password"
-                                value={formData.confirmPassword} onChange={(e) => updateField('confirmPassword', e.target.value)}
-                                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all ${errors.confirmPassword ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
-                                style={{ background: '#fafaf9' }} />
-                            {errors.confirmPassword && <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>}
-                        </div>
-
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-stone-700 mb-1.5">I am a...</label>
+                        {/* Role Section */}
+                        <div className="bg-white rounded-2xl border border-stone-200 p-6 mb-6">
+                            <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-4">I am a...</p>
                             <div className="grid grid-cols-2 gap-3">
                                 {['student', 'admin'].map((role) => (
                                     <button type="button" key={role}
                                         onClick={() => updateField('role', role)}
-                                        className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all cursor-pointer ${formData.role === role
-                                            ? 'bg-red-50 border-teal-300 text-red-700'
-                                            : 'bg-white border-stone-300 text-stone-600 hover:border-stone-400'
-                                            }`}>
-                                        {role === 'student' ? '🎓 Student' : '🛠️ Admin / Tutor'}
+                                        className={`flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${formData.role === role
+                                            ? 'border-red-300 text-red-700'
+                                            : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300'
+                                            }`}
+                                        style={formData.role === role ? { background: 'linear-gradient(135deg, #fef2f2, #fee2e2)' } : {}}>
+                                        <span className="text-lg">{role === 'student' ? '🎓' : '🛠️'}</span>
+                                        {role === 'student' ? 'Student' : 'Admin / Tutor'}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
                         <button type="submit" disabled={isLoading}
-                            className="w-full py-3 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-60 cursor-pointer border-none"
+                            className="w-full py-3.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-60 cursor-pointer border-none"
                             style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}
                             id="register-submit">
                             {isLoading ? (
