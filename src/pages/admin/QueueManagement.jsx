@@ -43,8 +43,8 @@ export default function QueueManagement() {
                         <button key={s.id}
                             onClick={() => setSelectedServiceId(s.id)}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border cursor-pointer transition-all ${selectedServiceId === s.id
-                                    ? 'bg-red-50 border-teal-300 text-red-700'
-                                    : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300'
+                                ? 'bg-red-50 border-red-300 text-red-700'
+                                : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300'
                                 }`}
                             id={`select-queue-${s.id}`}
                         >
@@ -100,8 +100,8 @@ export default function QueueManagement() {
                                     <div className="flex items-center gap-4">
                                         {/* Position */}
                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold ${idx === 0
-                                                ? 'text-white'
-                                                : 'bg-stone-100 text-stone-600'
+                                            ? 'text-white'
+                                            : 'bg-stone-100 text-stone-600'
                                             }`}
                                             style={idx === 0 ? { background: 'linear-gradient(135deg, #C8102E, #E8384F)' } : {}}>
                                             #{entry.position}

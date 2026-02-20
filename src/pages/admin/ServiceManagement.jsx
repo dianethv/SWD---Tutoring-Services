@@ -183,7 +183,7 @@ export default function ServiceManagement() {
                                 <div className="flex flex-wrap gap-1.5">
                                     {icons.map((icon) => (
                                         <button key={icon} type="button" onClick={() => updateField('icon', icon)}
-                                            className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg cursor-pointer border transition-all ${formData.icon === icon ? 'border-teal-400 bg-red-50 shadow-sm' : 'border-stone-200 bg-white hover:border-stone-300'
+                                            className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg cursor-pointer border transition-all ${formData.icon === icon ? 'border-red-400 bg-red-50 shadow-sm' : 'border-stone-200 bg-white hover:border-stone-300'
                                                 }`}>
                                             {icon}
                                         </button>

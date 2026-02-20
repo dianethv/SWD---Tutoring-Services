@@ -100,29 +100,30 @@ export default function Navbar({ onMenuToggle }) {
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                             </svg>
                             {unreadCount > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold badge-pulse">
+                                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center badge-pulse"
+                                    style={{ background: '#EF4444', color: '#fff', fontSize: '11px', fontWeight: 800, boxShadow: '0 0 0 2px #fff, 0 0 8px rgba(239,68,68,0.5)' }}>
                                     {unreadCount}
                                 </span>
                             )}
                         </button>
 
                         {showNotifs && (
-                            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden animate-fade-in-up"
+                            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-200 animate-fade-in-up"
                                 style={{ maxHeight: '420px' }}>
-                                <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
-                                    <h3 className="font-semibold text-stone-800 text-sm">Notifications</h3>
+                                <div style={{ padding: '14px 20px', borderBottom: '1px solid #f5f5f4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <h3 style={{ fontWeight: 600, fontSize: '14px', color: '#1c1917', margin: 0 }}>Notifications</h3>
                                     {unreadCount > 0 && (
                                         <button
                                             onClick={markAllNotificationsRead}
-                                            className="text-xs font-medium cursor-pointer border-none bg-transparent" style={{ color: '#C8102E' }}
+                                            style={{ fontSize: '12px', fontWeight: 500, color: '#C8102E', cursor: 'pointer', border: 'none', background: 'transparent', padding: 0 }}
                                         >
                                             Mark all read
                                         </button>
                                     )}
                                 </div>
-                                <div className="overflow-y-auto" style={{ maxHeight: '340px' }}>
+                                <div style={{ overflowY: 'auto', maxHeight: '340px' }}>
                                     {notifications.length === 0 ? (
-                                        <div className="px-4 py-8 text-center text-stone-400 text-sm">
+                                        <div style={{ padding: '32px 20px', textAlign: 'center', color: '#a8a29e', fontSize: '13px' }}>
                                             No notifications yet
                                         </div>
                                     ) : (
@@ -130,17 +131,26 @@ export default function Navbar({ onMenuToggle }) {
                                             <div
                                                 key={n.id}
                                                 onClick={() => markNotificationRead(n.id)}
-                                                className={`px-4 py-3 border-b border-stone-50 cursor-pointer hover:bg-stone-50 transition-colors flex gap-3 ${!n.read ? 'bg-red-50/40' : ''
-                                                    }`}
+                                                style={{
+                                                    padding: '12px 20px',
+                                                    borderBottom: '1px solid #fafaf9',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    gap: '12px',
+                                                    background: !n.read ? 'rgba(254,242,242,0.4)' : 'transparent',
+                                                    transition: 'background 0.15s',
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = '#fafaf9'}
+                                                onMouseLeave={(e) => e.currentTarget.style.background = !n.read ? 'rgba(254,242,242,0.4)' : 'transparent'}
                                             >
-                                                <span className="text-lg flex-shrink-0 mt-0.5">{notifIcon(n.type)}</span>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-medium text-sm text-stone-800 truncate">{n.title}</span>
-                                                        {!n.read && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#C8102E' }} />}
+                                                <span style={{ fontSize: '18px', flexShrink: 0, marginTop: '2px' }}>{notifIcon(n.type)}</span>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span style={{ fontWeight: 500, fontSize: '13px', color: '#1c1917', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</span>
+                                                        {!n.read && <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#C8102E', flexShrink: 0 }} />}
                                                     </div>
-                                                    <p className="text-xs text-stone-500 mt-0.5">{n.message}</p>
-                                                    <span className="text-xs text-stone-400 mt-1 block">{timeAgo(n.timestamp)}</span>
+                                                    <p style={{ fontSize: '12px', color: '#78716c', margin: '3px 0 0 0' }}>{n.message}</p>
+                                                    <span style={{ fontSize: '11px', color: '#a8a29e', marginTop: '4px', display: 'block' }}>{timeAgo(n.timestamp)}</span>
                                                 </div>
                                             </div>
                                         ))
@@ -168,22 +178,44 @@ export default function Navbar({ onMenuToggle }) {
                         </button>
 
                         {showProfile && (
-                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden animate-fade-in-up">
-                                <div className="px-4 py-3 border-b border-stone-100">
-                                    <p className="font-semibold text-sm text-stone-800">{currentUser?.name}</p>
-                                    <p className="text-xs text-stone-500">{currentUser?.email}</p>
-                                    <span className="inline-block mt-1.5 px-2 py-0.5 rounded-md text-xs font-medium capitalize"
-                                        style={{
-                                            background: '#fef2f2',
-                                            color: '#C8102E',
-                                        }}>
+                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-stone-200 animate-fade-in-up">
+                                <div style={{ padding: '16px 20px', borderBottom: '1px solid #f5f5f4' }}>
+                                    <p style={{ fontWeight: 600, fontSize: '14px', color: '#1c1917', margin: 0 }}>{currentUser?.name}</p>
+                                    <p style={{ fontSize: '12px', color: '#78716c', margin: '4px 0 0 0' }}>{currentUser?.email}</p>
+                                    <span style={{
+                                        display: 'inline-block',
+                                        marginTop: '8px',
+                                        padding: '3px 10px',
+                                        borderRadius: '6px',
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        textTransform: 'capitalize',
+                                        background: '#fef2f2',
+                                        color: '#C8102E',
+                                    }}>
                                         {currentUser?.role}
                                     </span>
                                 </div>
-                                <div className="py-1">
+                                <div style={{ padding: '6px 8px' }}>
                                     <button
                                         onClick={handleLogout}
-                                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer border-none bg-transparent flex items-center gap-2"
+                                        style={{
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            padding: '10px 12px',
+                                            fontSize: '13px',
+                                            color: '#dc2626',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderRadius: '10px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            transition: 'background 0.15s',
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                         id="logout-button"
                                     >
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
