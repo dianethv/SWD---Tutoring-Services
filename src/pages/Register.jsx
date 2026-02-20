@@ -141,55 +141,57 @@ export default function Register() {
         <div className="min-h-screen flex" style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fafaf9 50%, #fffbeb 100%)' }}>
             {/* ── Left Panel (dynamic) ─────────────────────── */}
             <div className="hidden lg:flex lg:w-[52%] flex-col relative overflow-hidden"
-                style={{ background: 'linear-gradient(160deg, #C8102E, #960C22 40%, #6B0A1A)', padding: '56px 64px' }}>
-                <div className="relative z-10 flex flex-col h-full">
+                style={{ background: 'linear-gradient(160deg, #C8102E, #960C22 40%, #6B0A1A)' }}>
+                <div className="relative z-10 flex flex-col justify-between h-full" style={{ padding: '48px 56px' }}>
                     {/* Logo */}
-                    <div className="flex items-center gap-3 mb-10">
-                        <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl"
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
                             style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}>
                             🐾
                         </div>
                         <span className="text-2xl font-bold text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>TutorCoogs</span>
                     </div>
 
-                    {/* Headline */}
-                    <h1 className="text-4xl font-bold text-white leading-tight mb-4" style={{ fontFamily: 'Outfit, sans-serif', whiteSpace: 'pre-line' }}>
-                        {content.headline}
-                    </h1>
-                    <p className="text-red-100 text-base leading-relaxed max-w-lg mb-10">
-                        {content.subtitle}
-                    </p>
+                    {/* Headline + Subtitle */}
+                    <div>
+                        <h1 className="text-5xl font-bold text-white leading-[1.1] mb-5" style={{ fontFamily: 'Outfit, sans-serif', whiteSpace: 'pre-line' }}>
+                            {content.headline}
+                        </h1>
+                        <p className="text-red-100 text-lg leading-relaxed max-w-lg">
+                            {content.subtitle}
+                        </p>
+                    </div>
 
                     {/* Feature Cards */}
-                    <div className="space-y-3 mb-10">
+                    <div className="space-y-4">
                         {content.features.map((f) => (
-                            <div key={f.title} className="flex items-start gap-4 rounded-2xl px-5 py-4 transition-all"
+                            <div key={f.title} className="flex items-start gap-4 rounded-2xl px-6 py-5 transition-all"
                                 style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                                     style={{ background: 'rgba(255,255,255,0.12)', color: '#fecdd3' }}>
                                     {f.icon}
                                 </div>
                                 <div>
-                                    <p className="text-white font-semibold text-sm mb-0.5">{f.title}</p>
-                                    <p className="text-red-200 text-xs leading-relaxed">{f.desc}</p>
+                                    <p className="text-white font-semibold text-base mb-1">{f.title}</p>
+                                    <p className="text-red-200 text-sm leading-relaxed">{f.desc}</p>
                                 </div>
                             </div>
                         ))}
                     </div>
 
                     {/* How It Works */}
-                    <div className="mt-auto">
-                        <p className="text-xs font-semibold text-red-300 uppercase tracking-wider mb-4">How it works</p>
+                    <div>
+                        <p className="text-sm font-semibold text-red-300 uppercase tracking-wider mb-5">How it works</p>
                         <div className="flex gap-4">
                             {content.steps.map((step) => (
-                                <div key={step.num} className="flex-1 rounded-xl px-4 py-3"
+                                <div key={step.num} className="flex-1 rounded-2xl px-5 py-5"
                                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white mb-2"
+                                    <div className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold text-white mb-3"
                                         style={{ background: 'rgba(255,255,255,0.15)' }}>
                                         {step.num}
                                     </div>
-                                    <p className="text-white font-semibold text-xs mb-0.5">{step.title}</p>
-                                    <p className="text-red-300 text-xs leading-relaxed" style={{ fontSize: '11px' }}>{step.desc}</p>
+                                    <p className="text-white font-semibold text-sm mb-1">{step.title}</p>
+                                    <p className="text-red-300 text-xs leading-relaxed">{step.desc}</p>
                                 </div>
                             ))}
                         </div>
@@ -206,7 +208,7 @@ export default function Register() {
             <div className="flex-1 flex items-center justify-center p-6 lg:p-12 overflow-y-auto">
                 <div className="w-full max-w-md animate-fade-in-up">
                     {/* Mobile logo */}
-                    <div className="lg:hidden flex items-center gap-2.5 mb-6">
+                    <div className="lg:hidden flex items-center gap-2.5 mb-8">
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
                             style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}>
                             🐾
@@ -216,41 +218,41 @@ export default function Register() {
                         </span>
                     </div>
 
-                    <h2 className="text-2xl font-bold text-stone-800 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                    <h2 className="text-3xl font-bold text-stone-800 mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>
                         Create your account
                     </h2>
-                    <p className="text-stone-500 mb-6 text-sm">Join TutorCoogs and get started in seconds</p>
+                    <p className="text-stone-500 mb-8">Join TutorCoogs and get started in seconds</p>
 
                     {/* ── Role Selector (prominent) ──────────── */}
-                    <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="grid grid-cols-2 gap-4 mb-8">
                         {[
-                            { role: 'student', emoji: '🎓', label: 'I\'m a Student', desc: 'Get tutoring help' },
-                            { role: 'admin', emoji: '🛠️', label: 'I\'m a Tutor', desc: 'Manage services' },
+                            { role: 'student', emoji: '🎓', label: 'I\'m a Student', desc: 'Join queues and get tutoring help for your courses' },
+                            { role: 'admin', emoji: '🛠️', label: 'I\'m a Tutor', desc: 'Create services and manage student queues' },
                         ].map((opt) => (
                             <button
                                 type="button"
                                 key={opt.role}
                                 onClick={() => updateField('role', opt.role)}
-                                className={`relative flex flex-col items-center gap-1.5 px-4 py-5 rounded-2xl border-2 text-center transition-all cursor-pointer ${
+                                className={`relative flex flex-col items-center gap-2 px-5 py-6 rounded-2xl border-2 text-center transition-all cursor-pointer ${
                                     formData.role === opt.role
-                                        ? 'border-red-400 shadow-md'
-                                        : 'border-stone-200 bg-white text-stone-500 hover:border-stone-300'
+                                        ? 'border-red-400 shadow-lg'
+                                        : 'border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:shadow-sm'
                                 }`}
                                 style={formData.role === opt.role ? { background: 'linear-gradient(135deg, #fef2f2, #fee2e2)' } : {}}
                             >
                                 {formData.role === opt.role && (
-                                    <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center"
+                                    <div className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center"
                                         style={{ background: '#C8102E' }}>
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
                                             <polyline points="20 6 9 17 4 12" />
                                         </svg>
                                     </div>
                                 )}
-                                <span className="text-2xl">{opt.emoji}</span>
-                                <span className={`text-sm font-bold ${formData.role === opt.role ? 'text-red-700' : 'text-stone-700'}`}>
+                                <span className="text-3xl">{opt.emoji}</span>
+                                <span className={`text-base font-bold ${formData.role === opt.role ? 'text-red-700' : 'text-stone-700'}`}>
                                     {opt.label}
                                 </span>
-                                <span className={`text-xs ${formData.role === opt.role ? 'text-red-500' : 'text-stone-400'}`}>
+                                <span className={`text-xs leading-relaxed ${formData.role === opt.role ? 'text-red-500' : 'text-stone-400'}`}>
                                     {opt.desc}
                                 </span>
                             </button>
@@ -258,7 +260,7 @@ export default function Register() {
                     </div>
 
                     {serverError && (
-                        <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+                        <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
                             {serverError}
                         </div>
@@ -266,48 +268,48 @@ export default function Register() {
 
                     {/* ── Form Fields ─────────────────────────── */}
                     <form onSubmit={handleSubmit} noValidate>
-                        <div className="space-y-4 mb-6">
+                        <div className="space-y-5 mb-8">
                             <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-name">Full name</label>
+                                <label className="block text-sm font-medium text-stone-700 mb-2" htmlFor="register-name">Full name</label>
                                 <input id="register-name" type="text" placeholder="Jordan Rivera"
                                     value={formData.name} onChange={(e) => updateField('name', e.target.value)}
-                                    className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.name ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
+                                    className={`w-full px-4 py-3.5 rounded-xl border transition-all ${errors.name ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
                                     style={{ background: '#fafaf9' }} />
-                                {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+                                {errors.name && <p className="mt-1.5 text-xs text-red-600">{errors.name}</p>}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-email">University email</label>
+                                <label className="block text-sm font-medium text-stone-700 mb-2" htmlFor="register-email">University email</label>
                                 <input id="register-email" type="email" placeholder="you@university.edu"
                                     value={formData.email} onChange={(e) => updateField('email', e.target.value)}
-                                    className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.email ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
+                                    className={`w-full px-4 py-3.5 rounded-xl border transition-all ${errors.email ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
                                     style={{ background: '#fafaf9' }} />
-                                {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
+                                {errors.email && <p className="mt-1.5 text-xs text-red-600">{errors.email}</p>}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-password">Password</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-2" htmlFor="register-password">Password</label>
                                     <input id="register-password" type="password" placeholder="Min. 6 characters"
                                         value={formData.password} onChange={(e) => updateField('password', e.target.value)}
-                                        className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.password ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
+                                        className={`w-full px-4 py-3.5 rounded-xl border transition-all ${errors.password ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
                                         style={{ background: '#fafaf9' }} />
-                                    {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
+                                    {errors.password && <p className="mt-1.5 text-xs text-red-600">{errors.password}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="register-confirm">Confirm password</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-2" htmlFor="register-confirm">Confirm password</label>
                                     <input id="register-confirm" type="password" placeholder="Re-enter password"
                                         value={formData.confirmPassword} onChange={(e) => updateField('confirmPassword', e.target.value)}
-                                        className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.confirmPassword ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
+                                        className={`w-full px-4 py-3.5 rounded-xl border transition-all ${errors.confirmPassword ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'}`}
                                         style={{ background: '#fafaf9' }} />
-                                    {errors.confirmPassword && <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>}
+                                    {errors.confirmPassword && <p className="mt-1.5 text-xs text-red-600">{errors.confirmPassword}</p>}
                                 </div>
                             </div>
                         </div>
 
                         <button type="submit" disabled={isLoading}
-                            className="w-full py-3.5 rounded-xl text-white font-semibold transition-all hover:opacity-90 disabled:opacity-60 cursor-pointer border-none text-sm"
-                            style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}
+                            className="w-full py-4 rounded-xl text-white font-semibold transition-all hover:opacity-90 disabled:opacity-60 cursor-pointer border-none"
+                            style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)', fontSize: '15px' }}
                             id="register-submit">
                             {isLoading ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -321,16 +323,16 @@ export default function Register() {
                     </form>
 
                     {/* Stats bar */}
-                    <div className="mt-6 grid grid-cols-3 gap-3">
+                    <div className="mt-8 grid grid-cols-3 gap-4">
                         {content.stats.map((stat) => (
-                            <div key={stat.label} className="text-center py-3 rounded-xl bg-white border border-stone-200">
-                                <p className="text-sm font-bold text-stone-800">{stat.value}</p>
-                                <p className="text-xs text-stone-400">{stat.label}</p>
+                            <div key={stat.label} className="text-center py-4 rounded-2xl bg-white border border-stone-200">
+                                <p className="text-lg font-bold text-stone-800">{stat.value}</p>
+                                <p className="text-xs text-stone-400 mt-0.5">{stat.label}</p>
                             </div>
                         ))}
                     </div>
 
-                    <p className="mt-6 text-center text-sm text-stone-500">
+                    <p className="mt-8 text-center text-sm text-stone-500">
                         Already have an account?{' '}
                         <Link to="/login" className="text-red-600 hover:text-red-700 font-medium no-underline">Sign in</Link>
                     </p>
