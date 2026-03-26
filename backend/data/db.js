@@ -1,12 +1,15 @@
 // ── Shared In-Memory Data Store ─────────────────────
 // All route modules import from here so state is consistent.
 
+const bcrypt = require('bcrypt');
+const SALT_ROUNDS = 10;
+
 const users = [
     {
         id: 'u1',
         name: 'Jordan Rivera',
         email: 'jordan@university.edu',
-        password: 'password123',
+        password: bcrypt.hashSync('password123', SALT_ROUNDS),
         role: 'student',
         createdAt: '2025-09-01',
     },
@@ -14,7 +17,7 @@ const users = [
         id: 'u2',
         name: 'Alex Chen',
         email: 'alex@university.edu',
-        password: 'password123',
+        password: bcrypt.hashSync('password123', SALT_ROUNDS),
         role: 'student',
         createdAt: '2025-09-15',
     },
@@ -22,7 +25,7 @@ const users = [
         id: 'u3',
         name: 'Sam Patel',
         email: 'sam@university.edu',
-        password: 'password123',
+        password: bcrypt.hashSync('password123', SALT_ROUNDS),
         role: 'student',
         createdAt: '2025-10-02',
     },
@@ -30,7 +33,7 @@ const users = [
         id: 'u4',
         name: 'Morgan Lee',
         email: 'morgan@university.edu',
-        password: 'password123',
+        password: bcrypt.hashSync('password123', SALT_ROUNDS),
         role: 'student',
         createdAt: '2025-10-10',
     },
@@ -38,7 +41,7 @@ const users = [
         id: 'a1',
         name: 'Dr. Emily Watson',
         email: 'admin@university.edu',
-        password: 'admin123',
+        password: bcrypt.hashSync('admin123', SALT_ROUNDS),
         role: 'admin',
         createdAt: '2025-08-01',
     },
@@ -46,7 +49,7 @@ const users = [
         id: 'a2',
         name: 'Prof. Marcus Johnson',
         email: 'marcus@university.edu',
-        password: 'admin123',
+        password: bcrypt.hashSync('admin123', SALT_ROUNDS),
         role: 'admin',
         createdAt: '2025-08-15',
     },
@@ -280,12 +283,12 @@ const notifications = [
 function resetData() {
     users.length = 0;
     users.push(
-        { id: 'u1', name: 'Jordan Rivera', email: 'jordan@university.edu', password: 'password123', role: 'student', createdAt: '2025-09-01' },
-        { id: 'u2', name: 'Alex Chen', email: 'alex@university.edu', password: 'password123', role: 'student', createdAt: '2025-09-15' },
-        { id: 'u3', name: 'Sam Patel', email: 'sam@university.edu', password: 'password123', role: 'student', createdAt: '2025-10-02' },
-        { id: 'u4', name: 'Morgan Lee', email: 'morgan@university.edu', password: 'password123', role: 'student', createdAt: '2025-10-10' },
-        { id: 'a1', name: 'Dr. Emily Watson', email: 'admin@university.edu', password: 'admin123', role: 'admin', createdAt: '2025-08-01' },
-        { id: 'a2', name: 'Prof. Marcus Johnson', email: 'marcus@university.edu', password: 'admin123', role: 'admin', createdAt: '2025-08-15' }
+        { id: 'u1', name: 'Jordan Rivera', email: 'jordan@university.edu', password: bcrypt.hashSync('password123', SALT_ROUNDS), role: 'student', createdAt: '2025-09-01' },
+        { id: 'u2', name: 'Alex Chen', email: 'alex@university.edu', password: bcrypt.hashSync('password123', SALT_ROUNDS), role: 'student', createdAt: '2025-09-15' },
+        { id: 'u3', name: 'Sam Patel', email: 'sam@university.edu', password: bcrypt.hashSync('password123', SALT_ROUNDS), role: 'student', createdAt: '2025-10-02' },
+        { id: 'u4', name: 'Morgan Lee', email: 'morgan@university.edu', password: bcrypt.hashSync('password123', SALT_ROUNDS), role: 'student', createdAt: '2025-10-10' },
+        { id: 'a1', name: 'Dr. Emily Watson', email: 'admin@university.edu', password: bcrypt.hashSync('admin123', SALT_ROUNDS), role: 'admin', createdAt: '2025-08-01' },
+        { id: 'a2', name: 'Prof. Marcus Johnson', email: 'marcus@university.edu', password: bcrypt.hashSync('admin123', SALT_ROUNDS), role: 'admin', createdAt: '2025-08-15' }
     );
 
     services.length = 0;
