@@ -23,10 +23,11 @@ function recalcPositions(serviceId) {
     const waiting = queueEntries
         .filter(q => q.serviceId === serviceId && q.status === 'waiting')
         .sort((a, b) => {
-            // High priority first, then by joinedAt
             if (a.priority === 'high' && b.priority !== 'high') return -1;
             if (a.priority !== 'high' && b.priority === 'high') return 1;
-            return new Date(a.joinedAt) - new Date(b.joinedAt);
+            const timeDiff = new Date(a.joinedAt) - new Date(b.joinedAt);
+            if (timeDiff !== 0) return timeDiff;
+            return queueEntries.indexOf(a) - queueEntries.indexOf(b);
         });
     waiting.forEach((entry, i) => {
         entry.position = i + 1;

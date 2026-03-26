@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcrypt');
 const { users } = require('../data/db');
 
 // POST /api/auth/register
-router.post('/register', (req, res) => {
+router.post('/register', async (req, res) => {
     const { name, email, password, role } = req.body;
 
     // ── Validate required fields ────────────────────
@@ -44,12 +45,13 @@ router.post('/register', (req, res) => {
         return res.status(400).json({ message: 'Email already registered' });
     }
 
-    // ── Create user (plain-text password — no DB required) ──
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = {
         id: `u${Date.now()}`,
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        password,
+        password: hashedPassword,
         role,
         createdAt: new Date().toISOString().split('T')[0],
     };
@@ -61,7 +63,7 @@ router.post('/register', (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     // ── Validate ────────────────────────────────────
@@ -76,11 +78,14 @@ router.post('/login', (req, res) => {
         return res.status(400).json({ message: 'Validation failed', errors });
     }
 
-    // ── Find user ───────────────────────────────────
-    const user = users.find(
-        u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
+    // ── Find user by email, then compare hashed password ──
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (!user) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
         return res.status(401).json({ message: 'Invalid email or password' });
     }
 
