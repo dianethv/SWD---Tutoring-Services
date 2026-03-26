@@ -1,21 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { mockUsers } from '../../data/mockData';
 
 export default function QueueManagement() {
     const { services, getQueueForService, serveNext, markNoShow, reorderQueue, leaveQueue } = useApp();
     const [selectedServiceId, setSelectedServiceId] = useState(services[0]?.id || '');
+    const [allUsers, setAllUsers] = useState([]);
+
+    useEffect(() => {
+        fetch('http://localhost:5000/api/users')
+            .then(res => res.json())
+            .then(data => setAllUsers(data))
+            .catch(() => {});
+    }, []);
 
     const selectedService = services.find((s) => s.id === selectedServiceId);
     const queue = getQueueForService(selectedServiceId);
 
     const getUserName = (userId) => {
-        const user = mockUsers.find((u) => u.id === userId);
+        const user = allUsers.find((u) => u.id === userId);
         return user?.name || 'Unknown Student';
     };
 
     const getUserEmail = (userId) => {
-        const user = mockUsers.find((u) => u.id === userId);
+        const user = allUsers.find((u) => u.id === userId);
         return user?.email || '';
     };
 

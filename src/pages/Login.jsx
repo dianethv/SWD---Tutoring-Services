@@ -28,8 +28,7 @@ export default function Login() {
         if (Object.keys(errs).length > 0) return;
 
         setIsLoading(true);
-        await new Promise((r) => setTimeout(r, 600));
-        const result = login(formData.email, formData.password);
+        const result = await login(formData.email, formData.password);
         setIsLoading(false);
 
         if (result.success) {

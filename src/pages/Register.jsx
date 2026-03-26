@@ -123,8 +123,7 @@ export default function Register() {
         if (Object.keys(errs).length > 0) return;
 
         setIsLoading(true);
-        await new Promise((r) => setTimeout(r, 600));
-        const result = register(formData.name, formData.email, formData.password, formData.role);
+        const result = await register(formData.name, formData.email, formData.password, formData.role);
         setIsLoading(false);
 
         if (result.success) {
