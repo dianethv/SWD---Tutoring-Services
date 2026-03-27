@@ -4,7 +4,12 @@ const API = 'http://localhost:5000/api';
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-    const [currentUser, setCurrentUser] = useState(null);
+    const [currentUser, setCurrentUser] = useState(() => {
+        try {
+            const saved = localStorage.getItem('tutorcoogs_user');
+            return saved ? JSON.parse(saved) : null;
+        } catch { return null; }
+    });
     const [services, setServices] = useState([]);
     const [queueEntries, setQueueEntries] = useState([]);
     const [history, setHistory] = useState([]);
@@ -83,10 +88,14 @@ export function AppProvider({ children }) {
         }
     }, [fetchServices, fetchQueue, fetchHistory, fetchNotifications]);
 
-    // Load services on mount (before login, for display purposes)
+    // Load data on mount — if user was saved in localStorage, refresh everything
     useEffect(() => {
         fetchServices();
-    }, [fetchServices]);
+        if (currentUser) {
+            refreshAll(currentUser);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // ── Auth ────────────────────────────────────────
     const login = useCallback(async (email, password) => {
@@ -101,6 +110,7 @@ export function AppProvider({ children }) {
                 return { success: false, error: data.message || 'Login failed' };
             }
             setCurrentUser(data.user);
+            localStorage.setItem('tutorcoogs_user', JSON.stringify(data.user));
             await refreshAll(data.user);
             return { success: true, user: data.user };
         } catch (e) {
@@ -120,6 +130,7 @@ export function AppProvider({ children }) {
                 return { success: false, error: data.message || 'Registration failed' };
             }
             setCurrentUser(data.user);
+            localStorage.setItem('tutorcoogs_user', JSON.stringify(data.user));
             await refreshAll(data.user);
             return { success: true, user: data.user };
         } catch (e) {
@@ -132,6 +143,7 @@ export function AppProvider({ children }) {
         setQueueEntries([]);
         setHistory([]);
         setNotifications([]);
+        localStorage.removeItem('tutorcoogs_user');
     }, []);
 
     // ── Queue Operations ────────────────────────────
