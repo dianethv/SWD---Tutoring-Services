@@ -9,6 +9,7 @@ export default function Login() {
     const [errors, setErrors] = useState({});
     const [serverError, setServerError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const validate = () => {
         const errs = {};
@@ -27,8 +28,7 @@ export default function Login() {
         if (Object.keys(errs).length > 0) return;
 
         setIsLoading(true);
-        await new Promise((r) => setTimeout(r, 600));
-        const result = login(formData.email, formData.password);
+        const result = await login(formData.email, formData.password);
         setIsLoading(false);
 
         if (result.success) {
@@ -45,12 +45,12 @@ export default function Login() {
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                padding: '48px',
+                padding: '64px 72px',
                 position: 'relative',
                 overflow: 'hidden',
                 background: 'linear-gradient(160deg, #C8102E, #960C22 40%, #6B0A1A)',
             }} className="hidden lg:flex lg:w-1/2">
-                <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '460px' }}>
+                <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '480px', width: '100%' }}>
                     {/* Big logo + title */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '20px' }}>
                         <div style={{
@@ -139,7 +139,7 @@ export default function Login() {
                                 placeholder="you@university.edu"
                                 value={formData.email}
                                 onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErrors({ ...errors, email: '' }); }}
-                                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all ${errors.email ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'
+                                className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.email ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'
                                     }`}
                                 style={{ background: '#fafaf9' }}
                             />
@@ -150,16 +150,26 @@ export default function Login() {
                             <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="login-password">
                                 Password
                             </label>
-                            <input
-                                id="login-password"
-                                type="password"
-                                placeholder="••••••••"
-                                value={formData.password}
-                                onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setErrors({ ...errors, password: '' }); }}
-                                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all ${errors.password ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'
-                                    }`}
-                                style={{ background: '#fafaf9' }}
-                            />
+                            <div className="relative">
+                                <input
+                                    id="login-password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="••••••••"
+                                    value={formData.password}
+                                    onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setErrors({ ...errors, password: '' }); }}
+                                    className={`w-full px-4 py-3 pr-11 rounded-xl border transition-all ${errors.password ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'
+                                        }`}
+                                    style={{ background: '#fafaf9' }}
+                                />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors bg-transparent border-none cursor-pointer p-0">
+                                    {showPassword ? (
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                                    ) : (
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                    )}
+                                </button>
+                            </div>
                             {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
                         </div>
 

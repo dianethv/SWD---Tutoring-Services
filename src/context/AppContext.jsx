@@ -1,247 +1,251 @@
-import { createContext, useContext, useState, useCallback } from 'react';
-import {
-    mockUsers,
-    mockServices as initialServices,
-    mockQueueEntries as initialQueue,
-    mockHistory as initialHistory,
-    mockNotifications as initialNotifications,
-    mockStats,
-} from '../data/mockData';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
+const API = 'http://localhost:5000/api';
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
-    const [services, setServices] = useState(initialServices);
-    const [queueEntries, setQueueEntries] = useState(initialQueue);
-    const [history, setHistory] = useState(initialHistory);
-    const [notifications, setNotifications] = useState(initialNotifications);
-    const [stats] = useState(mockStats);
+    const [services, setServices] = useState([]);
+    const [queueEntries, setQueueEntries] = useState([]);
+    const [history, setHistory] = useState([]);
+    const [notifications, setNotifications] = useState([]);
+    const [stats, setStats] = useState({
+        dailyVolume: [
+            { day: 'Mon', count: 34 },
+            { day: 'Tue', count: 42 },
+            { day: 'Wed', count: 28 },
+            { day: 'Thu', count: 51 },
+            { day: 'Fri', count: 39 },
+            { day: 'Sat', count: 15 },
+            { day: 'Sun', count: 8 },
+        ],
+        avgWaitTime: 22,
+        totalServedToday: 47,
+        totalInQueue: 8,
+        peakHour: '2:00 PM - 3:00 PM',
+        serviceBreakdown: [
+            { name: 'Calculus Help', count: 18, avgWait: 20 },
+            { name: 'CS Tutoring', count: 14, avgWait: 28 },
+            { name: 'Writing Center', count: 9, avgWait: 15 },
+            { name: 'Physics Lab Prep', count: 4, avgWait: 30 },
+            { name: 'Chemistry Review', count: 2, avgWait: 18 },
+        ],
+    });
 
-    // ── Auth ────────────────────────────────────────────
-    const login = useCallback((email, password) => {
-        const user = mockUsers.find(
-            (u) => u.email === email && u.password === password
-        );
-        if (user) {
-            setCurrentUser(user);
-            return { success: true, user };
+    // ── Fetch helpers ───────────────────────────────
+    const fetchServices = useCallback(async () => {
+        try {
+            const res = await fetch(`${API}/services`);
+            if (res.ok) setServices(await res.json());
+        } catch (e) {
+            console.error('Failed to fetch services:', e);
         }
-        return { success: false, error: 'Invalid email or password' };
     }, []);
 
-    const register = useCallback((name, email, password, role) => {
-        const exists = mockUsers.find((u) => u.email === email);
-        if (exists) return { success: false, error: 'Email already registered' };
-
-        const newUser = {
-            id: `u${Date.now()}`,
-            name,
-            email,
-            password,
-            role,
-            avatar: null,
-            createdAt: new Date().toISOString().split('T')[0],
-        };
-        mockUsers.push(newUser);
-        setCurrentUser(newUser);
-        return { success: true, user: newUser };
+    const fetchQueue = useCallback(async () => {
+        try {
+            const res = await fetch(`${API}/queue`);
+            if (res.ok) setQueueEntries(await res.json());
+        } catch (e) {
+            console.error('Failed to fetch queue:', e);
+        }
     }, []);
+
+    const fetchHistory = useCallback(async (userId) => {
+        try {
+            const url = userId ? `${API}/history?userId=${userId}` : `${API}/history`;
+            const res = await fetch(url);
+            if (res.ok) setHistory(await res.json());
+        } catch (e) {
+            console.error('Failed to fetch history:', e);
+        }
+    }, []);
+
+    const fetchNotifications = useCallback(async (userId) => {
+        try {
+            if (!userId) return;
+            const res = await fetch(`${API}/notifications?userId=${userId}`);
+            if (res.ok) setNotifications(await res.json());
+        } catch (e) {
+            console.error('Failed to fetch notifications:', e);
+        }
+    }, []);
+
+    // ── Refresh all data when user logs in ──────────
+    const refreshAll = useCallback(async (user) => {
+        await fetchServices();
+        await fetchQueue();
+        if (user) {
+            await fetchHistory(user.id);
+            await fetchNotifications(user.id);
+        } else {
+            await fetchHistory();
+        }
+    }, [fetchServices, fetchQueue, fetchHistory, fetchNotifications]);
+
+    // Load services on mount (before login, for display purposes)
+    useEffect(() => {
+        fetchServices();
+    }, [fetchServices]);
+
+    // ── Auth ────────────────────────────────────────
+    const login = useCallback(async (email, password) => {
+        try {
+            const res = await fetch(`${API}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                return { success: false, error: data.message || 'Login failed' };
+            }
+            setCurrentUser(data.user);
+            await refreshAll(data.user);
+            return { success: true, user: data.user };
+        } catch (e) {
+            return { success: false, error: 'Cannot connect to server' };
+        }
+    }, [refreshAll]);
+
+    const register = useCallback(async (name, email, password, role) => {
+        try {
+            const res = await fetch(`${API}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password, role }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                return { success: false, error: data.message || 'Registration failed' };
+            }
+            setCurrentUser(data.user);
+            await refreshAll(data.user);
+            return { success: true, user: data.user };
+        } catch (e) {
+            return { success: false, error: 'Cannot connect to server' };
+        }
+    }, [refreshAll]);
 
     const logout = useCallback(() => {
         setCurrentUser(null);
+        setQueueEntries([]);
+        setHistory([]);
+        setNotifications([]);
     }, []);
 
-    // ── Queue Operations ────────────────────────────────
-    const joinQueue = useCallback(
-        (serviceId, notes = '', priority = 'normal') => {
-            if (!currentUser) return;
-            const alreadyInQueue = queueEntries.find(
-                (q) => q.userId === currentUser.id && q.serviceId === serviceId && q.status === 'waiting'
-            );
-            if (alreadyInQueue) return { success: false, error: 'Already in this queue' };
-
-            const serviceQueue = queueEntries.filter(
-                (q) => q.serviceId === serviceId && q.status === 'waiting'
-            );
-            const newEntry = {
-                id: `q${Date.now()}`,
-                userId: currentUser.id,
-                serviceId,
-                joinedAt: new Date().toISOString(),
-                status: 'waiting',
-                priority,
-                position: serviceQueue.length + 1,
-                notes,
-            };
-            setQueueEntries((prev) => [...prev, newEntry]);
-
-            // Add notification
-            const service = services.find((s) => s.id === serviceId);
-            addNotification({
-                type: 'queue_update',
-                title: 'Joined Queue',
-                message: `You joined the queue for ${service?.name}. Position: #${newEntry.position}`,
+    // ── Queue Operations ────────────────────────────
+    const joinQueue = useCallback(async (serviceId, notes = '', priority = 'normal') => {
+        if (!currentUser) return { success: false, error: 'Not logged in' };
+        try {
+            const res = await fetch(`${API}/queue/join`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id, serviceId, notes, priority }),
             });
-            return { success: true, entry: newEntry };
-        },
-        [currentUser, queueEntries, services]
-    );
+            const data = await res.json();
+            if (!res.ok) {
+                return { success: false, error: data.message || 'Failed to join queue' };
+            }
+            await fetchQueue();
+            await fetchNotifications(currentUser.id);
+            return { success: true, entry: data };
+        } catch (e) {
+            return { success: false, error: 'Cannot connect to server' };
+        }
+    }, [currentUser, fetchQueue, fetchNotifications]);
 
-    const leaveQueue = useCallback(
-        (entryId) => {
-            setQueueEntries((prev) => {
-                const entry = prev.find((q) => q.id === entryId);
-                if (!entry) return prev;
+    const leaveQueue = useCallback(async (entryId) => {
+        try {
+            const res = await fetch(`${API}/queue/leave/${entryId}`, { method: 'POST' });
+            if (!res.ok) return;
+            await fetchQueue();
+            if (currentUser) {
+                await fetchHistory(currentUser.id);
+            }
+        } catch (e) {
+            console.error('Failed to leave queue:', e);
+        }
+    }, [currentUser, fetchQueue, fetchHistory]);
 
-                const updated = prev.filter((q) => q.id !== entryId);
-                // Recalculate positions for remaining entries in same service
-                const serviceEntries = updated
-                    .filter((q) => q.serviceId === entry.serviceId && q.status === 'waiting')
-                    .sort((a, b) => new Date(a.joinedAt) - new Date(b.joinedAt));
-                serviceEntries.forEach((q, i) => {
-                    q.position = i + 1;
-                });
-                return updated;
+    const serveNext = useCallback(async (serviceId) => {
+        try {
+            const res = await fetch(`${API}/queue/serve/${serviceId}`, { method: 'POST' });
+            if (!res.ok) return;
+            await fetchQueue();
+            await fetchHistory();
+            await fetchNotifications(currentUser?.id);
+        } catch (e) {
+            console.error('Failed to serve next:', e);
+        }
+    }, [currentUser, fetchQueue, fetchHistory, fetchNotifications]);
+
+    const markNoShow = useCallback(async (entryId) => {
+        try {
+            const res = await fetch(`${API}/queue/no-show/${entryId}`, { method: 'POST' });
+            if (!res.ok) return;
+            await fetchQueue();
+            await fetchHistory();
+        } catch (e) {
+            console.error('Failed to mark no-show:', e);
+        }
+    }, [fetchQueue, fetchHistory]);
+
+    const reorderQueue = useCallback(async (serviceId, entryId, direction) => {
+        try {
+            const res = await fetch(`${API}/queue/reorder/${entryId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ direction }),
             });
-        },
-        []
-    );
+            if (!res.ok) return;
+            await fetchQueue();
+        } catch (e) {
+            console.error('Failed to reorder queue:', e);
+        }
+    }, [fetchQueue]);
 
-    const serveNext = useCallback(
-        (serviceId) => {
-            setQueueEntries((prev) => {
-                const serviceQueue = prev
-                    .filter((q) => q.serviceId === serviceId && q.status === 'waiting')
-                    .sort((a, b) => a.position - b.position);
-                if (serviceQueue.length === 0) return prev;
-
-                const served = serviceQueue[0];
-                const service = services.find((s) => s.id === serviceId);
-
-                // Add to history
-                const historyEntry = {
-                    id: `h${Date.now()}`,
-                    userId: served.userId,
-                    serviceId,
-                    serviceName: service?.name || 'Unknown',
-                    date: new Date().toISOString().split('T')[0],
-                    joinedAt: new Date(served.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    servedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    waitTime: Math.round((Date.now() - new Date(served.joinedAt).getTime()) / 60000),
-                    outcome: 'served',
-                };
-                setHistory((h) => [historyEntry, ...h]);
-
-                // Update queue
-                const updated = prev.map((q) => {
-                    if (q.id === served.id) return { ...q, status: 'served' };
-                    if (q.serviceId === serviceId && q.status === 'waiting') {
-                        return { ...q, position: q.position - 1 };
-                    }
-                    return q;
-                });
-
-                // Notify the next person if they exist
-                const nextInLine = updated.find(
-                    (q) => q.serviceId === serviceId && q.status === 'waiting' && q.position === 1
-                );
-                if (nextInLine) {
-                    const user = mockUsers.find((u) => u.id === nextInLine.userId);
-                    addNotification({
-                        type: 'queue_update',
-                        title: 'Almost Your Turn!',
-                        message: `You are next in line for ${service?.name}. Please be ready.`,
-                        userId: nextInLine.userId,
-                    });
-                }
-
-                return updated;
+    // ── Service Management ──────────────────────────
+    const createService = useCallback(async (serviceData) => {
+        try {
+            const res = await fetch(`${API}/services`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(serviceData),
             });
-        },
-        [services]
-    );
+            if (!res.ok) return null;
+            const newService = await res.json();
+            await fetchServices();
+            return newService;
+        } catch (e) {
+            console.error('Failed to create service:', e);
+            return null;
+        }
+    }, [fetchServices]);
 
-    const markNoShow = useCallback(
-        (entryId) => {
-            setQueueEntries((prev) => {
-                const entry = prev.find((q) => q.id === entryId);
-                if (!entry) return prev;
-
-                const service = services.find((s) => s.id === entry.serviceId);
-                const historyEntry = {
-                    id: `h${Date.now()}`,
-                    userId: entry.userId,
-                    serviceId: entry.serviceId,
-                    serviceName: service?.name || 'Unknown',
-                    date: new Date().toISOString().split('T')[0],
-                    joinedAt: new Date(entry.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    servedAt: null,
-                    waitTime: null,
-                    outcome: 'no-show',
-                };
-                setHistory((h) => [historyEntry, ...h]);
-
-                const updated = prev.map((q) => {
-                    if (q.id === entryId) return { ...q, status: 'no-show' };
-                    if (q.serviceId === entry.serviceId && q.status === 'waiting' && q.position > entry.position) {
-                        return { ...q, position: q.position - 1 };
-                    }
-                    return q;
-                });
-                return updated;
+    const updateService = useCallback(async (serviceId, updates) => {
+        try {
+            const res = await fetch(`${API}/services/${serviceId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates),
             });
-        },
-        [services]
-    );
+            if (!res.ok) return;
+            await fetchServices();
+        } catch (e) {
+            console.error('Failed to update service:', e);
+        }
+    }, [fetchServices]);
 
-    const reorderQueue = useCallback((serviceId, entryId, direction) => {
-        setQueueEntries((prev) => {
-            const serviceQueue = prev
-                .filter((q) => q.serviceId === serviceId && q.status === 'waiting')
-                .sort((a, b) => a.position - b.position);
+    const toggleService = useCallback(async (serviceId) => {
+        const service = services.find(s => s.id === serviceId);
+        if (!service) return;
+        await updateService(serviceId, { isOpen: !service.isOpen });
+    }, [services, updateService]);
 
-            const idx = serviceQueue.findIndex((q) => q.id === entryId);
-            if (idx === -1) return prev;
-            if (direction === 'up' && idx === 0) return prev;
-            if (direction === 'down' && idx === serviceQueue.length - 1) return prev;
-
-            const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-            const tempPos = serviceQueue[idx].position;
-
-            return prev.map((q) => {
-                if (q.id === serviceQueue[idx].id) return { ...q, position: serviceQueue[swapIdx].position };
-                if (q.id === serviceQueue[swapIdx].id) return { ...q, position: tempPos };
-                return q;
-            });
-        });
-    }, []);
-
-    // ── Service Management ──────────────────────────────
-    const createService = useCallback((serviceData) => {
-        const newService = {
-            id: `s${Date.now()}`,
-            ...serviceData,
-            isOpen: true,
-        };
-        setServices((prev) => [...prev, newService]);
-        return newService;
-    }, []);
-
-    const updateService = useCallback((serviceId, updates) => {
-        setServices((prev) =>
-            prev.map((s) => (s.id === serviceId ? { ...s, ...updates } : s))
-        );
-    }, []);
-
-    const toggleService = useCallback((serviceId) => {
-        setServices((prev) =>
-            prev.map((s) => (s.id === serviceId ? { ...s, isOpen: !s.isOpen } : s))
-        );
-    }, []);
-
-    // ── Notifications ───────────────────────────────────
+    // ── Notifications ───────────────────────────────
     const addNotification = useCallback((notif) => {
+        // This is kept for local usage; backend generates notifications automatically
         const newNotif = {
             id: `n${Date.now()}`,
             userId: notif.userId || currentUser?.id,
@@ -254,17 +258,28 @@ export function AppProvider({ children }) {
         setNotifications((prev) => [newNotif, ...prev]);
     }, [currentUser]);
 
-    const markNotificationRead = useCallback((notifId) => {
-        setNotifications((prev) =>
-            prev.map((n) => (n.id === notifId ? { ...n, read: true } : n))
-        );
+    const markNotificationRead = useCallback(async (notifId) => {
+        try {
+            await fetch(`${API}/notifications/${notifId}/read`, { method: 'PUT' });
+            setNotifications((prev) =>
+                prev.map((n) => (n.id === notifId ? { ...n, read: true } : n))
+            );
+        } catch (e) {
+            console.error('Failed to mark notification read:', e);
+        }
     }, []);
 
-    const markAllNotificationsRead = useCallback(() => {
-        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    }, []);
+    const markAllNotificationsRead = useCallback(async () => {
+        if (!currentUser) return;
+        try {
+            await fetch(`${API}/notifications/read-all/${currentUser.id}`, { method: 'PUT' });
+            setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        } catch (e) {
+            console.error('Failed to mark all notifications read:', e);
+        }
+    }, [currentUser]);
 
-    // ── Computed Values ─────────────────────────────────
+    // ── Computed Values ─────────────────────────────
     const getQueueForService = useCallback(
         (serviceId) =>
             queueEntries
@@ -297,7 +312,7 @@ export function AppProvider({ children }) {
         (serviceId, position) => {
             const service = services.find((s) => s.id === serviceId);
             if (!service) return 0;
-            return position * service.expectedDuration;
+            return (position - 1) * service.expectedDuration;
         },
         [services]
     );

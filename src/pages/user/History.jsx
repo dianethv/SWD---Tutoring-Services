@@ -1,108 +1,141 @@
 import { useApp } from '../../context/AppContext';
 
 export default function History() {
-    const { getUserHistory } = useApp();
-    const history = getUserHistory();
+  const { getUserHistory } = useApp();
+  const history = getUserHistory();
 
-    const getOutcomeBadge = (outcome) => {
-        switch (outcome) {
-            case 'served':
-                return (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-green-50 text-green-700 border border-green-200 text-xs font-semibold">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-                        Served
-                    </span>
-                );
-            case 'cancelled':
-                return (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-100 text-stone-600 border border-stone-200 text-xs font-semibold">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
-                        Cancelled
-                    </span>
-                );
-            case 'no-show':
-                return (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-50 text-red-600 border border-red-200 text-xs font-semibold">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-                        No Show
-                    </span>
-                );
-            default:
-                return null;
-        }
-    };
+  const outcomeMeta = (outcome) => {
+    switch (outcome) {
+      case 'served':
+        return { label: 'Completed', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0', icon: '✅' };
+      case 'cancelled':
+        return { label: 'Cancelled', color: '#78716c', bg: '#fafaf9', border: '#e7e5e4', icon: '🚫' };
+      case 'no-show':
+        return { label: 'No Show', color: '#dc2626', bg: '#fef2f2', border: '#fecaca', icon: '⚠️' };
+      default:
+        return { label: '—', color: '#a8a29e', bg: '#fafaf9', border: '#e7e5e4', icon: '❔' };
+    }
+  };
 
-    return (
-        <div className="animate-fade-in-up">
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-stone-800 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>
-                    Session History
-                </h1>
-                <p className="text-stone-500">Review your past tutoring sessions and outcomes.</p>
-            </div>
+  // Accent icons for cards — rotated in top-right corner
+  const cardIcons = ['📖', '🎓', '📐', '🧮', '💡', '🔬', '📝', '🖥️'];
 
-            {history.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-2xl border border-stone-200">
-                    <div className="text-5xl mb-4">📚</div>
-                    <h2 className="text-xl font-bold text-stone-800 mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>
-                        No history yet
-                    </h2>
-                    <p className="text-stone-500 text-sm">Your completed tutoring sessions will appear here.</p>
-                </div>
-            ) : (
-                <>
-                    {/* Summary cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                        <div className="bg-white rounded-2xl p-5 border border-stone-200">
-                            <p className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-1">Total Sessions</p>
-                            <p className="text-3xl font-bold text-stone-800">{history.length}</p>
-                        </div>
-                        <div className="bg-white rounded-2xl p-5 border border-stone-200">
-                            <p className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-1">Successfully Served</p>
-                            <p className="text-3xl font-bold text-green-600">{history.filter((h) => h.outcome === 'served').length}</p>
-                        </div>
-                        <div className="bg-white rounded-2xl p-5 border border-stone-200">
-                            <p className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-1">Avg. Wait Time</p>
-                            <p className="text-3xl font-bold text-stone-800">
-                                {Math.round(
-                                    history.filter((h) => h.waitTime).reduce((sum, h) => sum + h.waitTime, 0) /
-                                    Math.max(1, history.filter((h) => h.waitTime).length)
-                                )} <span className="text-base font-normal text-stone-500">min</span>
-                            </p>
-                        </div>
-                    </div>
+  const card = { background: '#fff', border: '1px solid #e7e5e4', borderRadius: '16px', padding: '24px' };
 
-                    {/* History Table */}
-                    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full" id="history-table">
-                                <thead>
-                                    <tr className="border-b border-stone-100">
-                                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-stone-500 uppercase tracking-wide">Date</th>
-                                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-stone-500 uppercase tracking-wide">Service</th>
-                                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-stone-500 uppercase tracking-wide">Joined</th>
-                                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-stone-500 uppercase tracking-wide">Served</th>
-                                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-stone-500 uppercase tracking-wide">Wait</th>
-                                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-stone-500 uppercase tracking-wide">Outcome</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {history.map((h, i) => (
-                                        <tr key={h.id} className={`border-b border-stone-50 hover:bg-stone-50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-stone-50/30'}`}>
-                                            <td className="px-5 py-4 text-sm text-stone-700 font-medium whitespace-nowrap">{h.date}</td>
-                                            <td className="px-5 py-4 text-sm text-stone-800 font-semibold">{h.serviceName}</td>
-                                            <td className="px-5 py-4 text-sm text-stone-600">{h.joinedAt}</td>
-                                            <td className="px-5 py-4 text-sm text-stone-600">{h.servedAt || '—'}</td>
-                                            <td className="px-5 py-4 text-sm text-stone-600">{h.waitTime ? `${h.waitTime} min` : '—'}</td>
-                                            <td className="px-5 py-4">{getOutcomeBadge(h.outcome)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </>
-            )}
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '24px', fontWeight: 700, color: '#1c1917', margin: '0 0 6px 0' }}>
+          Session History
+        </h1>
+        <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>A record of your tutoring activity.</p>
+      </div>
+
+      {/* Summary Stats */}
+      {history.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
+          <div style={card}>
+            <p style={{ fontSize: '28px', fontWeight: 700, color: '#1c1917', margin: 0, lineHeight: 1 }}>{history.length}</p>
+            <p style={{ fontSize: '13px', color: '#78716c', margin: '6px 0 0 0' }}>Total Sessions</p>
+          </div>
+          <div style={card}>
+            <p style={{ fontSize: '28px', fontWeight: 700, color: '#16a34a', margin: 0, lineHeight: 1 }}>
+              {history.filter((h) => h.outcome === 'served').length}
+            </p>
+            <p style={{ fontSize: '13px', color: '#78716c', margin: '6px 0 0 0' }}>Completed</p>
+          </div>
+          <div style={card}>
+            <p style={{ fontSize: '28px', fontWeight: 700, color: '#C8102E', margin: 0, lineHeight: 1 }}>
+              {history.filter((h) => h.waitTime).reduce((sum, h) => sum + h.waitTime, 0) > 0
+                ? `${Math.round(history.filter((h) => h.waitTime).reduce((sum, h) => sum + h.waitTime, 0) / history.filter((h) => h.waitTime).length)}m`
+                : '—'}
+            </p>
+            <p style={{ fontSize: '13px', color: '#78716c', margin: '6px 0 0 0' }}>Avg Wait Time</p>
+          </div>
         </div>
-    );
+      )}
+
+      {/* Empty State */}
+      {history.length === 0 ? (
+        <div style={{
+          textAlign: 'center', padding: '80px 24px',
+          border: '2px dashed #d6d3d1', borderRadius: '16px', background: '#fafaf9',
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.6 }}>📚</div>
+          <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>Your completed sessions will appear here.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {history.map((h, i) => {
+            const meta = outcomeMeta(h.outcome);
+            const accent = cardIcons[i % cardIcons.length];
+
+            return (
+              <div key={h.id} style={{
+                ...card,
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'box-shadow 0.2s, transform 0.2s',
+              }}
+                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              >
+                {/* Corner decorative icon */}
+                <div style={{
+                  position: 'absolute', top: '-6px', right: '-6px',
+                  width: '56px', height: '56px',
+                  borderRadius: '0 16px 0 20px',
+                  background: meta.bg, border: `1px solid ${meta.border}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '22px',
+                }}>
+                  {accent}
+                </div>
+
+                {/* Service name + date */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', paddingRight: '60px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1c1917', margin: 0 }}>{h.serviceName}</h3>
+                    <p style={{ fontSize: '13px', color: '#78716c', margin: '4px 0 0 0' }}>{h.date}</p>
+                  </div>
+                </div>
+
+                {/* Outcome badge */}
+                <div style={{ marginBottom: '16px' }}>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    padding: '5px 14px', borderRadius: '20px',
+                    fontSize: '12px', fontWeight: 600,
+                    background: meta.bg, color: meta.color, border: `1px solid ${meta.border}`,
+                  }}>
+                    {meta.icon} {meta.label}
+                  </span>
+                </div>
+
+                {/* Divider */}
+                <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, #e7e5e4, transparent)', margin: '0 0 16px 0' }} />
+
+                {/* Stats row */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                  <div>
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Joined</p>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', margin: '4px 0 0 0' }}>{h.joinedAt}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Served</p>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', margin: '4px 0 0 0' }}>{h.servedAt || '—'}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Wait Time</p>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', margin: '4px 0 0 0' }}>{h.waitTime ? `${h.waitTime} min` : '—'}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
