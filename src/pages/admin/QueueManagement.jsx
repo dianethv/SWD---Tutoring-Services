@@ -6,8 +6,10 @@ export default function QueueManagement() {
     const [selectedServiceId, setSelectedServiceId] = useState(services[0]?.id || '');
     const [allUsers, setAllUsers] = useState([]);
 
+    const API = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
+
     useEffect(() => {
-        fetch('http://localhost:5000/api/users')
+        fetch(`${API}/users`)
             .then(res => res.json())
             .then(data => setAllUsers(data))
             .catch(() => {});

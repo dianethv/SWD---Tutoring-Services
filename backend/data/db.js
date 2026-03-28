@@ -1,7 +1,7 @@
 // ── Shared In-Memory Data Store ─────────────────────
 // All route modules import from here so state is consistent.
 
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const SALT_ROUNDS = 10;
 
 const users = [
