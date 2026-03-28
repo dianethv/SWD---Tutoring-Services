@@ -29,22 +29,25 @@ export default function Sidebar({ isOpen, onClose }) {
     };
 
     return (
-        <aside style={{
+        <aside className="app-sidebar" style={{
             position: 'fixed',
             left: 0,
             top: 0,
             bottom: 0,
-            width: '256px',
+            width: 'min(256px, 85vw)',
             background: '#ffffff',
             borderRight: '1px solid #e7e5e4',
             zIndex: 40,
             paddingTop: '76px',
+            paddingBottom: '140px',
+            overflowY: 'auto',
             transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
             transition: 'transform 0.3s ease',
         }}>
             {/* Close button */}
             <button
                 onClick={onClose}
+                className="lg:hidden"
                 style={{
                     position: 'absolute',
                     top: '76px',
@@ -102,7 +105,7 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
 
             {/* Bottom help card */}
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px', borderTop: '1px solid #f5f5f4' }}>
+            <div className="sidebar-help-card" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px', borderTop: '1px solid #f5f5f4' }}>
                 <div style={{ padding: '14px', borderRadius: '12px', background: 'linear-gradient(135deg, #fef2f2, #fee2e2)', border: '1px solid #fecaca' }}>
                     <p style={{ fontSize: '12px', fontWeight: 600, color: '#960C22', marginBottom: '4px' }}>Need help?</p>
                     <p style={{ fontSize: '12px', color: '#C8102E', lineHeight: 1.5 }}>

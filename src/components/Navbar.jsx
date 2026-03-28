@@ -58,7 +58,7 @@ export default function Navbar({ onMenuToggle }) {
                 WebkitBackdropFilter: 'blur(12px)',
             }}
         >
-            <div className="flex items-center justify-between h-full px-4 lg:px-6">
+            <div className="flex items-center justify-between h-full px-3 sm:px-4 lg:px-6">
                 {/* Left: Hamburger + Logo */}
                 <div className="flex items-center gap-3">
                     {/* Mobile hamburger */}
@@ -80,14 +80,14 @@ export default function Navbar({ onMenuToggle }) {
                             style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}>
                             🐾
                         </div>
-                        <span className="text-lg font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                        <span className="hidden sm:inline text-lg font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>
                             Tutor<span style={{ color: '#C8102E' }}>Coogs</span>
                         </span>
                     </Link>
                 </div>
 
                 {/* Right side */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                     {/* Notifications */}
                     <div ref={notifRef} className="relative">
                         <button
@@ -108,8 +108,8 @@ export default function Navbar({ onMenuToggle }) {
                         </button>
 
                         {showNotifs && (
-                            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-200 animate-fade-in-up"
-                                style={{ maxHeight: '420px' }}>
+                            <div className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-stone-200 animate-fade-in-up app-notif-dropdown"
+                                style={{ width: 'min(20rem, calc(100vw - 1rem))', maxHeight: '420px' }}>
                                 <div style={{ padding: '14px 20px', borderBottom: '1px solid #f5f5f4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                     <h3 style={{ fontWeight: 600, fontSize: '14px', color: '#1c1917', margin: 0 }}>Notifications</h3>
                                     {unreadCount > 0 && (
@@ -178,7 +178,8 @@ export default function Navbar({ onMenuToggle }) {
                         </button>
 
                         {showProfile && (
-                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-stone-200 animate-fade-in-up">
+                            <div className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-stone-200 animate-fade-in-up app-profile-dropdown"
+                                style={{ width: 'min(14rem, calc(100vw - 1rem))' }}>
                                 <div style={{ padding: '16px 20px', borderBottom: '1px solid #f5f5f4' }}>
                                     <p style={{ fontWeight: 600, fontSize: '14px', color: '#1c1917', margin: 0 }}>{currentUser?.name}</p>
                                     <p style={{ fontSize: '12px', color: '#78716c', margin: '4px 0 0 0' }}>{currentUser?.email}</p>

@@ -225,7 +225,7 @@ export default function Register() {
                     <p className="text-stone-500 mb-8">Join TutorCoogs and get started in seconds</p>
 
                     {/* ── Role Selector (prominent) ──────────── */}
-                    <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                         {[
                             { role: 'student', emoji: '🎓', label: 'I\'m a Student', desc: 'Join queues and get tutoring help for your courses' },
                             { role: 'admin', emoji: '🛠️', label: 'I\'m a Tutor', desc: 'Create services and manage student queues' },
@@ -288,7 +288,7 @@ export default function Register() {
                                 {errors.email && <p className="mt-1.5 text-xs text-red-600">{errors.email}</p>}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-stone-700 mb-2" htmlFor="register-password">Password</label>
                                     <div className="relative">
@@ -344,7 +344,7 @@ export default function Register() {
                     </form>
 
                     {/* Stats bar */}
-                    <div className="mt-8 grid grid-cols-3 gap-4">
+                    <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {content.stats.map((stat) => (
                             <div key={stat.label} className="text-center py-4 rounded-2xl bg-white border border-stone-200">
                                 <p className="text-lg font-bold text-stone-800">{stat.value}</p>

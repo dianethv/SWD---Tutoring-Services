@@ -85,9 +85,9 @@ export default function ServiceManagement() {
     const closedCount = services.length - openCount;
 
     return (
-        <div>
+        <div className="service-management-page">
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '32px' }}>
                 <div>
                     <h1 style={heading}>Service Management</h1>
                     <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>Create and edit tutoring services offered to students.</p>
@@ -111,7 +111,7 @@ export default function ServiceManagement() {
             </div>
 
             {/* Summary pills */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '24px' }}>
                 <span style={{
                     padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
                     background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a',
@@ -134,7 +134,7 @@ export default function ServiceManagement() {
 
             {/* Success toast */}
             {successMsg && (
-                <div style={{
+                <div className="app-toast" style={{
                     position: 'fixed', top: '80px', right: '16px', zIndex: 50,
                     padding: '14px 20px', borderRadius: '14px',
                     background: '#f0fdf4', border: '1px solid #bbf7d0',
@@ -155,7 +155,7 @@ export default function ServiceManagement() {
                     </h2>
 
                     <form onSubmit={handleSubmit} noValidate>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                             <div>
                                 <label htmlFor="service-name" style={labelStyle}>
                                     Service Name <span style={{ color: '#dc2626' }}>*</span>
@@ -189,7 +189,7 @@ export default function ServiceManagement() {
                             {errors.description && <span style={{ fontSize: '11px', color: '#dc2626', marginTop: '4px', display: 'block' }}>{errors.description}</span>}
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '20px' }}>
                             <div>
                                 <label htmlFor="service-duration" style={labelStyle}>
                                     Expected Duration (min) <span style={{ color: '#dc2626' }}>*</span>
@@ -243,7 +243,7 @@ export default function ServiceManagement() {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '8px', borderTop: '1px solid #f5f5f4' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid #f5f5f4' }}>
                             <button type="submit" id="save-service-btn"
                                 style={{
                                     padding: '10px 24px', borderRadius: '10px', border: 'none',
@@ -274,7 +274,7 @@ export default function ServiceManagement() {
             )}
 
             {/* Services Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
                 {services.map((s) => {
                     const pColors = priorityColors[s.priorityLevel] || priorityColors.medium;
                     const isHovered = hoveredCard === s.id;

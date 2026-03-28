@@ -23,7 +23,7 @@ export default function History() {
   const card = { background: '#fff', border: '1px solid #e7e5e4', borderRadius: '16px', padding: '24px' };
 
   return (
-    <div>
+    <div className="history-page">
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
         <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '24px', fontWeight: 700, color: '#1c1917', margin: '0 0 6px 0' }}>
@@ -34,7 +34,7 @@ export default function History() {
 
       {/* Summary Stats */}
       {history.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '32px' }}>
           <div style={card}>
             <p style={{ fontSize: '28px', fontWeight: 700, color: '#1c1917', margin: 0, lineHeight: 1 }}>{history.length}</p>
             <p style={{ fontSize: '13px', color: '#78716c', margin: '6px 0 0 0' }}>Total Sessions</p>
@@ -94,7 +94,7 @@ export default function History() {
                 </div>
 
                 {/* Service name + date */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', paddingRight: '60px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '16px', paddingRight: '60px' }}>
                   <div>
                     <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1c1917', margin: 0 }}>{h.serviceName}</h3>
                     <p style={{ fontSize: '13px', color: '#78716c', margin: '4px 0 0 0' }}>{h.date}</p>
@@ -117,7 +117,7 @@ export default function History() {
                 <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, #e7e5e4, transparent)', margin: '0 0 16px 0' }} />
 
                 {/* Stats row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '16px' }}>
                   <div>
                     <p style={{ fontSize: '11px', fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Joined</p>
                     <p style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', margin: '4px 0 0 0' }}>{h.joinedAt}</p>
