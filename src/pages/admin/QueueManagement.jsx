@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { API_BASE_URL } from '../../config/api';
 
 export default function QueueManagement() {
     const { services, getQueueForService, serveNext, markNoShow, reorderQueue, leaveQueue } = useApp();
     const [selectedServiceId, setSelectedServiceId] = useState(services[0]?.id || '');
     const [allUsers, setAllUsers] = useState([]);
 
-    const API = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
-
     useEffect(() => {
-        fetch(`${API}/users`)
+        fetch(`${API_BASE_URL}/users`)
             .then(res => res.json())
             .then(data => setAllUsers(data))
             .catch(() => {});
@@ -49,7 +48,7 @@ export default function QueueManagement() {
     const totalInQueue = openServices.reduce((sum, s) => sum + getQueueForService(s.id).length, 0);
 
     return (
-        <div>
+        <div className="queue-management-page">
             {/* Header */}
             <div style={{ marginBottom: '28px' }}>
                 <h1 style={heading}>Queue Management</h1>
@@ -57,7 +56,7 @@ export default function QueueManagement() {
             </div>
 
             {/* Overview stats */}
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
                 <div style={{
                     padding: '6px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
                     background: totalInQueue > 0 ? '#fef2f2' : '#f0fdf4',
@@ -117,9 +116,9 @@ export default function QueueManagement() {
                 <div style={card}>
                     {/* Panel header with accent strip */}
                     <div style={{ height: '3px', background: 'linear-gradient(90deg, #C8102E, #E8384F)' }} />
-                    <div style={{
+                    <div className="queue-panel-header" style={{
                         padding: '22px 28px', borderBottom: '1px solid #f5f5f4',
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap',
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                             <div style={{
@@ -171,16 +170,17 @@ export default function QueueManagement() {
                         <div>
                             {queue.map((entry, idx) => (
                                 <div key={entry.id}
+                                    className="queue-entry-row"
                                     style={{
                                         padding: '18px 28px', borderBottom: '1px solid #f5f5f4',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap',
                                         background: idx === 0 ? 'linear-gradient(90deg, rgba(200,16,46,0.04), transparent)' : 'transparent',
                                         transition: 'background 0.15s',
                                     }}
                                     onMouseEnter={(e) => { if (idx !== 0) e.currentTarget.style.background = '#fafaf9'; }}
                                     onMouseLeave={(e) => { if (idx !== 0) e.currentTarget.style.background = 'transparent'; }}
                                 >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0 }}>
                                         {/* Position badge */}
                                         <div style={{
                                             width: '42px', height: '42px', borderRadius: '12px',
@@ -214,7 +214,7 @@ export default function QueueManagement() {
                                     </div>
 
                                     {/* Actions */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <div className="queue-entry-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                                         <button
                                             onClick={() => reorderQueue(selectedServiceId, entry.id, 'up')}
                                             disabled={idx === 0}

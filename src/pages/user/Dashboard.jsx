@@ -33,9 +33,10 @@ export default function Dashboard() {
     const linkStyle = { fontSize: '13px', color: '#C8102E', fontWeight: 600, textDecoration: 'none' };
 
     return (
-        <div>
+        <div className="dashboard-page">
             {/* ── Welcome Banner ─────────────────────────────── */}
             <div
+  className="dashboard-hero"
   style={{
     borderRadius: '20px',
     padding: '48px 40px',
@@ -121,7 +122,7 @@ export default function Dashboard() {
           }. We'll notify you before your turn.`
         : `Browse available tutoring services and hop in a queue. We'll notify you when it's your turn.`}
     </p>
-    <div className="fade-up-delay" style={{ display: 'flex', gap: '14px' }}>
+    <div className="fade-up-delay" style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
       <Link
         to="/join-queue"
         style={{
@@ -198,11 +199,11 @@ export default function Dashboard() {
             {/* ── Active Queues ───────────────────────────────── */}
             {activeQueues.length > 0 && (
                 <div style={sectionGap}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
                         <h2 style={heading}>Your Active Queues</h2>
                         <Link to="/queue-status" style={linkStyle}>View details →</Link>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
                         {activeQueues.map((q) => {
                             const service = services.find((s) => s.id === q.serviceId);
                             const eta = getEstimatedWait(q.serviceId, q.position);
@@ -230,7 +231,7 @@ export default function Dashboard() {
                                                 {isNext ? "You're next!" : 'Waiting'}
                                             </span>
                                         </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px', marginBottom: '20px' }}>
                                             <div style={{ padding: '14px', borderRadius: '10px', background: '#fafaf9', textAlign: 'center' }}>
                                                 <p style={{ fontSize: '11px', color: '#78716c', margin: '0 0 4px 0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Position</p>
                                                 <p style={{ fontSize: '24px', fontWeight: 700, color: accent, margin: 0 }}>#{q.position}</p>
@@ -258,12 +259,12 @@ export default function Dashboard() {
 
             {/* ── Available Services ─────────────────────────── */}
             <div style={sectionGap}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
                     <h2 style={heading}>Available Services</h2>
                     <Link to="/join-queue" style={linkStyle}>Browse all →</Link>
                 </div>
                 <p style={subtext}>{openServices.length} services currently accepting students</p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px', marginTop: '16px' }}>
                     {openServices.slice(0, 6).map((service) => (
                         <Link to="/join-queue" key={service.id} style={{ ...card, textDecoration: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                             <div>
@@ -304,14 +305,14 @@ export default function Dashboard() {
             {/* ── Recent Activity ────────────────────────────── */}
             {history.length > 0 && (
                 <div style={sectionGap}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
                         <h2 style={heading}>Recent Activity</h2>
                         <Link to="/history" style={linkStyle}>Full history →</Link>
                     </div>
                     <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
                         {history.slice(0, 4).map((h, i) => (
                             <div key={h.id} style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px',
                                 padding: '16px 24px',
                                 borderBottom: i < Math.min(history.length, 4) - 1 ? '1px solid #f5f5f4' : 'none',
                             }}>
@@ -328,7 +329,7 @@ export default function Dashboard() {
                                         <p style={{ fontSize: '12px', color: '#a8a29e', margin: '2px 0 0 0' }}>{h.date} at {h.joinedAt}</p>
                                     </div>
                                 </div>
-                                <div style={{ textAlign: 'right' }}>
+                                <div style={{ textAlign: 'right' }} className="dashboard-activity-meta">
                                     <span style={{
                                         display: 'inline-block', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600,
                                         background: h.outcome === 'served' ? '#f0fdf4' : h.outcome === 'cancelled' ? '#f5f5f4' : '#fef2f2',
@@ -348,7 +349,7 @@ export default function Dashboard() {
             <div style={{
                 borderRadius: '16px', border: '1px solid #fecaca', background: '#fffbeb', padding: '28px',
             }}>
-                <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '28px', flexShrink: 0 }}>💡</span>
                     <div>
                         <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: '#78350f', margin: '0 0 10px 0', fontSize: '15px' }}>Tutoring Tips</h3>

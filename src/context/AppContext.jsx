@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { API_BASE_URL } from '../config/api';
 
-const API = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
@@ -40,7 +40,7 @@ export function AppProvider({ children }) {
     // ── Fetch helpers ───────────────────────────────
     const fetchServices = useCallback(async () => {
         try {
-            const res = await fetch(`${API}/services`);
+            const res = await fetch(`${API_BASE_URL}/services`);
             if (res.ok) setServices(await res.json());
         } catch (e) {
             console.error('Failed to fetch services:', e);
@@ -49,7 +49,7 @@ export function AppProvider({ children }) {
 
     const fetchQueue = useCallback(async () => {
         try {
-            const res = await fetch(`${API}/queue`);
+            const res = await fetch(`${API_BASE_URL}/queue`);
             if (res.ok) setQueueEntries(await res.json());
         } catch (e) {
             console.error('Failed to fetch queue:', e);
@@ -58,7 +58,7 @@ export function AppProvider({ children }) {
 
     const fetchHistory = useCallback(async (userId) => {
         try {
-            const url = userId ? `${API}/history?userId=${userId}` : `${API}/history`;
+            const url = userId ? `${API_BASE_URL}/history?userId=${userId}` : `${API_BASE_URL}/history`;
             const res = await fetch(url);
             if (res.ok) setHistory(await res.json());
         } catch (e) {
@@ -69,7 +69,7 @@ export function AppProvider({ children }) {
     const fetchNotifications = useCallback(async (userId) => {
         try {
             if (!userId) return;
-            const res = await fetch(`${API}/notifications?userId=${userId}`);
+            const res = await fetch(`${API_BASE_URL}/notifications?userId=${userId}`);
             if (res.ok) setNotifications(await res.json());
         } catch (e) {
             console.error('Failed to fetch notifications:', e);
@@ -100,7 +100,7 @@ export function AppProvider({ children }) {
     // ── Auth ────────────────────────────────────────
     const login = useCallback(async (email, password) => {
         try {
-            const res = await fetch(`${API}/auth/login`, {
+            const res = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
@@ -120,7 +120,7 @@ export function AppProvider({ children }) {
 
     const register = useCallback(async (name, email, password, role) => {
         try {
-            const res = await fetch(`${API}/auth/register`, {
+            const res = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password, role }),
@@ -150,7 +150,7 @@ export function AppProvider({ children }) {
     const joinQueue = useCallback(async (serviceId, notes = '', priority = 'normal') => {
         if (!currentUser) return { success: false, error: 'Not logged in' };
         try {
-            const res = await fetch(`${API}/queue/join`, {
+            const res = await fetch(`${API_BASE_URL}/queue/join`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: currentUser.id, serviceId, notes, priority }),
@@ -169,7 +169,7 @@ export function AppProvider({ children }) {
 
     const leaveQueue = useCallback(async (entryId) => {
         try {
-            const res = await fetch(`${API}/queue/leave/${entryId}`, { method: 'POST' });
+            const res = await fetch(`${API_BASE_URL}/queue/leave/${entryId}`, { method: 'POST' });
             if (!res.ok) return;
             await fetchQueue();
             if (currentUser) {
@@ -182,7 +182,7 @@ export function AppProvider({ children }) {
 
     const serveNext = useCallback(async (serviceId) => {
         try {
-            const res = await fetch(`${API}/queue/serve/${serviceId}`, { method: 'POST' });
+            const res = await fetch(`${API_BASE_URL}/queue/serve/${serviceId}`, { method: 'POST' });
             if (!res.ok) return;
             await fetchQueue();
             await fetchHistory();
@@ -194,7 +194,7 @@ export function AppProvider({ children }) {
 
     const markNoShow = useCallback(async (entryId) => {
         try {
-            const res = await fetch(`${API}/queue/no-show/${entryId}`, { method: 'POST' });
+            const res = await fetch(`${API_BASE_URL}/queue/no-show/${entryId}`, { method: 'POST' });
             if (!res.ok) return;
             await fetchQueue();
             await fetchHistory();
@@ -205,7 +205,7 @@ export function AppProvider({ children }) {
 
     const reorderQueue = useCallback(async (serviceId, entryId, direction) => {
         try {
-            const res = await fetch(`${API}/queue/reorder/${entryId}`, {
+            const res = await fetch(`${API_BASE_URL}/queue/reorder/${entryId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ direction }),
@@ -220,7 +220,7 @@ export function AppProvider({ children }) {
     // ── Service Management ──────────────────────────
     const createService = useCallback(async (serviceData) => {
         try {
-            const res = await fetch(`${API}/services`, {
+            const res = await fetch(`${API_BASE_URL}/services`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(serviceData),
@@ -237,7 +237,7 @@ export function AppProvider({ children }) {
 
     const updateService = useCallback(async (serviceId, updates) => {
         try {
-            const res = await fetch(`${API}/services/${serviceId}`, {
+            const res = await fetch(`${API_BASE_URL}/services/${serviceId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates),
@@ -272,7 +272,7 @@ export function AppProvider({ children }) {
 
     const markNotificationRead = useCallback(async (notifId) => {
         try {
-            await fetch(`${API}/notifications/${notifId}/read`, { method: 'PUT' });
+            await fetch(`${API_BASE_URL}/notifications/${notifId}/read`, { method: 'PUT' });
             setNotifications((prev) =>
                 prev.map((n) => (n.id === notifId ? { ...n, read: true } : n))
             );
@@ -284,7 +284,7 @@ export function AppProvider({ children }) {
     const markAllNotificationsRead = useCallback(async () => {
         if (!currentUser) return;
         try {
-            await fetch(`${API}/notifications/read-all/${currentUser.id}`, { method: 'PUT' });
+            await fetch(`${API_BASE_URL}/notifications/read-all/${currentUser.id}`, { method: 'PUT' });
             setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
         } catch (e) {
             console.error('Failed to mark all notifications read:', e);

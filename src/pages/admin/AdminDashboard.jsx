@@ -39,9 +39,9 @@ export default function AdminDashboard() {
     const linkStyle = { fontSize: '13px', color: '#C8102E', fontWeight: 600, textDecoration: 'none' };
 
     return (
-        <div>
+        <div className="admin-dashboard-page">
             {/* ── Welcome Banner ─────────────────────────────── */}
-            <div style={{
+            <div className="admin-dashboard-hero" style={{
                 borderRadius: '20px',
                 padding: '48px 40px',
                 background: 'linear-gradient(135deg, #C8102E 0%, #A60F26 50%, #7A0B1C 100%)',
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* ── Weekly Volume + Service Load ─────────────────── */}
-            <div style={{ ...sectionGap, display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
+            <div style={{ ...sectionGap, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
                 <div style={card}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
                         <div>
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
 
             {/* ── Services Table ───────────────────────────────── */}
             <div style={sectionGap}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '4px' }}>
                     <h2 style={heading}>Services Overview</h2>
                     <Link to="/admin/services" style={linkStyle}>Manage services →</Link>
                 </div>
@@ -292,7 +292,7 @@ export default function AdminDashboard() {
             <div style={{
                 borderRadius: '16px', border: '1px solid #fecaca', background: '#fffbeb', padding: '28px',
             }}>
-                <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '28px', flexShrink: 0 }}>🎯</span>
                     <div>
                         <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: '#78350f', margin: '0 0 10px 0', fontSize: '15px' }}>Management Tips</h3>

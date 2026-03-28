@@ -50,7 +50,7 @@ export default function QueueStatus() {
 
   /* ── Active Queues ───────────────────────────── */
   return (
-    <div>
+    <div className="queue-status-page">
       <div style={{ marginBottom: '32px' }}>
         <h1 style={heading}>Queue Status</h1>
         <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>Live updates for your active queues.</p>
@@ -98,9 +98,9 @@ export default function QueueStatus() {
                 background: `linear-gradient(90deg, ${accent}, ${accent}99)`,
               }} />
 
-              <div style={{ padding: '28px' }}>
+              <div className="queue-status-card-body" style={{ padding: '28px' }}>
                 {/* Service header */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{
                       width: '56px', height: '56px', borderRadius: '14px',
@@ -134,7 +134,7 @@ export default function QueueStatus() {
                 </div>
 
                 {/* Stat cards — Position, ETA, Joined */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '14px', marginBottom: '24px' }}>
                   {/* Position */}
                   <div style={{
                     textAlign: 'center', padding: '20px 16px', borderRadius: '14px',
@@ -197,47 +197,48 @@ export default function QueueStatus() {
                 </div>
 
                 {/* Timeline steps */}
-                <div style={{
-                  display: 'flex', alignItems: 'flex-start',
-                  marginBottom: '28px', padding: '20px', borderRadius: '14px',
-                  background: '#fafaf9', border: '1px solid #f0eeee',
-                }}>
-                  {steps.map((step, i) => (
-                    <div key={step.label} style={{ display: 'contents' }}>
-                      {/* Step circle + label */}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                        <div style={{
-                          width: '36px', height: '36px', borderRadius: '50%',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: step.done ? '16px' : '14px',
-                          background: step.done ? accent : '#fff',
-                          color: step.done ? '#fff' : '#a8a29e',
-                          border: step.done ? 'none' : '2px solid #d6d3d1',
-                          fontWeight: 700,
-                          boxShadow: step.done ? `0 2px 8px ${accent}44` : 'none',
-                          transition: 'all 0.3s',
-                          flexShrink: 0,
-                        }}>
-                          {step.done ? '✓' : i + 1}
+                <div style={{ marginBottom: '28px', overflowX: 'auto' }}>
+                  <div className="queue-status-timeline" style={{
+                    display: 'flex', alignItems: 'flex-start',
+                    padding: '20px', borderRadius: '14px',
+                    background: '#fafaf9', border: '1px solid #f0eeee',
+                    minWidth: '620px',
+                  }}>
+                    {steps.map((step, i) => (
+                      <div key={step.label} style={{ display: 'contents' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                          <div style={{
+                            width: '36px', height: '36px', borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: step.done ? '16px' : '14px',
+                            background: step.done ? accent : '#fff',
+                            color: step.done ? '#fff' : '#a8a29e',
+                            border: step.done ? 'none' : '2px solid #d6d3d1',
+                            fontWeight: 700,
+                            boxShadow: step.done ? `0 2px 8px ${accent}44` : 'none',
+                            transition: 'all 0.3s',
+                            flexShrink: 0,
+                          }}>
+                            {step.done ? '✓' : i + 1}
+                          </div>
+                          <span style={{
+                            fontSize: '11px', fontWeight: 600,
+                            color: step.done ? accent : '#a8a29e',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {step.label}
+                          </span>
                         </div>
-                        <span style={{
-                          fontSize: '11px', fontWeight: 600,
-                          color: step.done ? accent : '#a8a29e',
-                          whiteSpace: 'nowrap',
-                        }}>
-                          {step.label}
-                        </span>
+                        {i < steps.length - 1 && (
+                          <div style={{
+                            flex: 1, height: '2px', marginTop: '17px',
+                            background: steps[i + 1].done ? accent : '#e7e5e4',
+                            transition: 'background 0.3s',
+                          }} />
+                        )}
                       </div>
-                      {/* Connector line between circles */}
-                      {i < steps.length - 1 && (
-                        <div style={{
-                          flex: 1, height: '2px', marginTop: '17px',
-                          background: steps[i + 1].done ? accent : '#e7e5e4',
-                          transition: 'background 0.3s',
-                        }} />
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
                 {/* Leave queue button */}

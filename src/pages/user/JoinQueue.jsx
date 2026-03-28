@@ -33,7 +33,7 @@ export default function JoinQueue() {
     const heading = { fontFamily: "'Outfit', sans-serif", fontSize: '18px', fontWeight: 700, color: '#1c1917', margin: 0 };
 
     return (
-        <div>
+        <div className="join-queue-page">
             {/* Header */}
             <div style={{ marginBottom: '32px' }}>
                 <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '24px', fontWeight: 700, color: '#1c1917', margin: '0 0 6px 0' }}>
@@ -44,7 +44,7 @@ export default function JoinQueue() {
 
             {/* Toast Notifications */}
             {joinSuccess && (
-                <div style={{
+                <div className="app-toast" style={{
                     position: 'fixed', top: '80px', right: '16px', zIndex: 50,
                     padding: '14px 20px', borderRadius: '14px',
                     background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534',
@@ -55,7 +55,7 @@ export default function JoinQueue() {
                 </div>
             )}
             {joinError && (
-                <div style={{
+                <div className="app-toast" style={{
                     position: 'fixed', top: '80px', right: '16px', zIndex: 50,
                     padding: '14px 20px', borderRadius: '14px',
                     background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b',
@@ -67,7 +67,7 @@ export default function JoinQueue() {
             )}
 
             {/* Services Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
                 {services.map((service) => {
                     const queueLength = getQueueForService(service.id).length;
                     const userEntry = getUserQueueEntry(service.id);
@@ -86,7 +86,7 @@ export default function JoinQueue() {
                             overflow: 'hidden',
                         }}>
                             {/* Service Header */}
-                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '14px' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                                     <div style={{
                                         width: '48px', height: '48px', borderRadius: '12px',
@@ -118,7 +118,7 @@ export default function JoinQueue() {
                             </p>
 
                             {/* Meta row */}
-                            <div style={{ display: 'flex', gap: '20px', marginBottom: '16px', fontSize: '12px', color: '#78716c' }}>
+                            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '16px', fontSize: '12px', color: '#78716c' }}>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     🕐 ~{service.expectedDuration} min
                                 </span>
@@ -161,7 +161,7 @@ export default function JoinQueue() {
                                     />
                                     <div style={{ marginTop: '12px' }}>
                                         <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#44403c', marginBottom: '8px' }}>Priority</label>
-                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                             {['normal', 'high'].map((p) => (
                                                 <button
                                                     key={p}

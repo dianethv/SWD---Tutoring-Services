@@ -342,3 +342,88 @@ textarea:focus {
   animation-delay: 0.7s;
   opacity: 0;
 }
+
+@media (max-width: 1024px) {
+  .app-main {
+    margin-left: 0 !important;
+  }
+
+  .sidebar-help-card {
+    position: static !important;
+    border-top: 1px solid #f5f5f4;
+    background: #fff;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-content {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .dashboard-hero,
+  .admin-dashboard-hero {
+    padding: 30px 22px !important;
+    margin-bottom: 28px !important;
+  }
+
+  .queue-status-card-body {
+    padding: 20px !important;
+  }
+
+  .queue-panel-header {
+    padding: 18px 16px !important;
+  }
+
+  .queue-entry-row {
+    padding: 16px !important;
+  }
+
+  .queue-management-page .queue-entry-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .app-toast {
+    left: 12px !important;
+    right: 12px !important;
+    top: 74px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-sidebar {
+    width: min(300px, 88vw) !important;
+  }
+
+  .sidebar-help-card {
+    display: none;
+  }
+
+  .app-notif-dropdown,
+  .app-profile-dropdown {
+    right: -4px !important;
+  }
+
+  .dashboard-page h1,
+  .admin-dashboard-page h1 {
+    font-size: 26px !important;
+    line-height: 1.2 !important;
+  }
+
+  .queue-status-page h1,
+  .history-page h1,
+  .service-management-page h1,
+  .queue-management-page h1 {
+    font-size: 22px !important;
+  }
+
+  .dashboard-activity-meta {
+    width: 100%;
+    text-align: left !important;
+  }
+
+  .queue-status-timeline {
+    min-width: 560px !important;
+  }
+}
