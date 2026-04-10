@@ -27,6 +27,27 @@ app.get("/", (req, res) => {
     res.json({ message: "TutorCoogs Backend is running" });
 });
 
+// ── Health check — verify database connectivity ─────
+app.get("/api/health", async (req, res) => {
+    try {
+        const { getPool } = require('./data/database');
+        const pool = getPool();
+        const [rows] = await pool.execute('SELECT 1 AS ok');
+        res.json({
+            status: 'ok',
+            database: 'connected',
+            timestamp: new Date().toISOString(),
+        });
+    } catch (err) {
+        res.status(500).json({
+            status: 'error',
+            database: 'disconnected',
+            error: err.message,
+            timestamp: new Date().toISOString(),
+        });
+    }
+});
+
 // Global error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);

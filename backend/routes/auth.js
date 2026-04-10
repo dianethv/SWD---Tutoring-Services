@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { users } = require('../data/db');
+const store = require('../data/store');
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
@@ -40,26 +40,22 @@ router.post('/register', async (req, res) => {
     }
 
     // ── Check duplicate ─────────────────────────────
-    const exists = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const exists = await store.findUserByEmail(email);
     if (exists) {
         return res.status(400).json({ message: 'Email already registered' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = {
-        id: `u${Date.now()}`,
+    const newUser = await store.createUser({
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password: hashedPassword,
         role,
-        createdAt: new Date().toISOString().split('T')[0],
-    };
-    users.push(newUser);
+    });
 
-    // Return without password
-    const { password: _, ...safeUser } = newUser;
-    res.status(201).json({ message: 'User registered', user: safeUser });
+    // createUser already strips password from the returned object
+    res.status(201).json({ message: 'User registered', user: newUser });
 });
 
 // POST /api/auth/login
@@ -79,7 +75,7 @@ router.post('/login', async (req, res) => {
     }
 
     // ── Find user by email, then compare hashed password ──
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const user = await store.findUserByEmail(email);
     if (!user) {
         return res.status(401).json({ message: 'Invalid email or password' });
     }

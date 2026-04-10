@@ -1,13 +1,15 @@
+process.env.NODE_ENV = 'test';
+
 const request = require('supertest');
 const app = require('../server');
-const { resetData } = require('../data/db');
+const store = require('../data/store');
 
 // Chai is ESM-only in v6. We'll use Node assert for simplicity.
 const assert = require('assert');
 
 describe('Auth Module', () => {
     beforeEach(() => {
-        resetData();
+        store.resetData();
     });
 
     // ── Registration ────────────────────────────────

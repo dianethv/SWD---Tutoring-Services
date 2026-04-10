@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { users } = require('../data/db');
+const store = require('../data/store');
 
 // GET /api/users — list all users (without passwords)
-router.get('/', (req, res) => {
-    const safeUsers = users.map(({ password, ...u }) => u);
-    res.json(safeUsers);
+router.get('/', async (req, res) => {
+    const users = await store.listUsers();
+    res.json(users);
 });
 
 // GET /api/users/:id — get a single user (without password)
-router.get('/:id', (req, res) => {
-    const user = users.find(u => u.id === req.params.id);
+router.get('/:id', async (req, res) => {
+    const user = await store.findUserById(req.params.id);
     if (!user) {
         return res.status(404).json({ message: 'User not found' });
     }

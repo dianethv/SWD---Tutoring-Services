@@ -1,11 +1,13 @@
+process.env.NODE_ENV = 'test';
+
 const request = require('supertest');
 const app = require('../server');
-const { resetData } = require('../data/db');
+const store = require('../data/store');
 const assert = require('assert');
 
 describe('Services Module', () => {
     beforeEach(() => {
-        resetData();
+        store.resetData();
     });
 
     // ── List services ───────────────────────────────

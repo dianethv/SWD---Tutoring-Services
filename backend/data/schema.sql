@@ -32,11 +32,27 @@ CREATE TABLE services (
     CONSTRAINT chk_services_duration CHECK (expected_duration BETWEEN 1 AND 120)
 ) ENGINE=InnoDB;
 
+-- ── Queue: represents an active queue for a service ──
+CREATE TABLE queues (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    public_id VARCHAR(32) NOT NULL UNIQUE,
+    service_id BIGINT UNSIGNED NOT NULL,
+    status ENUM('open', 'closed') NOT NULL DEFAULT 'open',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_queues_service
+        FOREIGN KEY (service_id) REFERENCES services(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_queues_service ON queues(service_id);
+
 CREATE TABLE queue_entries (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     public_id VARCHAR(32) NOT NULL UNIQUE,
     user_id BIGINT UNSIGNED NOT NULL,
     service_id BIGINT UNSIGNED NOT NULL,
+    queue_id BIGINT UNSIGNED NULL,
     joined_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     status ENUM('waiting', 'served', 'left', 'no_show') NOT NULL DEFAULT 'waiting',
     priority ENUM('normal', 'high') NOT NULL DEFAULT 'normal',
@@ -50,6 +66,9 @@ CREATE TABLE queue_entries (
     CONSTRAINT fk_queue_service
         FOREIGN KEY (service_id) REFERENCES services(id)
         ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_queue_entry_queue
+        FOREIGN KEY (queue_id) REFERENCES queues(id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT chk_queue_position CHECK (position IS NULL OR position >= 1)
 ) ENGINE=InnoDB;
 

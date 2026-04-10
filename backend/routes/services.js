@@ -1,15 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { services } = require('../data/db');
+const store = require('../data/store');
 
 // GET /api/services — list all services
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
+    const services = await store.listServices();
     res.json(services);
 });
 
 // GET /api/services/:id — get a single service
-router.get('/:id', (req, res) => {
-    const service = services.find(s => s.id === req.params.id);
+router.get('/:id', async (req, res) => {
+    const service = await store.findServiceById(req.params.id);
     if (!service) {
         return res.status(404).json({ message: 'Service not found' });
     }
@@ -17,7 +18,7 @@ router.get('/:id', (req, res) => {
 });
 
 // POST /api/services — create a new service
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
     const { name, description, expectedDuration, priorityLevel, icon, category } = req.body;
 
     // ── Validate ────────────────────────────────────
@@ -52,24 +53,21 @@ router.post('/', (req, res) => {
         return res.status(400).json({ message: 'Validation failed', errors });
     }
 
-    const newService = {
-        id: `s${Date.now()}`,
+    const newService = await store.createService({
         name: name.trim(),
         description: description.trim(),
         expectedDuration: Number(expectedDuration),
         priorityLevel,
-        isOpen: true,
         icon: icon || '📚',
         category: (category && typeof category === 'string') ? category.trim() : 'General',
-    };
-    services.push(newService);
+    });
 
     res.status(201).json(newService);
 });
 
 // PUT /api/services/:id — update a service
-router.put('/:id', (req, res) => {
-    const service = services.find(s => s.id === req.params.id);
+router.put('/:id', async (req, res) => {
+    const service = await store.findServiceById(req.params.id);
     if (!service) {
         return res.status(404).json({ message: 'Service not found' });
     }
@@ -111,16 +109,18 @@ router.put('/:id', (req, res) => {
         return res.status(400).json({ message: 'Validation failed', errors });
     }
 
-    // Apply updates
-    if (name !== undefined) service.name = name.trim();
-    if (description !== undefined) service.description = description.trim();
-    if (expectedDuration !== undefined) service.expectedDuration = Number(expectedDuration);
-    if (priorityLevel !== undefined) service.priorityLevel = priorityLevel;
-    if (icon !== undefined) service.icon = icon;
-    if (category !== undefined) service.category = category;
-    if (isOpen !== undefined) service.isOpen = Boolean(isOpen);
+    // Build updates object
+    const updates = {};
+    if (name !== undefined) updates.name = name.trim();
+    if (description !== undefined) updates.description = description.trim();
+    if (expectedDuration !== undefined) updates.expectedDuration = Number(expectedDuration);
+    if (priorityLevel !== undefined) updates.priorityLevel = priorityLevel;
+    if (icon !== undefined) updates.icon = icon;
+    if (category !== undefined) updates.category = category;
+    if (isOpen !== undefined) updates.isOpen = Boolean(isOpen);
 
-    res.json(service);
+    const updated = await store.updateService(req.params.id, updates);
+    res.json(updated);
 });
 
 module.exports = router;

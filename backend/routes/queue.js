@@ -1,54 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { queueEntries, services, users, history, notifications } = require('../data/db');
-
-// ── Helper: add a notification to the store ─────────
-function addNotification(userId, type, title, message) {
-    const notif = {
-        id: `n${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-        userId,
-        type,
-        title,
-        message,
-        timestamp: new Date().toISOString(),
-        read: false,
-    };
-    notifications.unshift(notif);
-    console.log(`NOTIFICATION [${userId}]: ${title} — ${message}`);
-    return notif;
-}
-
-// ── Helper: recalculate positions for a service queue ──
-function recalcPositions(serviceId) {
-    const waiting = queueEntries
-        .filter(q => q.serviceId === serviceId && q.status === 'waiting')
-        .sort((a, b) => {
-            if (a.priority === 'high' && b.priority !== 'high') return -1;
-            if (a.priority !== 'high' && b.priority === 'high') return 1;
-            const timeDiff = new Date(a.joinedAt) - new Date(b.joinedAt);
-            if (timeDiff !== 0) return timeDiff;
-            return queueEntries.indexOf(a) - queueEntries.indexOf(b);
-        });
-    waiting.forEach((entry, i) => {
-        entry.position = i + 1;
-    });
-}
+const store = require('../data/store');
 
 // GET /api/queue — get all waiting queue entries (optionally filter by serviceId)
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     const { serviceId } = req.query;
-    let entries = queueEntries.filter(q => q.status === 'waiting');
-    if (serviceId) {
-        entries = entries.filter(q => q.serviceId === serviceId);
-    }
-    entries.sort((a, b) => a.position - b.position);
+    const entries = await store.listWaitingEntries(serviceId || null);
     res.json(entries);
 });
 
 // GET /api/queue/wait-time/:serviceId/:position — estimate wait time
-router.get('/wait-time/:serviceId/:position', (req, res) => {
+router.get('/wait-time/:serviceId/:position', async (req, res) => {
     const { serviceId, position } = req.params;
-    const service = services.find(s => s.id === serviceId);
+    const service = await store.findServiceById(serviceId);
     if (!service) {
         return res.status(404).json({ message: 'Service not found' });
     }
@@ -61,7 +25,7 @@ router.get('/wait-time/:serviceId/:position', (req, res) => {
 });
 
 // POST /api/queue/join — user joins a queue
-router.post('/join', (req, res) => {
+router.post('/join', async (req, res) => {
     const { userId, serviceId, notes, priority } = req.body;
 
     // ── Validate ────────────────────────────────────
@@ -86,13 +50,13 @@ router.post('/join', (req, res) => {
     }
 
     // ── Check user exists ───────────────────────────
-    const user = users.find(u => u.id === userId);
+    const user = await store.findUserById(userId);
     if (!user) {
         return res.status(404).json({ message: 'User not found' });
     }
 
     // ── Check service exists & open ─────────────────
-    const service = services.find(s => s.id === serviceId);
+    const service = await store.findServiceById(serviceId);
     if (!service) {
         return res.status(404).json({ message: 'Service not found' });
     }
@@ -101,43 +65,32 @@ router.post('/join', (req, res) => {
     }
 
     // ── Check if already in this queue ──────────────
-    const alreadyIn = queueEntries.find(
-        q => q.userId === userId && q.serviceId === serviceId && q.status === 'waiting'
-    );
+    const alreadyIn = await store.findDuplicateEntry(userId, serviceId);
     if (alreadyIn) {
         return res.status(400).json({ message: 'Already in this queue' });
     }
 
-    // ── Calculate position ──────────────────────────
-    const serviceQueue = queueEntries.filter(
-        q => q.serviceId === serviceId && q.status === 'waiting'
-    );
-
-    const newEntry = {
-        id: `q${Date.now()}`,
+    // ── Create entry ────────────────────────────────
+    const newEntry = await store.createEntry({
         userId,
         serviceId,
-        joinedAt: new Date().toISOString(),
-        status: 'waiting',
         priority: priority || 'normal',
-        position: serviceQueue.length + 1,
         notes: notes || '',
-    };
-    queueEntries.push(newEntry);
+    });
 
     // Recalculate positions (handles priority ordering)
-    recalcPositions(serviceId);
+    await store.recalcPositions(serviceId);
 
     // Re-read the position after recalculation
-    const updatedEntry = queueEntries.find(q => q.id === newEntry.id);
+    const updatedEntry = await store.findEntryById(newEntry.id);
 
     // ── Notification: user joined queue ─────────────
-    addNotification(
+    await store.createNotification({
         userId,
-        'queue_update',
-        'Joined Queue',
-        `You joined the queue for ${service.name}. Position: #${updatedEntry.position}`
-    );
+        type: 'queue_update',
+        title: 'Joined Queue',
+        message: `You joined the queue for ${service.name}. Position: #${updatedEntry.position}`,
+    });
 
     // ── Compute estimated wait ──────────────────────
     const estimatedWait = (updatedEntry.position - 1) * service.expectedDuration;
@@ -146,8 +99,8 @@ router.post('/join', (req, res) => {
 });
 
 // POST /api/queue/leave/:id — user leaves queue
-router.post('/leave/:id', (req, res) => {
-    const entry = queueEntries.find(q => q.id === req.params.id);
+router.post('/leave/:id', async (req, res) => {
+    const entry = await store.findEntryById(req.params.id);
     if (!entry) {
         return res.status(404).json({ message: 'Queue entry not found' });
     }
@@ -155,12 +108,11 @@ router.post('/leave/:id', (req, res) => {
         return res.status(400).json({ message: 'Entry is not in waiting status' });
     }
 
-    entry.status = 'left';
+    await store.updateEntryStatus(entry.id, 'left');
 
     // Add to history as cancelled
-    const service = services.find(s => s.id === entry.serviceId);
-    history.unshift({
-        id: `h${Date.now()}`,
+    const service = await store.findServiceById(entry.serviceId);
+    await store.createHistory({
         userId: entry.userId,
         serviceId: entry.serviceId,
         serviceName: service?.name || 'Unknown',
@@ -171,32 +123,28 @@ router.post('/leave/:id', (req, res) => {
         outcome: 'cancelled',
     });
 
-    recalcPositions(entry.serviceId);
+    await store.recalcPositions(entry.serviceId);
     res.json({ message: 'Left queue' });
 });
 
 // POST /api/queue/serve/:serviceId — admin serves next user
-router.post('/serve/:serviceId', (req, res) => {
+router.post('/serve/:serviceId', async (req, res) => {
     const { serviceId } = req.params;
-    const service = services.find(s => s.id === serviceId);
+    const service = await store.findServiceById(serviceId);
     if (!service) {
         return res.status(404).json({ message: 'Service not found' });
     }
 
-    const serviceQueue = queueEntries
-        .filter(q => q.serviceId === serviceId && q.status === 'waiting')
-        .sort((a, b) => a.position - b.position);
-
+    const serviceQueue = await store.listWaitingEntries(serviceId);
     if (serviceQueue.length === 0) {
         return res.status(400).json({ message: 'Queue is empty' });
     }
 
     const served = serviceQueue[0];
-    served.status = 'served';
+    await store.updateEntryStatus(served.id, 'served');
 
     // Add to history
-    history.unshift({
-        id: `h${Date.now()}`,
+    await store.createHistory({
         userId: served.userId,
         serviceId,
         serviceName: service.name,
@@ -208,30 +156,27 @@ router.post('/serve/:serviceId', (req, res) => {
     });
 
     // Recalculate positions
-    recalcPositions(serviceId);
+    await store.recalcPositions(serviceId);
 
     // ── Notification: notify users close to being served ──
-    const remaining = queueEntries
-        .filter(q => q.serviceId === serviceId && q.status === 'waiting')
-        .sort((a, b) => a.position - b.position);
-
-    remaining.forEach(entry => {
+    const remaining = await store.listWaitingEntries(serviceId);
+    for (const entry of remaining) {
         if (entry.position <= 2) {
-            addNotification(
-                entry.userId,
-                'queue_update',
-                entry.position === 1 ? "You're Next!" : 'Almost Your Turn!',
-                `You are #${entry.position} in line for ${service.name}. Please be ready.`
-            );
+            await store.createNotification({
+                userId: entry.userId,
+                type: 'queue_update',
+                title: entry.position === 1 ? "You're Next!" : 'Almost Your Turn!',
+                message: `You are #${entry.position} in line for ${service.name}. Please be ready.`,
+            });
         }
-    });
+    }
 
     res.json({ message: `Served ${served.userId}`, served });
 });
 
 // POST /api/queue/no-show/:id — admin marks no-show
-router.post('/no-show/:id', (req, res) => {
-    const entry = queueEntries.find(q => q.id === req.params.id);
+router.post('/no-show/:id', async (req, res) => {
+    const entry = await store.findEntryById(req.params.id);
     if (!entry) {
         return res.status(404).json({ message: 'Queue entry not found' });
     }
@@ -239,11 +184,10 @@ router.post('/no-show/:id', (req, res) => {
         return res.status(400).json({ message: 'Entry is not in waiting status' });
     }
 
-    entry.status = 'no-show';
-    const service = services.find(s => s.id === entry.serviceId);
+    await store.updateEntryStatus(entry.id, 'no-show');
+    const service = await store.findServiceById(entry.serviceId);
 
-    history.unshift({
-        id: `h${Date.now()}`,
+    await store.createHistory({
         userId: entry.userId,
         serviceId: entry.serviceId,
         serviceName: service?.name || 'Unknown',
@@ -254,27 +198,25 @@ router.post('/no-show/:id', (req, res) => {
         outcome: 'no-show',
     });
 
-    recalcPositions(entry.serviceId);
+    await store.recalcPositions(entry.serviceId);
     res.json({ message: 'Marked as no-show' });
 });
 
 // PUT /api/queue/reorder/:id — admin reorders queue entry
-router.put('/reorder/:id', (req, res) => {
+router.put('/reorder/:id', async (req, res) => {
     const { direction } = req.body;
     if (!direction || !['up', 'down'].includes(direction)) {
         return res.status(400).json({ message: 'Direction must be up or down' });
     }
 
-    const entry = queueEntries.find(q => q.id === req.params.id && q.status === 'waiting');
-    if (!entry) {
+    const entry = await store.findEntryById(req.params.id);
+    if (!entry || entry.status !== 'waiting') {
         return res.status(404).json({ message: 'Queue entry not found' });
     }
 
-    const serviceQueue = queueEntries
-        .filter(q => q.serviceId === entry.serviceId && q.status === 'waiting')
-        .sort((a, b) => a.position - b.position);
-
+    const serviceQueue = await store.listWaitingEntries(entry.serviceId);
     const idx = serviceQueue.findIndex(q => q.id === entry.id);
+
     if (direction === 'up' && idx === 0) {
         return res.status(400).json({ message: 'Already at the top of the queue' });
     }
@@ -282,15 +224,15 @@ router.put('/reorder/:id', (req, res) => {
         return res.status(400).json({ message: 'Already at the bottom of the queue' });
     }
 
+    // Swap positions
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    const tempPos = serviceQueue[idx].position;
-    serviceQueue[idx].position = serviceQueue[swapIdx].position;
-    serviceQueue[swapIdx].position = tempPos;
+    const ourPos = serviceQueue[idx].position;
+    const theirPos = serviceQueue[swapIdx].position;
 
-    const updatedQueue = queueEntries
-        .filter(q => q.serviceId === entry.serviceId && q.status === 'waiting')
-        .sort((a, b) => a.position - b.position);
+    await store.updateEntryPosition(serviceQueue[idx].id, theirPos);
+    await store.updateEntryPosition(serviceQueue[swapIdx].id, ourPos);
 
+    const updatedQueue = await store.listWaitingEntries(entry.serviceId);
     res.json(updatedQueue);
 });
 

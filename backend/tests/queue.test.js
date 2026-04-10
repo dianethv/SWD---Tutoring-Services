@@ -1,11 +1,15 @@
+process.env.NODE_ENV = 'test';
+
 const request = require('supertest');
 const app = require('../server');
-const { resetData, queueEntries, notifications, history } = require('../data/db');
+const store = require('../data/store');
+// Keep db.js imports for direct array inspection in tests
+const { queueEntries, notifications, history } = require('../data/db');
 const assert = require('assert');
 
 describe('Queue Module', () => {
     beforeEach(() => {
-        resetData();
+        store.resetData();
     });
 
     // ── Join Queue ──────────────────────────────────
@@ -253,7 +257,7 @@ describe('Queue Module', () => {
 
 describe('History Module', () => {
     beforeEach(() => {
-        resetData();
+        store.resetData();
     });
 
     it('should return empty history initially', async () => {
@@ -285,7 +289,7 @@ describe('History Module', () => {
 
 describe('Notifications Module', () => {
     beforeEach(() => {
-        resetData();
+        store.resetData();
     });
 
     it('should return notifications after joining queue', async () => {
