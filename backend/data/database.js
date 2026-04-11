@@ -1,4 +1,5 @@
-require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+const { loadEnv } = require('../loadEnv');
+loadEnv('../.env');
 const mysql = require('mysql2/promise');
 
 function getDatabaseConfig() {
