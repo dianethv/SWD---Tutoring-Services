@@ -5,7 +5,7 @@
 // Requires: .env configured with valid DB credentials
 //           schema.sql (including queues table) already run
 
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const bcrypt = require('bcryptjs');
 const { getPool } = require('./database');
 
