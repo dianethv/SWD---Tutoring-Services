@@ -189,12 +189,6 @@ export default function Login() {
                         </button>
                     </form>
 
-                    <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200">
-                        <p className="text-xs text-amber-800 font-medium mb-1">Demo Accounts</p>
-                        <p className="text-xs text-amber-700">Student: jordan@university.edu / password123</p>
-                        <p className="text-xs text-amber-700">Admin: admin@university.edu / admin123</p>
-                    </div>
-
                     <p className="mt-6 text-center text-sm text-stone-500">
                         Don't have an account?{' '}
                         <Link to="/register" className="text-red-600 hover:text-red-700 font-medium no-underline">
