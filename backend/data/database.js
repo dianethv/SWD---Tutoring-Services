@@ -1,28 +1,39 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const mysql = require('mysql2/promise');
 
+function getDatabaseConfig() {
+  if (process.env.DATABASE_URL) {
+    const databaseUrl = new URL(process.env.DATABASE_URL);
+
+    return {
+      host: databaseUrl.hostname,
+      port: Number(databaseUrl.port) || 3306,
+      user: decodeURIComponent(databaseUrl.username),
+      password: decodeURIComponent(databaseUrl.password),
+      database: databaseUrl.pathname.replace(/^\//, ''),
+    };
+  }
+
+  return {
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT) || 3306,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+  };
+}
+
 let pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  ...getDatabaseConfig(),
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
 });
 
-/**
- * Get the active connection pool.
- * Routes should call getPool() inside request handlers (not at module load).
- */
 function getPool() {
   return pool;
 }
 
-/**
- * Replace the active pool (used by tests to inject a mock).
- */
 function setPool(p) {
   pool = p;
 }
