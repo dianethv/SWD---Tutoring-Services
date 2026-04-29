@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Backend Test</title>
+</head>
+<body>
+    <h2>Register User</h2>
+
+```
+<input id="username" placeholder="Username"><br><br>
+<input id="email" placeholder="Email"><br><br>
+<input id="password" placeholder="Password" type="password"><br><br>
+<input id="role" placeholder="Role"><br><br>
+
+<button onclick="register()">Register</button>
+
+<pre id="result"></pre>
+
+<script>
+    async function register() {
+        const data = {
+            username: document.getElementById('username').value,
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+            role: document.getElementById('role').value
+        };
+
+        try {
+            const res = await fetch('http://localhost:5000/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+            document.getElementById('result').innerText = JSON.stringify(result, null, 2);
+        } catch (err) {
+            document.getElementById('result').innerText = err;
+        }
+    }
+</script>
+```
+
+</body>
+</html>
