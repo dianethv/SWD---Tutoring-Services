@@ -81,7 +81,13 @@ export default function Register() {
         setIsLoading(false);
 
         if (result.success) {
-            navigate(result.user.role === 'admin' ? '/admin' : '/dashboard');
+            const destination =
+                result.user.role === 'admin'
+                    ? '/admin'
+                    : result.user.role === 'tutor'
+                        ? '/tutor'
+                        : '/dashboard';
+            navigate(destination);
         } else {
             setServerError(result.error);
         }
@@ -212,7 +218,7 @@ export default function Register() {
                         <div className="tc-role-row">
                             {[
                                 { role: 'student', label: 'Student', emoji: '🎓' },
-                                { role: 'admin', label: 'Tutor', emoji: '🛠️' },
+                                { role: 'tutor', label: 'Tutor', emoji: '🛠️' },
                             ].map((opt) => (
                                 <button
                                     key={opt.role}

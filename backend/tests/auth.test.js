@@ -72,6 +72,14 @@ describe('Auth Module', () => {
             assert.ok(res.body.errors.some(e => e.field === 'role'));
         });
 
+        it('should register a new tutor successfully', async () => {
+            const res = await request(app)
+                .post('/api/auth/register')
+                .send({ name: 'Tutor User', email: 'tutor2@uni.edu', password: 'test1234', role: 'tutor' });
+            assert.strictEqual(res.status, 201);
+            assert.strictEqual(res.body.user.role, 'tutor');
+        });
+
         it('should reject registration with missing role', async () => {
             const res = await request(app)
                 .post('/api/auth/register')
@@ -115,6 +123,14 @@ describe('Auth Module', () => {
                 .send({ email: 'admin@university.edu', password: 'admin123' });
             assert.strictEqual(res.status, 200);
             assert.strictEqual(res.body.user.role, 'admin');
+        });
+
+        it('should login as tutor', async () => {
+            const res = await request(app)
+                .post('/api/auth/login')
+                .send({ email: 'tutor@university.edu', password: 'tutor123' });
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(res.body.user.role, 'tutor');
         });
 
         it('should reject invalid password', async () => {

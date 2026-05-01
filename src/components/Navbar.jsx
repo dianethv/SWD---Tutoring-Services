@@ -21,6 +21,18 @@ export default function Navbar({ onMenuToggle }) {
     const navigate = useNavigate();
     const unreadCount = getUnreadCount();
     const notifications = getUserNotifications();
+    const homePath =
+        currentUser?.role === 'admin'
+            ? '/admin'
+            : currentUser?.role === 'tutor'
+                ? '/tutor'
+                : '/dashboard';
+    const profileGradient =
+        currentUser?.role === 'admin'
+            ? 'linear-gradient(135deg, #960C22, #C8102E)'
+            : currentUser?.role === 'tutor'
+                ? 'linear-gradient(135deg, #9A3412, #EA580C)'
+                : 'linear-gradient(135deg, #C8102E, #E8384F)';
 
     useEffect(() => {
         function handleClick(e) {
@@ -85,7 +97,7 @@ export default function Navbar({ onMenuToggle }) {
                     </button>
 
                     {/* Logo */}
-                    <Link to={currentUser?.role === 'admin' ? '/admin' : '/dashboard'} className="flex items-center gap-2.5 no-underline">
+                    <Link to={homePath} className="flex items-center gap-2.5 no-underline">
                         <PawMark size={34} />
                         <span className="hidden sm:inline text-lg font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.01em' }}>
                             Tutor<span style={{ color: '#C8102E' }}>Coogs</span>
@@ -220,7 +232,7 @@ export default function Navbar({ onMenuToggle }) {
                             id="profile-menu"
                         >
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                                style={{ background: currentUser?.role === 'admin' ? 'linear-gradient(135deg, #960C22, #C8102E)' : 'linear-gradient(135deg, #C8102E, #E8384F)' }}>
+                                style={{ background: profileGradient }}>
                                 {currentUser ? getInitials(currentUser.name) : '?'}
                             </div>
                             <span className="text-sm font-medium text-stone-700 hidden sm:block">{(() => { const parts = currentUser?.name?.split(' ') || []; return parts.length >= 3 ? `${parts[0]} ${parts[parts.length - 1]}` : parts[0] || ''; })()}</span>

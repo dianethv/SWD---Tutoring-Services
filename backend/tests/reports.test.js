@@ -17,7 +17,7 @@ describe('Reports Module', () => {
             const res = await request(app).get('/api/reports/users');
             assert.strictEqual(res.status, 200);
             assert.ok(Array.isArray(res.body));
-            assert.strictEqual(res.body.length, 4); // 3 students + 1 admin from seed
+            assert.strictEqual(res.body.length, 5); // 3 students + 1 tutor + 1 admin from seed
             const user = res.body.find(u => u.email === 'jordan@university.edu');
             assert.ok(user);
             assert.strictEqual(user.totalVisits, 0);
@@ -187,7 +187,7 @@ describe('Reports Module', () => {
             assert.strictEqual(res.body.totalActivity, 0);
             assert.strictEqual(res.body.avgWaitTime, 0);
             assert.strictEqual(res.body.currentlyInQueue, 0);
-            assert.strictEqual(res.body.totalUsers, 4);
+            assert.strictEqual(res.body.totalUsers, 5);
             assert.strictEqual(res.body.totalServices, 3);
         });
 
@@ -280,7 +280,7 @@ describe('Users API', () => {
             const res = await request(app).get('/api/users');
             assert.strictEqual(res.status, 200);
             assert.ok(Array.isArray(res.body));
-            assert.strictEqual(res.body.length, 4);
+            assert.strictEqual(res.body.length, 5);
             // Password should be stripped
             res.body.forEach(u => {
                 assert.strictEqual(u.password, undefined);

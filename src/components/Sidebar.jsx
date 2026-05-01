@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 export default function Sidebar({ isOpen, onClose }) {
     const { currentUser } = useApp();
     const isAdmin = currentUser?.role === 'admin';
+    const isTutor = currentUser?.role === 'tutor';
 
     const studentLinks = [
         { to: '/dashboard', label: 'Dashboard', icon: 'home' },
@@ -19,7 +20,12 @@ export default function Sidebar({ isOpen, onClose }) {
         { to: '/admin/reports', label: 'Reports', icon: 'reports' },
     ];
 
-    const links = isAdmin ? adminLinks : studentLinks;
+    const tutorLinks = [
+        { to: '/tutor', label: 'Dashboard', icon: 'home' },
+        { to: '/tutor/queues', label: 'Queue Mgmt', icon: 'queue' },
+    ];
+
+    const links = isAdmin ? adminLinks : isTutor ? tutorLinks : studentLinks;
 
     const iconPaths = {
         home: <><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></>,
@@ -74,14 +80,14 @@ export default function Sidebar({ isOpen, onClose }) {
 
             <div style={{ padding: '8px 12px' }}>
                 <p style={{ padding: '4px 12px', marginBottom: '8px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#a8a29e' }}>
-                    {isAdmin ? 'Administration' : 'Navigation'}
+                    {isAdmin ? 'Administration' : isTutor ? 'Tutor Operations' : 'Navigation'}
                 </p>
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     {links.map((link) => (
                         <NavLink
                             key={link.to}
                             to={link.to}
-                            end={link.to === '/admin' || link.to === '/dashboard'}
+                            end={link.to === '/admin' || link.to === '/tutor' || link.to === '/dashboard'}
                             onClick={onClose}
                             style={({ isActive }) => ({
                                 display: 'flex',

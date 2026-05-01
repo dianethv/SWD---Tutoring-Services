@@ -41,7 +41,13 @@ export default function Login() {
         setIsLoading(false);
 
         if (result.success) {
-            navigate(result.user.role === 'admin' ? '/admin' : '/dashboard');
+            const destination =
+                result.user.role === 'admin'
+                    ? '/admin'
+                    : result.user.role === 'tutor'
+                        ? '/tutor'
+                        : '/dashboard';
+            navigate(destination);
         } else {
             setServerError(result.error);
         }

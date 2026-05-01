@@ -31,8 +31,8 @@ router.post('/register', async (req, res) => {
 
     if (!role || typeof role !== 'string') {
         errors.push({ field: 'role', message: 'Role is required' });
-    } else if (!['student', 'admin'].includes(role)) {
-        errors.push({ field: 'role', message: 'Role must be student or admin' });
+    } else if (!['student', 'tutor', 'admin'].includes(role)) {
+        errors.push({ field: 'role', message: 'Role must be student, tutor, or admin' });
     }
 
     if (errors.length > 0) {
