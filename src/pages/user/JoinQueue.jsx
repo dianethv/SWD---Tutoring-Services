@@ -110,7 +110,13 @@ export default function JoinQueue() {
                         const queueLength = getQueueForService(service.id).length;
                         const userEntry = getUserQueueEntry(service.id);
                         const isInQueue = !!userEntry;
-                        const eta = getEstimatedWait(service.id, queueLength + 1);
+                        // When the user is already in the queue, show *their* ETA
+                        // based on their current position. Position 1 → no wait
+                        // (they're next). Otherwise show the prospective ETA for
+                        // a newcomer at queueLength + 1.
+                        const eta = isInQueue
+                            ? getEstimatedWait(service.id, userEntry.position)
+                            : getEstimatedWait(service.id, queueLength + 1);
                         const recommendation = getRecommendedAlternative(service.id);
                         const isSelected = selectedService === service.id;
                         const accent = !service.isOpen
@@ -218,7 +224,11 @@ export default function JoinQueue() {
                                         letterSpacing: '-0.025em',
                                         lineHeight: 1,
                                     }}>
-                                        {eta > 0 ? formatWait(eta, { prefix: '~' }) : 'No wait'}
+                                        {eta > 0
+                                            ? formatWait(eta, { prefix: '~' })
+                                            : isInQueue
+                                                ? "You're next"
+                                                : 'No wait'}
                                     </span>
                                 </div>
 

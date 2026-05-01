@@ -152,13 +152,25 @@ export function AppProvider({ children }) {
         }
     }, [refreshAll]);
 
+    // Clears every user-derived cache so the next user can never see the
+    // previous user's notifications / queue entries / history. We deliberately
+    // wipe BOTH React state and any persisted localStorage keys here.
     const logout = useCallback(() => {
         setCurrentUser(null);
         setQueueEntries([]);
         setHistory([]);
         setNotifications([]);
         setServiceInsights([]);
-        localStorage.removeItem('tutorcoogs_user');
+        try {
+            localStorage.removeItem('tutorcoogs_user');
+            // Future-proof: clear anything else under our namespace.
+            Object.keys(localStorage)
+                .filter((k) => k.startsWith('tutorcoogs_'))
+                .forEach((k) => localStorage.removeItem(k));
+        } catch {
+            // localStorage can throw in private/quota-exceeded contexts —
+            // logging out should still succeed even if the cleanup fails.
+        }
     }, []);
 
     // ── Queue Operations ────────────────────────────
