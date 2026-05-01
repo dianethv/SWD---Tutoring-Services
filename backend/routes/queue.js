@@ -2,6 +2,81 @@ const express = require('express');
 const router = express.Router();
 const store = require('../data/store');
 
+// ── Smart Wait-Time Estimator ───────────────────────
+// The static formula (position - 1) × expectedDuration treats every service as
+// running exactly on schedule. In reality some services run long, some short.
+// We blend the static estimate with a "drift-corrected" slot time pulled from
+// the most recent served history rows.
+//
+// driftFactor = avgHistoricalWait / (assumedAvgPositionsWaited × expectedDuration)
+//   - assumedAvgPositionsWaited = 2  (an average past student waited from
+//     about the middle of a typical small queue)
+//   - clamped to [0.5, 2.0] so a single outlier can't blow up the estimate
+//   - requires ≥ MIN_SAMPLE_FOR_BLEND served rows; below that we fall back
+//     to the static formula (cold start)
+const MIN_SAMPLE_FOR_BLEND = 5;
+const ASSUMED_AVG_POSITIONS_WAITED = 2;
+const DRIFT_LOWER_BOUND = 0.5;
+const DRIFT_UPPER_BOUND = 2.0;
+const HISTORY_SAMPLE_LIMIT = 20;
+// An alternate service is only suggested when its smart estimate is at most
+// this fraction of the target service's smart estimate AND saves the user a
+// meaningful amount of time.
+const RECOMMEND_RATIO_THRESHOLD = 0.5;
+const RECOMMEND_MIN_MINUTES_SAVED = 10;
+
+function calculateSmartEstimate({ position, expectedDuration, avgHistoricalWait, sampleSize }) {
+    const staticEstimate = Math.max(0, (position - 1) * expectedDuration);
+
+    if (!avgHistoricalWait || sampleSize < MIN_SAMPLE_FOR_BLEND) {
+        return {
+            staticEstimate,
+            smartEstimate: staticEstimate,
+            basis: 'static',
+            driftFactor: null,
+        };
+    }
+
+    const rawDrift = avgHistoricalWait / (ASSUMED_AVG_POSITIONS_WAITED * expectedDuration);
+    const drift = Math.max(DRIFT_LOWER_BOUND, Math.min(DRIFT_UPPER_BOUND, rawDrift));
+    const smartSlotTime = expectedDuration * drift;
+
+    return {
+        staticEstimate,
+        smartEstimate: Math.max(0, Math.round((position - 1) * smartSlotTime)),
+        basis: 'blended',
+        driftFactor: Number(drift.toFixed(2)),
+    };
+}
+
+async function buildServiceInsight(service) {
+    const [{ avg, sampleSize }, waitingEntries] = await Promise.all([
+        store.getAverageWaitForService(service.id, HISTORY_SAMPLE_LIMIT),
+        store.listWaitingEntries(service.id),
+    ]);
+    const newcomerPosition = waitingEntries.length + 1;
+    const estimate = calculateSmartEstimate({
+        position: newcomerPosition,
+        expectedDuration: service.expectedDuration,
+        avgHistoricalWait: avg,
+        sampleSize,
+    });
+    return {
+        serviceId: service.id,
+        serviceName: service.name,
+        category: service.category,
+        isOpen: service.isOpen,
+        expectedDuration: service.expectedDuration,
+        waitingCount: waitingEntries.length,
+        historicalAvgWait: avg,
+        sampleSize,
+        currentSmartEstimate: estimate.smartEstimate,
+        currentStaticEstimate: estimate.staticEstimate,
+        basis: estimate.basis,
+        driftFactor: estimate.driftFactor,
+    };
+}
+
 // GET /api/queue — get all waiting queue entries (optionally filter by serviceId)
 router.get('/', async (req, res) => {
     const { serviceId } = req.query;
@@ -9,7 +84,69 @@ router.get('/', async (req, res) => {
     res.json(entries);
 });
 
+// GET /api/queue/insights — per-service smart-estimate snapshot
+// Returns one row per service with the current waiting count, the historical
+// average wait, the smart estimate for a brand-new joiner, and the drift
+// factor. Cached on the client to keep render-time wait calcs synchronous.
+router.get('/insights', async (req, res) => {
+    const services = await store.listServices();
+    const insights = await Promise.all(services.map(buildServiceInsight));
+    res.json(insights);
+});
+
+// GET /api/queue/recommend/:serviceId — same-category alternate suggestion
+// Suggests a different open service in the same category whose smart estimate
+// is at least RECOMMEND_RATIO_THRESHOLD shorter and saves ≥ RECOMMEND_MIN_MINUTES_SAVED.
+router.get('/recommend/:serviceId', async (req, res) => {
+    const { serviceId } = req.params;
+    const targetService = await store.findServiceById(serviceId);
+    if (!targetService) {
+        return res.status(404).json({ message: 'Service not found' });
+    }
+
+    const allServices = await store.listServices();
+    const targetInsight = await buildServiceInsight(targetService);
+    const targetEst = targetInsight.currentSmartEstimate;
+
+    // Don't bother recommending alternatives for already-quick services.
+    if (targetEst < RECOMMEND_MIN_MINUTES_SAVED * 2) {
+        return res.json({
+            targetServiceId: serviceId,
+            targetSmartEstimate: targetEst,
+            recommendation: null,
+        });
+    }
+
+    const candidates = await Promise.all(
+        allServices
+            .filter(s => s.id !== serviceId && s.isOpen && s.category === targetService.category)
+            .map(buildServiceInsight)
+    );
+
+    const better = candidates
+        .filter(c => c.currentSmartEstimate <= targetEst * RECOMMEND_RATIO_THRESHOLD)
+        .filter(c => targetEst - c.currentSmartEstimate >= RECOMMEND_MIN_MINUTES_SAVED)
+        .sort((a, b) => a.currentSmartEstimate - b.currentSmartEstimate)[0] || null;
+
+    res.json({
+        targetServiceId: serviceId,
+        targetSmartEstimate: targetEst,
+        recommendation: better
+            ? {
+                serviceId: better.serviceId,
+                serviceName: better.serviceName,
+                category: better.category,
+                smartEstimate: better.currentSmartEstimate,
+                waitingCount: better.waitingCount,
+                minutesSaved: targetEst - better.currentSmartEstimate,
+            }
+            : null,
+    });
+});
+
 // GET /api/queue/wait-time/:serviceId/:position — estimate wait time
+// Returns both the static formula and the smart blended estimate so the
+// client can show both numbers when the smart one is active.
 router.get('/wait-time/:serviceId/:position', async (req, res) => {
     const { serviceId, position } = req.params;
     const service = await store.findServiceById(serviceId);
@@ -20,8 +157,32 @@ router.get('/wait-time/:serviceId/:position', async (req, res) => {
     if (isNaN(pos) || pos < 1) {
         return res.status(400).json({ message: 'Position must be a positive integer' });
     }
-    const estimatedWaitTime = (pos - 1) * service.expectedDuration;
-    res.json({ serviceId, position: pos, estimatedWaitTime, unit: 'minutes' });
+
+    const { avg: avgHistoricalWait, sampleSize } = await store.getAverageWaitForService(
+        serviceId,
+        HISTORY_SAMPLE_LIMIT
+    );
+    const estimate = calculateSmartEstimate({
+        position: pos,
+        expectedDuration: service.expectedDuration,
+        avgHistoricalWait,
+        sampleSize,
+    });
+
+    res.json({
+        serviceId,
+        position: pos,
+        unit: 'minutes',
+        // back-compat: existing clients expected a single estimatedWaitTime.
+        // Keep it pointed at the static formula so old assertions still pass.
+        estimatedWaitTime: estimate.staticEstimate,
+        staticEstimate: estimate.staticEstimate,
+        smartEstimate: estimate.smartEstimate,
+        historicalAvgWait: avgHistoricalWait,
+        sampleSize,
+        basis: estimate.basis,
+        driftFactor: estimate.driftFactor,
+    });
 });
 
 // POST /api/queue/join — user joins a queue

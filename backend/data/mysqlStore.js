@@ -511,6 +511,27 @@ module.exports = {
         };
     },
 
+    // ── Smart Feature: historical wait sampling ──────
+    // Returns { avg, sampleSize } from the most recent N served history rows
+    // for a service. Used by the smart wait-time estimator.
+    async getAverageWaitForService(servicePublicId, limit = 20) {
+        const pool = getPool();
+        // LIMIT can't be a bound param in mysql2.execute(); clamp + interpolate safely.
+        const lim = Math.max(1, Math.min(200, parseInt(limit, 10) || 20));
+        const [rows] = await pool.execute(
+            `SELECT h.wait_time
+             FROM history h
+             JOIN services s ON s.id = h.service_id
+             WHERE s.public_id = ? AND h.outcome = 'served' AND h.wait_time IS NOT NULL
+             ORDER BY h.created_at DESC
+             LIMIT ${lim}`,
+            [servicePublicId]
+        );
+        if (rows.length === 0) return { avg: null, sampleSize: 0 };
+        const total = rows.reduce((s, r) => s + Number(r.wait_time), 0);
+        return { avg: Math.round(total / rows.length), sampleSize: rows.length };
+    },
+
     // ── Notifications ────────────────────────────────
 
     async listNotifications(userPublicId) {

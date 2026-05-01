@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Test + coverage output
+coverage
+.nyc_output
+
 .env
 
 # Editor directories and files

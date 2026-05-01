@@ -224,6 +224,18 @@ module.exports = {
         return entry;
     },
 
+    // ── Smart Feature: historical wait sampling ──────
+    // Returns { avg, sampleSize } from the most recent N served entries
+    // for a service. Used by the smart wait-time estimator.
+    async getAverageWaitForService(serviceId, limit = 20) {
+        const served = db.history
+            .filter(h => h.serviceId === serviceId && h.outcome === 'served' && h.waitTime != null)
+            .slice(0, limit);
+        if (served.length === 0) return { avg: null, sampleSize: 0 };
+        const total = served.reduce((s, h) => s + h.waitTime, 0);
+        return { avg: Math.round(total / served.length), sampleSize: served.length };
+    },
+
     // ── Notifications ────────────────────────────────
 
     async listNotifications(userId) {

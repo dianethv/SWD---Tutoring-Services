@@ -14,6 +14,7 @@ export function AppProvider({ children }) {
     const [queueEntries, setQueueEntries] = useState([]);
     const [history, setHistory] = useState([]);
     const [notifications, setNotifications] = useState([]);
+    const [serviceInsights, setServiceInsights] = useState([]);
     const [stats, setStats] = useState({
         dailyVolume: [
             { day: 'Mon', count: 34 },
@@ -76,21 +77,34 @@ export function AppProvider({ children }) {
         }
     }, []);
 
+    // Smart-feature insights: per-service historical wait sampling + drift.
+    // Pulled alongside services so render-time wait calcs can stay synchronous.
+    const fetchInsights = useCallback(async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/queue/insights`);
+            if (res.ok) setServiceInsights(await res.json());
+        } catch (e) {
+            console.error('Failed to fetch service insights:', e);
+        }
+    }, []);
+
     // ── Refresh all data when user logs in ──────────
     const refreshAll = useCallback(async (user) => {
         await fetchServices();
         await fetchQueue();
+        await fetchInsights();
         if (user) {
             await fetchHistory(user.id);
             await fetchNotifications(user.id);
         } else {
             await fetchHistory();
         }
-    }, [fetchServices, fetchQueue, fetchHistory, fetchNotifications]);
+    }, [fetchServices, fetchQueue, fetchInsights, fetchHistory, fetchNotifications]);
 
     // Load data on mount — if user was saved in localStorage, refresh everything
     useEffect(() => {
         fetchServices();
+        fetchInsights();
         if (currentUser) {
             refreshAll(currentUser);
         }
@@ -143,6 +157,7 @@ export function AppProvider({ children }) {
         setQueueEntries([]);
         setHistory([]);
         setNotifications([]);
+        setServiceInsights([]);
         localStorage.removeItem('tutorcoogs_user');
     }, []);
 
@@ -159,49 +174,51 @@ export function AppProvider({ children }) {
             if (!res.ok) {
                 return { success: false, error: data.message || 'Failed to join queue' };
             }
-            await fetchQueue();
-            await fetchNotifications(currentUser.id);
+            await Promise.all([fetchQueue(), fetchInsights(), fetchNotifications(currentUser.id)]);
             return { success: true, entry: data };
         } catch (e) {
             return { success: false, error: 'Cannot connect to server' };
         }
-    }, [currentUser, fetchQueue, fetchNotifications]);
+    }, [currentUser, fetchQueue, fetchInsights, fetchNotifications]);
 
     const leaveQueue = useCallback(async (entryId) => {
         try {
             const res = await fetch(`${API_BASE_URL}/queue/leave/${entryId}`, { method: 'POST' });
             if (!res.ok) return;
-            await fetchQueue();
-            if (currentUser) {
-                await fetchHistory(currentUser.id);
-            }
+            await Promise.all([
+                fetchQueue(),
+                fetchInsights(),
+                currentUser ? fetchHistory(currentUser.id) : Promise.resolve(),
+            ]);
         } catch (e) {
             console.error('Failed to leave queue:', e);
         }
-    }, [currentUser, fetchQueue, fetchHistory]);
+    }, [currentUser, fetchQueue, fetchInsights, fetchHistory]);
 
     const serveNext = useCallback(async (serviceId) => {
         try {
             const res = await fetch(`${API_BASE_URL}/queue/serve/${serviceId}`, { method: 'POST' });
             if (!res.ok) return;
-            await fetchQueue();
-            await fetchHistory();
-            await fetchNotifications(currentUser?.id);
+            await Promise.all([
+                fetchQueue(),
+                fetchInsights(),
+                fetchHistory(),
+                fetchNotifications(currentUser?.id),
+            ]);
         } catch (e) {
             console.error('Failed to serve next:', e);
         }
-    }, [currentUser, fetchQueue, fetchHistory, fetchNotifications]);
+    }, [currentUser, fetchQueue, fetchInsights, fetchHistory, fetchNotifications]);
 
     const markNoShow = useCallback(async (entryId) => {
         try {
             const res = await fetch(`${API_BASE_URL}/queue/no-show/${entryId}`, { method: 'POST' });
             if (!res.ok) return;
-            await fetchQueue();
-            await fetchHistory();
+            await Promise.all([fetchQueue(), fetchInsights(), fetchHistory()]);
         } catch (e) {
             console.error('Failed to mark no-show:', e);
         }
-    }, [fetchQueue, fetchHistory]);
+    }, [fetchQueue, fetchInsights, fetchHistory]);
 
     const reorderQueue = useCallback(async (serviceId, entryId, direction) => {
         try {
@@ -211,11 +228,11 @@ export function AppProvider({ children }) {
                 body: JSON.stringify({ direction }),
             });
             if (!res.ok) return;
-            await fetchQueue();
+            await Promise.all([fetchQueue(), fetchInsights()]);
         } catch (e) {
             console.error('Failed to reorder queue:', e);
         }
-    }, [fetchQueue]);
+    }, [fetchQueue, fetchInsights]);
 
     // ── Service Management ──────────────────────────
     const createService = useCallback(async (serviceData) => {
@@ -320,13 +337,89 @@ export function AppProvider({ children }) {
         );
     }, [currentUser, queueEntries]);
 
+    // ── Smart Wait-Time Estimator (client mirror) ───
+    // Mirrors backend/routes/queue.js so render-time calls stay synchronous.
+    // Falls back to the static formula when historical data is sparse.
+    const SMART_MIN_SAMPLE = 5;
+    const SMART_ASSUMED_POSITIONS = 2;
+    const SMART_DRIFT_LOWER = 0.5;
+    const SMART_DRIFT_UPPER = 2.0;
+
     const getEstimatedWait = useCallback(
         (serviceId, position) => {
             const service = services.find((s) => s.id === serviceId);
             if (!service) return 0;
-            return (position - 1) * service.expectedDuration;
+            const insight = serviceInsights.find((i) => i.serviceId === serviceId);
+            const staticEstimate = Math.max(0, (position - 1) * service.expectedDuration);
+            if (
+                !insight ||
+                insight.sampleSize < SMART_MIN_SAMPLE ||
+                !insight.historicalAvgWait
+            ) {
+                return staticEstimate;
+            }
+            const rawDrift =
+                insight.historicalAvgWait /
+                (SMART_ASSUMED_POSITIONS * service.expectedDuration);
+            const drift = Math.max(SMART_DRIFT_LOWER, Math.min(SMART_DRIFT_UPPER, rawDrift));
+            return Math.max(0, Math.round((position - 1) * service.expectedDuration * drift));
         },
-        [services]
+        [services, serviceInsights]
+    );
+
+    // Returns metadata explaining how an estimate was produced.
+    // basis: 'static' (no/low history) | 'blended' (using historical sampling)
+    const getEstimateMeta = useCallback(
+        (serviceId) => {
+            const insight = serviceInsights.find((i) => i.serviceId === serviceId);
+            if (!insight) {
+                return { basis: 'static', sampleSize: 0, historicalAvgWait: null, driftFactor: null };
+            }
+            return {
+                basis: insight.sampleSize >= SMART_MIN_SAMPLE && insight.historicalAvgWait
+                    ? 'blended'
+                    : 'static',
+                sampleSize: insight.sampleSize,
+                historicalAvgWait: insight.historicalAvgWait,
+                driftFactor: insight.driftFactor,
+            };
+        },
+        [serviceInsights]
+    );
+
+    // Suggests an open service in the same category whose smart estimate is at
+    // most half the target's AND saves ≥ 10 minutes. Returns null otherwise.
+    const RECOMMEND_RATIO = 0.5;
+    const RECOMMEND_MIN_SAVED = 10;
+    const getRecommendedAlternative = useCallback(
+        (serviceId) => {
+            const target = services.find((s) => s.id === serviceId);
+            const targetInsight = serviceInsights.find((i) => i.serviceId === serviceId);
+            if (!target || !targetInsight) return null;
+            const targetEst = targetInsight.currentSmartEstimate;
+            if (targetEst < RECOMMEND_MIN_SAVED * 2) return null;
+
+            const better = serviceInsights
+                .filter((i) =>
+                    i.serviceId !== serviceId &&
+                    i.isOpen &&
+                    i.category === target.category &&
+                    i.currentSmartEstimate <= targetEst * RECOMMEND_RATIO &&
+                    targetEst - i.currentSmartEstimate >= RECOMMEND_MIN_SAVED
+                )
+                .sort((a, b) => a.currentSmartEstimate - b.currentSmartEstimate)[0];
+
+            if (!better) return null;
+            return {
+                serviceId: better.serviceId,
+                serviceName: better.serviceName,
+                category: better.category,
+                smartEstimate: better.currentSmartEstimate,
+                waitingCount: better.waitingCount,
+                minutesSaved: targetEst - better.currentSmartEstimate,
+            };
+        },
+        [services, serviceInsights]
     );
 
     const getUserNotifications = useCallback(() => {
@@ -349,6 +442,7 @@ export function AppProvider({ children }) {
         queueEntries,
         history,
         notifications,
+        serviceInsights,
         stats,
         login,
         register,
@@ -368,6 +462,8 @@ export function AppProvider({ children }) {
         getUserQueueEntry,
         getUserActiveQueues,
         getEstimatedWait,
+        getEstimateMeta,
+        getRecommendedAlternative,
         getUserNotifications,
         getUnreadCount,
         getUserHistory,
