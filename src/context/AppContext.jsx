@@ -308,6 +308,29 @@ export function AppProvider({ children }) {
         }
     }, [currentUser]);
 
+    const clearNotification = useCallback(async (notifId) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/notifications/${notifId}`, { method: 'DELETE' });
+            if (!res.ok) return;
+            setNotifications((prev) => prev.filter((n) => n.id !== notifId));
+        } catch (e) {
+            console.error('Failed to clear notification:', e);
+        }
+    }, []);
+
+    const clearAllNotifications = useCallback(async () => {
+        if (!currentUser) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/notifications/clear-all/${currentUser.id}`, {
+                method: 'DELETE',
+            });
+            if (!res.ok) return;
+            setNotifications((prev) => prev.filter((n) => n.userId !== currentUser.id));
+        } catch (e) {
+            console.error('Failed to clear all notifications:', e);
+        }
+    }, [currentUser]);
+
     // ── Computed Values ─────────────────────────────
     const getQueueForService = useCallback(
         (serviceId) =>
@@ -463,6 +486,8 @@ export function AppProvider({ children }) {
         addNotification,
         markNotificationRead,
         markAllNotificationsRead,
+        clearNotification,
+        clearAllNotifications,
         getQueueForService,
         getUserQueueEntry,
         getUserActiveQueues,

@@ -25,4 +25,22 @@ router.put('/read-all/:userId', async (req, res) => {
     res.json({ message: `Marked ${count} notifications as read` });
 });
 
+// DELETE /api/notifications/clear-all/:userId — delete all notifications for a user
+// Note: defined BEFORE /:id so the literal "clear-all" segment never collides
+// with an actual notification public_id.
+router.delete('/clear-all/:userId', async (req, res) => {
+    const { userId } = req.params;
+    const count = await store.deleteAllNotifications(userId);
+    res.json({ message: `Cleared ${count} notifications` });
+});
+
+// DELETE /api/notifications/:id — dismiss a single notification
+router.delete('/:id', async (req, res) => {
+    const removed = await store.deleteNotification(req.params.id);
+    if (!removed) {
+        return res.status(404).json({ message: 'Notification not found' });
+    }
+    res.json({ message: 'Notification cleared' });
+});
+
 module.exports = router;

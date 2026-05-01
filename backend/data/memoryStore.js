@@ -281,6 +281,24 @@ module.exports = {
         return count;
     },
 
+    async deleteNotification(id) {
+        const idx = db.notifications.findIndex(n => n.id === id);
+        if (idx === -1) return false;
+        db.notifications.splice(idx, 1);
+        return true;
+    },
+
+    async deleteAllNotifications(userId) {
+        const before = db.notifications.length;
+        // Iterate backwards so splice doesn't shift indexes we haven't seen yet.
+        for (let i = db.notifications.length - 1; i >= 0; i--) {
+            if (db.notifications[i].userId === userId) {
+                db.notifications.splice(i, 1);
+            }
+        }
+        return before - db.notifications.length;
+    },
+
     // ── Reset (for tests) ────────────────────────────
 
     resetData() {

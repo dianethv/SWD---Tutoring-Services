@@ -610,6 +610,25 @@ module.exports = {
         return result.affectedRows;
     },
 
+    async deleteNotification(publicId) {
+        const pool = getPool();
+        const [result] = await pool.execute(
+            'DELETE FROM notifications WHERE public_id = ?',
+            [publicId]
+        );
+        return result.affectedRows > 0;
+    },
+
+    async deleteAllNotifications(userPublicId) {
+        const pool = getPool();
+        const [result] = await pool.execute(
+            `DELETE FROM notifications
+             WHERE user_id = (SELECT id FROM users WHERE public_id = ?)`,
+            [userPublicId]
+        );
+        return result.affectedRows;
+    },
+
     // ── Reset ────────────────────────────────────────
 
     resetData() {
