@@ -17,7 +17,10 @@ const store = require('../data/store');
 //     move the estimate)
 const MIN_SAMPLE_FOR_BLEND = 1;
 const ASSUMED_AVG_POSITIONS_WAITED = 2;
-const DRIFT_LOWER_BOUND = 0.5;
+// Floor at 0 so the estimate honestly reflects the data: if past students were
+// served instantly, predict an instant serve. We still cap the upside at 2× to
+// stop a single 4-hour outlier from blowing up future estimates.
+const DRIFT_LOWER_BOUND = 0;
 const DRIFT_UPPER_BOUND = 2.0;
 // Smaller window = each new serve has visible weight in the rolling average,
 // which is what makes the demo feel responsive.

@@ -343,7 +343,8 @@ export function AppProvider({ children }) {
     // static formula only when there's no history at all.
     const SMART_MIN_SAMPLE = 1;
     const SMART_ASSUMED_POSITIONS = 2;
-    const SMART_DRIFT_LOWER = 0.5;
+    // Floor at 0 — if past students waited 0 min, we predict 0 min.
+    const SMART_DRIFT_LOWER = 0;
     const SMART_DRIFT_UPPER = 2.0;
 
     const getEstimatedWait = useCallback(

@@ -212,17 +212,17 @@ describe('Queue Module', () => {
             assert.strictEqual(res.body.smartEstimate, 50);
         });
 
-        it('still blends when every served wait_time is 0 (instant serves)', async () => {
-            // Regression: a real avg of 0 is NOT the same as "no data".
-            // The blend should still engage and the drift should clamp to 0.5.
+        it('returns 0 when every served wait_time is 0 (instant serves)', async () => {
+            // The estimator should honestly reflect the data: if the service
+            // historically serves instantly, predict an instant serve.
             seedSlowHistory('s1', 6, 0);
             const res = await request(app).get('/api/queue/wait-time/s1/3');
             assert.strictEqual(res.body.basis, 'blended');
             assert.strictEqual(res.body.sampleSize, 6);
             assert.strictEqual(res.body.historicalAvgWait, 0);
-            assert.strictEqual(res.body.driftFactor, 0.5);
-            // position 3 → (3-1) * 25 * 0.5 = 25 min (vs static 50 min)
-            assert.strictEqual(res.body.smartEstimate, 25);
+            assert.strictEqual(res.body.driftFactor, 0);
+            assert.strictEqual(res.body.smartEstimate, 0);
+            // The static formula is still reported alongside for transparency.
             assert.strictEqual(res.body.staticEstimate, 50);
         });
 
