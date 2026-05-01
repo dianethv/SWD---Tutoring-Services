@@ -12,11 +12,17 @@ import ServiceManagement from './pages/admin/ServiceManagement'
 import QueueManagement from './pages/admin/QueueManagement'
 import Reports from './pages/admin/Reports'
 
-function ProtectedRoute({ children, allowedRole }) {
+function getHomePath(role) {
+  if (role === 'admin') return '/admin'
+  if (role === 'tutor') return '/tutor'
+  return '/dashboard'
+}
+
+function ProtectedRoute({ children, allowedRoles }) {
   const { currentUser } = useApp()
   if (!currentUser) return <Navigate to="/login" replace />
-  if (allowedRole && currentUser.role !== allowedRole) {
-    return <Navigate to={currentUser.role === 'admin' ? '/admin' : '/dashboard'} replace />
+  if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
+    return <Navigate to={getHomePath(currentUser.role)} replace />
   }
   return children
 }
@@ -30,7 +36,7 @@ function AppRoutes() {
         path="/login"
         element={
           currentUser ? (
-            <Navigate to={currentUser.role === 'admin' ? '/admin' : '/dashboard'} replace />
+            <Navigate to={getHomePath(currentUser.role)} replace />
           ) : (
             <Login />
           )
@@ -40,21 +46,26 @@ function AppRoutes() {
         path="/register"
         element={
           currentUser ? (
-            <Navigate to={currentUser.role === 'admin' ? '/admin' : '/dashboard'} replace />
+            <Navigate to={getHomePath(currentUser.role)} replace />
           ) : (
             <Register />
           )
         }
       />
 
-      <Route element={<ProtectedRoute allowedRole="student"><Layout /></ProtectedRoute>}>
+      <Route element={<ProtectedRoute allowedRoles={['student']}><Layout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/join-queue" element={<JoinQueue />} />
         <Route path="/queue-status" element={<QueueStatus />} />
         <Route path="/history" element={<History />} />
       </Route>
 
-      <Route element={<ProtectedRoute allowedRole="admin"><Layout /></ProtectedRoute>}>
+      <Route element={<ProtectedRoute allowedRoles={['tutor', 'admin']}><Layout /></ProtectedRoute>}>
+        <Route path="/tutor" element={<AdminDashboard />} />
+        <Route path="/tutor/queues" element={<QueueManagement />} />
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={['admin']}><Layout /></ProtectedRoute>}>
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/services" element={<ServiceManagement />} />
         <Route path="/admin/queues" element={<QueueManagement />} />

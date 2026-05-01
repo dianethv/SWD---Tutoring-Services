@@ -16,6 +16,7 @@ const bcrypt = require('bcryptjs');
 const SALT_ROUNDS = 10;
 const STUDENT_PASSWORD_HASH = bcrypt.hashSync('password123', SALT_ROUNDS);
 const ADMIN_PASSWORD_HASH = bcrypt.hashSync('admin123', SALT_ROUNDS);
+const TUTOR_PASSWORD_HASH = bcrypt.hashSync('tutor123', SALT_ROUNDS);
 
 const SEED_DATE = '2024-01-01';
 
@@ -24,6 +25,7 @@ function seedUsers() {
         { id: 'u1', name: 'Jordan Rivera', email: 'jordan@university.edu', password: STUDENT_PASSWORD_HASH, role: 'student', createdAt: SEED_DATE },
         { id: 'u2', name: 'Alex Chen',     email: 'alex@university.edu',   password: STUDENT_PASSWORD_HASH, role: 'student', createdAt: SEED_DATE },
         { id: 'u3', name: 'Sam Patel',     email: 'sam@university.edu',    password: STUDENT_PASSWORD_HASH, role: 'student', createdAt: SEED_DATE },
+        { id: 't1', name: 'Taylor Brooks', email: 'tutor@university.edu',  password: TUTOR_PASSWORD_HASH, role: 'tutor',   createdAt: SEED_DATE },
         { id: 'a1', name: 'Dr. Emily Watson', email: 'admin@university.edu', password: ADMIN_PASSWORD_HASH, role: 'admin',   createdAt: SEED_DATE },
     ];
 }

@@ -18,6 +18,7 @@ async function seed() {
 
     // ── Users ────────────────────────────────────────
     const studentPw = await bcrypt.hash('password123', SALT_ROUNDS);
+    const tutorPw = await bcrypt.hash('tutor123', SALT_ROUNDS);
     const adminPw = await bcrypt.hash('admin123', SALT_ROUNDS);
 
     const users = [
@@ -25,6 +26,7 @@ async function seed() {
         ['u2', 'Alex Chen', 'alex@university.edu', studentPw, 'student'],
         ['u3', 'Sam Patel', 'sam@university.edu', studentPw, 'student'],
         ['u4', 'Morgan Lee', 'morgan@university.edu', studentPw, 'student'],
+        ['t1', 'Taylor Brooks', 'tutor@university.edu', tutorPw, 'tutor'],
         ['a1', 'Dr. Emily Watson', 'admin@university.edu', adminPw, 'admin'],
         ['a2', 'Prof. Marcus Johnson', 'marcus@university.edu', adminPw, 'admin'],
     ];
