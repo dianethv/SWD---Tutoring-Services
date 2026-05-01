@@ -33,7 +33,7 @@ export default function Layout() {
     }, [isDesktop, sidebarOpen]);
 
     return (
-        <div className="app-shell" style={{ minHeight: '100vh', background: '#f5f5f4', fontFamily: "'Inter', system-ui, sans-serif" }}>
+        <div className="app-shell" style={{ minHeight: '100vh', background: '#fafaf7', fontFamily: "'Inter', system-ui, sans-serif" }}>
             <Navbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { PawMark } from './authShared';
 
 export default function Navbar({ onMenuToggle }) {
     const {
@@ -85,11 +86,8 @@ export default function Navbar({ onMenuToggle }) {
 
                     {/* Logo */}
                     <Link to={currentUser?.role === 'admin' ? '/admin' : '/dashboard'} className="flex items-center gap-2.5 no-underline">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
-                            style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}>
-                            🐾
-                        </div>
-                        <span className="hidden sm:inline text-lg font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                        <PawMark size={34} />
+                        <span className="hidden sm:inline text-lg font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.01em' }}>
                             Tutor<span style={{ color: '#C8102E' }}>Coogs</span>
                         </span>
                     </Link>

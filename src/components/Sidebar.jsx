@@ -108,10 +108,20 @@ export default function Sidebar({ isOpen, onClose }) {
 
             {/* Bottom help card */}
             <div className="sidebar-help-card" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px', borderTop: '1px solid #f5f5f4' }}>
-                <div style={{ padding: '14px', borderRadius: '12px', background: 'linear-gradient(135deg, #fef2f2, #fee2e2)', border: '1px solid #fecaca' }}>
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: '#960C22', marginBottom: '4px' }}>Need help?</p>
-                    <p style={{ fontSize: '12px', color: '#C8102E', lineHeight: 1.5 }}>
-                        Visit the tutoring center in Room 204 of the Student Union.
+                <div style={{
+                    padding: '14px',
+                    borderRadius: '12px',
+                    background: '#FAF7F2',
+                    backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(28, 25, 23, 0.06) 1px, transparent 0)',
+                    backgroundSize: '18px 18px',
+                    border: '1px solid #ece9e2',
+                    borderTop: '3px solid #C8102E',
+                }}>
+                    <p style={{ fontSize: '10.5px', fontWeight: 700, color: '#78716c', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        Need a hand?
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#44403c', lineHeight: 1.55, margin: 0 }}>
+                        Visit the tutoring center in <strong style={{ color: '#1c1917' }}>Room 204</strong>, Student Union.
                     </p>
                 </div>
             </div>

@@ -15,352 +15,443 @@ export default function Dashboard() {
         return 'Good evening';
     };
 
-    const servedCount = history.filter((h) => h.outcome === 'served').length;
-    const avgWait = history.filter((h) => h.waitTime).length > 0
-        ? Math.round(history.filter((h) => h.waitTime).reduce((s, h) => s + h.waitTime, 0) / history.filter((h) => h.waitTime).length)
-        : 0;
+    const firstName = currentUser?.name?.split(' ')[0] || 'there';
+    const servedHistory = history.filter((h) => h.outcome === 'served');
+    const waitedHistory = history.filter((h) => h.waitTime);
+    const servedCount = servedHistory.length;
+    const avgWait =
+        waitedHistory.length > 0
+            ? Math.round(waitedHistory.reduce((s, h) => s + h.waitTime, 0) / waitedHistory.length)
+            : 0;
 
-    // Shared style tokens
-    const card = {
-        background: '#fff',
-        border: '1px solid #e7e5e4',
-        borderRadius: '16px',
-        padding: '24px',
-    };
-    const sectionGap = { marginBottom: '32px' };
-    const heading = { fontFamily: "'Outfit', sans-serif", fontSize: '18px', fontWeight: 700, color: '#1c1917', margin: 0 };
-    const subtext = { fontSize: '13px', color: '#78716c', marginTop: '4px' };
-    const linkStyle = { fontSize: '13px', color: '#C8102E', fontWeight: 600, textDecoration: 'none' };
+    // Hero "my queue" ticket — features the user's first active queue.
+    const heroQueue = activeQueues[0];
+    const heroService = heroQueue ? services.find((s) => s.id === heroQueue.serviceId) : null;
+    const heroEta = heroQueue ? getEstimatedWait(heroQueue.serviceId, heroQueue.position) : 0;
 
     return (
         <div className="dashboard-page">
-            {/* ── Welcome Banner ─────────────────────────────── */}
-            <div
-  className="dashboard-hero"
-  style={{
-    borderRadius: '20px',
-    padding: '48px 40px',
-    background:
-      'linear-gradient(135deg, #C8102E 0%, #A60F26 50%, #7A0B1C 100%)',
-    position: 'relative',
-    overflow: 'hidden',
-    marginBottom: '40px',
-  }}
->
-  {/* floating glow */}
-  <div
-    className="glow-orb"
-    style={{
-      position: 'absolute',
-      top: '-80px',
-      right: '-80px',
-      width: '260px',
-      height: '260px',
-      borderRadius: '50%',
-      background: 'rgba(255,255,255,0.08)',
-    }}
-  />
-  <div
-    className="glow-orb"
-    style={{
-      position: 'absolute',
-      bottom: '-60px',
-      left: '30%',
-      width: '180px',
-      height: '180px',
-      borderRadius: '50%',
-      background: 'rgba(255,255,255,0.06)',
-      animationDelay: '2s',
-    }}
-  />
+            {/* ── Hero ────────────────────────────────────────────────── */}
+            <section className="tc-page-hero">
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 320px)',
+                        gap: 32,
+                        alignItems: 'center',
+                    }}
+                    className="dashboard-hero-grid"
+                >
+                    <div>
+                        <span className="tc-page-eyebrow">
+                            {activeQueues.length > 0 ? 'Live Queue · You\'re In' : 'Tutoring Center · Live'}
+                        </span>
+                        <h1 className="tc-page-headline" style={{ marginTop: 16 }}>
+                            {getGreeting()}, {firstName}
+                            <span className="tc-dot">.</span>
+                        </h1>
+                        <p className="tc-page-sub">
+                            {activeQueues.length > 0
+                                ? `You're in ${activeQueues.length} ${activeQueues.length > 1 ? 'queues' : 'queue'} right now. We'll notify you before your turn — keep studying.`
+                                : `Browse ${openServices.length} live tutoring ${openServices.length === 1 ? 'service' : 'services'}. Hop in a queue and we'll notify you when it's your turn.`}
+                        </p>
+                        <div style={{ marginTop: 24, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            <Link
+                                to="/join-queue"
+                                style={{
+                                    padding: '12px 22px',
+                                    borderRadius: 12,
+                                    background: '#C8102E',
+                                    color: '#fff',
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    boxShadow: '0 4px 14px -6px rgba(200, 16, 46, 0.45)',
+                                    transition: 'background 0.2s, transform 0.2s',
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = '#960C22'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = '#C8102E'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                            >
+                                Join a queue
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                    <polyline points="12 5 19 12 12 19" />
+                                </svg>
+                            </Link>
+                            {activeQueues.length > 0 && (
+                                <Link
+                                    to="/queue-status"
+                                    style={{
+                                        padding: '12px 22px',
+                                        borderRadius: 12,
+                                        background: '#ffffff',
+                                        color: '#1c1917',
+                                        fontSize: 13,
+                                        fontWeight: 600,
+                                        textDecoration: 'none',
+                                        border: '1px solid #ece9e2',
+                                        transition: 'border-color 0.2s, color 0.2s',
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#1c1917'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#ece9e2'; }}
+                                >
+                                    View live tracking
+                                </Link>
+                            )}
+                        </div>
+                    </div>
 
-  <div style={{ position: 'relative', zIndex: 1, maxWidth: '600px' }}>
-    <div className="fade-up" style={{ marginBottom: '14px' }}>
-      <span
-        style={{
-          fontSize: '12px',
-          fontWeight: 600,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: '#fecdd3',
-        }}
-      >
-        Tutoring Center • Open Now
-      </span>
-    </div>
+                    {/* Hero ticket — user's primary queue or a CTA card */}
+                    <div className="dashboard-hero-ticket">
+                        {heroQueue && heroService ? (
+                            <Link to="/queue-status" style={{ textDecoration: 'none', display: 'block' }}>
+                                <div className="tc-ticket tc-ticket-stripe" style={{ padding: '24px 28px' }}>
+                                    <div className="tc-ticket-cut-l" />
+                                    <div className="tc-ticket-cut-r" />
 
-    <h1
-      className="fade-up"
-      style={{
-        fontFamily: "'Outfit', sans-serif",
-        fontSize: '32px',
-        fontWeight: 700,
-        color: '#fff',
-        margin: '0 0 12px 0',
-        lineHeight: 1.25,
-      }}
-    >
-      {getGreeting()},{' '}
-      <span style={{ color: '#fff', opacity: 0.95 }}>
-        {currentUser?.name?.split(' ')[0]}
-      </span>{' '}
-      👋
-    </h1>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                                        <span className="tc-pill tc-pill-brand">YOUR TICKET</span>
+                                        <span style={{ fontSize: 11, fontWeight: 700, color: '#a8a29e', letterSpacing: '0.12em', fontFamily: 'JetBrains Mono, monospace' }}>
+                                            #{heroQueue.id?.slice(-4).toUpperCase() || '0001'}
+                                        </span>
+                                    </div>
 
-    <p
-      className="fade-up-delay"
-      style={{
-        fontSize: '15px',
-        color: '#fee2e2',
-        lineHeight: 1.6,
-        margin: '0 0 28px 0',
-      }}
-    >
-      {activeQueues.length > 0
-        ? `You're in ${activeQueues.length} queue${
-            activeQueues.length > 1 ? 's' : ''
-          }. We'll notify you before your turn.`
-        : `Browse available tutoring services and hop in a queue. We'll notify you when it's your turn.`}
-    </p>
-    <div className="fade-up-delay" style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-      <Link
-        to="/join-queue"
-        style={{
-          padding: '12px 22px',
-          borderRadius: '12px',
-          background: '#fff',
-          color: '#960C22',
-          fontSize: '14px',
-          fontWeight: 600,
-          textDecoration: 'none',
-          transition: 'all 0.2s ease',
-        }}
-        onMouseEnter={(e) => (e.target.style.transform = 'scale(1.03)')}
-        onMouseLeave={(e) => (e.target.style.transform = 'scale(1)')}
-      >
-        Join a Queue
-      </Link>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                        <span className="tc-mono" style={{ fontSize: 56, fontWeight: 700, color: '#1c1917', letterSpacing: '-0.04em', lineHeight: 1 }}>
+                                            #{heroQueue.position}
+                                        </span>
+                                        <span className="tc-mono" style={{ fontSize: 12, color: '#a8a29e', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
+                                            in line
+                                        </span>
+                                    </div>
 
-      {activeQueues.length > 0 && (
-        <Link
-          to="/queue-status"
-          style={{
-            padding: '12px 22px',
-            borderRadius: '12px',
-            background: 'rgba(255,255,255,0.18)',
-            color: '#fff',
-            fontSize: '14px',
-            fontWeight: 600,
-            textDecoration: 'none',
-            backdropFilter: 'blur(6px)',
-            border: '1px solid rgba(255,255,255,0.25)',
-            transition: 'all 0.2s ease',
-          }}
-          onMouseEnter={(e) =>
-            (e.target.style.background = 'rgba(255,255,255,0.28)')
-          }
-          onMouseLeave={(e) =>
-            (e.target.style.background = 'rgba(255,255,255,0.18)')
-          }
-        >
-          View Live Tracking
-        </Link>
-      )}
-    </div>
-  </div>
+                                    <p style={{ fontSize: 14, fontWeight: 600, color: '#1c1917', marginTop: 14 }}>{heroService.name}</p>
+                                    <p style={{ fontSize: 12, color: '#78716c', marginTop: 2 }}>
+                                        {heroService.category} · ~{heroEta > 0 ? heroEta : '<1'} min wait
+                                    </p>
 
-    {/* Decorative */}
-                <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-                <div style={{ position: 'absolute', bottom: '-60px', right: '80px', width: '140px', height: '140px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
-                <div style={{ position: 'absolute', top: '20px', right: '28px', fontSize: '48px', opacity: 0.15, userSelect: 'none' }}>🐾</div>
-            </div>
+                                    <div className="tc-ticket-divider" />
 
-            {/* ── Stats Row ──────────────────────────────────── */}
-            <div style={{ ...sectionGap }}>
-                <h2 style={heading}>Your Overview</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '16px' }}>
-                    {[
-                        { label: 'Active Queues', value: activeQueues.length, bg: '#dbeafe', iconColor: '#3b82f6', icon: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></> },
-                        { label: 'Sessions Done', value: servedCount, bg: '#d1fae5', iconColor: '#059669', icon: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></> },
-                        { label: 'Unread Alerts', value: recentNotifs.length, bg: '#fef2f2', iconColor: '#d97706', icon: <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></> },
-                        { label: 'Avg Wait', value: avgWait > 0 ? `${avgWait}m` : '—', bg: '#ede9fe', iconColor: '#7c3aed', icon: <><path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l4 2" /></> },
-                    ].map((stat) => (
-                        <div key={stat.label} style={card}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: stat.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stat.iconColor} strokeWidth="2">{stat.icon}</svg>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11 }}>
+                                        <span className="tc-pill tc-pill-success">
+                                            <span className="tc-pulse-dot" /> {heroQueue.position === 1 ? "YOU'RE NEXT" : 'WAITING'}
+                                        </span>
+                                        <span className="tc-mono" style={{ color: '#a8a29e', letterSpacing: '0.12em', fontWeight: 600 }}>
+                                            VIEW LIVE →
+                                        </span>
+                                    </div>
+                                </div>
+                            </Link>
+                        ) : (
+                            <div className="tc-ticket tc-ticket-stripe" style={{ padding: '24px 28px' }}>
+                                <div className="tc-ticket-cut-l" />
+                                <div className="tc-ticket-cut-r" />
+
+                                <span className="tc-pill tc-pill-neutral">NO TICKET YET</span>
+
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 16 }}>
+                                    <span className="tc-mono" style={{ fontSize: 56, fontWeight: 700, color: '#1c1917', letterSpacing: '-0.04em', lineHeight: 1 }}>
+                                        {openServices.length}
+                                    </span>
+                                    <span className="tc-mono" style={{ fontSize: 12, color: '#a8a29e', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
+                                        live services
+                                    </span>
+                                </div>
+
+                                <p style={{ fontSize: 14, fontWeight: 600, color: '#1c1917', marginTop: 14 }}>
+                                    Ready when you are.
+                                </p>
+                                <p style={{ fontSize: 12, color: '#78716c', marginTop: 2 }}>
+                                    Pick a service and grab a ticket.
+                                </p>
+
+                                <div className="tc-ticket-divider" />
+
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11 }}>
+                                    <span className="tc-pill tc-pill-success">
+                                        <span className="tc-pulse-dot" /> CENTER OPEN
+                                    </span>
+                                    <Link
+                                        to="/join-queue"
+                                        style={{ color: '#1c1917', fontWeight: 700, fontSize: 11, letterSpacing: '0.12em', fontFamily: 'JetBrains Mono, monospace', textDecoration: 'none' }}
+                                    >
+                                        JOIN →
+                                    </Link>
+                                </div>
                             </div>
-                            <p style={{ fontSize: '28px', fontWeight: 700, color: '#1c1917', margin: '0 0 2px 0', lineHeight: 1 }}>{stat.value}</p>
-                            <p style={{ fontSize: '13px', color: '#78716c', margin: 0 }}>{stat.label}</p>
+                        )}
+                    </div>
+                </div>
+            </section>
+
+            {/* ── Stats row ─────────────────────────────────────────── */}
+            <section style={{ marginBottom: 36 }}>
+                <div className="tc-section-head">
+                    <div>
+                        <span className="tc-page-eyebrow">Your Overview</span>
+                        <h2 className="tc-section-title">At a glance</h2>
+                    </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                    {[
+                        { label: 'Active Queues', value: activeQueues.length, meta: activeQueues.length > 0 ? `next: ${services.find((s) => s.id === activeQueues[0].serviceId)?.name || '—'}` : 'not in any queue' },
+                        { label: 'Sessions Done', value: servedCount, meta: servedCount > 0 ? `${servedHistory[0]?.serviceName || ''} most recent` : 'no sessions yet' },
+                        { label: 'Unread Alerts', value: recentNotifs.length, meta: recentNotifs.length > 0 ? 'check the bell' : 'all caught up' },
+                        { label: 'Avg Wait', value: avgWait > 0 ? `${avgWait}m` : '—', meta: waitedHistory.length > 0 ? `across ${waitedHistory.length} sessions` : 'first time soon' },
+                    ].map((stat) => (
+                        <div key={stat.label} className="tc-stat">
+                            <p className="tc-stat-eyebrow">
+                                <span>{stat.label}</span>
+                            </p>
+                            <p className="tc-stat-value">{stat.value}</p>
+                            <p className="tc-stat-meta">{stat.meta}</p>
                         </div>
                     ))}
                 </div>
-            </div>
+            </section>
 
-            {/* ── Active Queues ───────────────────────────────── */}
+            {/* ── Active queues ─────────────────────────────────────── */}
             {activeQueues.length > 0 && (
-                <div style={sectionGap}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
-                        <h2 style={heading}>Your Active Queues</h2>
-                        <Link to="/queue-status" style={linkStyle}>View details →</Link>
+                <section style={{ marginBottom: 36 }}>
+                    <div className="tc-section-head">
+                        <div>
+                            <span className="tc-page-eyebrow">Live · Updates Every Few Seconds</span>
+                            <h2 className="tc-section-title">Your active queues</h2>
+                        </div>
+                        <Link to="/queue-status" className="tc-link">
+                            View details
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                                <polyline points="12 5 19 12 12 19" />
+                            </svg>
+                        </Link>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
                         {activeQueues.map((q) => {
                             const service = services.find((s) => s.id === q.serviceId);
                             const eta = getEstimatedWait(q.serviceId, q.position);
                             const isNext = q.position === 1;
-                            const accent = isNext ? '#3b82f6' : '#C8102E';
                             return (
-                                <Link to="/queue-status" key={q.id} style={{ ...card, textDecoration: 'none', borderTop: `3px solid ${accent}`, padding: 0, overflow: 'hidden' }}>
-                                    <div style={{ padding: '24px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                                <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
-                                                    {service?.icon}
-                                                </div>
-                                                <div>
-                                                    <p style={{ fontWeight: 600, color: '#1c1917', margin: 0, fontSize: '15px' }}>{service?.name}</p>
-                                                    <p style={{ fontSize: '12px', color: '#a8a29e', margin: '2px 0 0 0' }}>{service?.category}</p>
-                                                </div>
-                                            </div>
-                                            <span style={{
-                                                padding: '4px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600,
-                                                background: isNext ? '#eff6ff' : '#f0fdf4',
-                                                color: isNext ? '#2563eb' : '#16a34a',
-                                                border: `1px solid ${isNext ? '#bfdbfe' : '#bbf7d0'}`,
-                                            }}>
-                                                {isNext ? "You're next!" : 'Waiting'}
+                                <Link
+                                    to="/queue-status"
+                                    key={q.id}
+                                    className="tc-lift"
+                                    style={{
+                                        textDecoration: 'none',
+                                        background: '#ffffff',
+                                        border: '1px solid #e7e5e4',
+                                        borderTop: `3px solid ${isNext ? '#16a34a' : '#C8102E'}`,
+                                        borderRadius: 14,
+                                        padding: 22,
+                                        display: 'block',
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                                        <span className="tc-stat-eyebrow" style={{ margin: 0 }}>{service?.category || '—'}</span>
+                                        {isNext ? (
+                                            <span className="tc-pill tc-pill-success">
+                                                <span className="tc-pulse-dot" /> NEXT UP
                                             </span>
-                                        </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-                                            <div style={{ padding: '14px', borderRadius: '10px', background: '#fafaf9', textAlign: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#78716c', margin: '0 0 4px 0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Position</p>
-                                                <p style={{ fontSize: '24px', fontWeight: 700, color: accent, margin: 0 }}>#{q.position}</p>
-                                            </div>
-                                            <div style={{ padding: '14px', borderRadius: '10px', background: '#fafaf9', textAlign: 'center' }}>
-                                                <p style={{ fontSize: '11px', color: '#78716c', margin: '0 0 4px 0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Est. Wait</p>
-                                                <p style={{ fontSize: '24px', fontWeight: 700, color: '#1c1917', margin: 0 }}>{eta > 0 ? `${eta}m` : '<1m'}</p>
-                                            </div>
-                                        </div>
-                                        <div style={{ height: '6px', background: '#f5f5f4', borderRadius: '3px', overflow: 'hidden' }}>
-                                            <div style={{
-                                                height: '100%', borderRadius: '3px',
-                                                width: `${Math.max(15, 100 - (q.position - 1) * 25)}%`,
-                                                background: `linear-gradient(90deg, ${accent}, ${isNext ? '#60a5fa' : '#E8384F'})`,
-                                                transition: 'width 0.7s ease',
-                                            }} />
-                                        </div>
+                                        ) : (
+                                            <span className="tc-pill tc-pill-brand">WAITING</span>
+                                        )}
+                                    </div>
+
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                        <span className="tc-mono" style={{ fontSize: 44, fontWeight: 700, color: '#1c1917', letterSpacing: '-0.035em', lineHeight: 1 }}>
+                                            #{q.position}
+                                        </span>
+                                        <span className="tc-mono" style={{ fontSize: 11, color: '#a8a29e', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
+                                            position
+                                        </span>
+                                    </div>
+                                    <p style={{ fontSize: 14, fontWeight: 600, color: '#1c1917', marginTop: 12 }}>{service?.name || 'Service'}</p>
+
+                                    <div className="tc-divider-dashed" />
+
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11 }}>
+                                        <span className="tc-mono" style={{ color: '#78716c', letterSpacing: '0.1em', fontWeight: 600 }}>
+                                            ETA <span style={{ color: '#1c1917' }}>~{eta > 0 ? eta : '<1'}M</span>
+                                        </span>
+                                        <span className="tc-mono" style={{ color: '#a8a29e', letterSpacing: '0.12em', fontWeight: 600 }}>
+                                            VIEW →
+                                        </span>
+                                    </div>
+
+                                    <div className="tc-bar-track" style={{ marginTop: 14 }}>
+                                        <div
+                                            className="tc-bar-fill"
+                                            style={{ width: `${Math.max(15, 100 - (q.position - 1) * 25)}%` }}
+                                        />
                                     </div>
                                 </Link>
                             );
                         })}
                     </div>
-                </div>
+                </section>
             )}
 
-            {/* ── Available Services ─────────────────────────── */}
-            <div style={sectionGap}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                    <h2 style={heading}>Available Services</h2>
-                    <Link to="/join-queue" style={linkStyle}>Browse all →</Link>
+            {/* ── Available services ────────────────────────────────── */}
+            <section style={{ marginBottom: 36 }}>
+                <div className="tc-section-head">
+                    <div>
+                        <span className="tc-page-eyebrow">Open Now · {openServices.length} {openServices.length === 1 ? 'service' : 'services'}</span>
+                        <h2 className="tc-section-title">Available services</h2>
+                    </div>
+                    <Link to="/join-queue" className="tc-link">
+                        Browse all
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                    </Link>
                 </div>
-                <p style={subtext}>{openServices.length} services currently accepting students</p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
                     {openServices.slice(0, 6).map((service) => (
-                        <Link to="/join-queue" key={service.id} style={{ ...card, textDecoration: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <Link
+                            to="/join-queue"
+                            key={service.id}
+                            className="tc-lift"
+                            style={{
+                                textDecoration: 'none',
+                                background: '#ffffff',
+                                border: '1px solid #e7e5e4',
+                                borderRadius: 14,
+                                padding: 22,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                gap: 16,
+                            }}
+                        >
                             <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
-                                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
-                                        {service.icon}
-                                    </div>
-                                    <div>
-                                        <p style={{ fontWeight: 600, color: '#1c1917', margin: 0, fontSize: '15px' }}>{service.name}</p>
-                                        <span style={{ fontSize: '12px', color: '#a8a29e' }}>{service.category}</span>
-                                    </div>
-                                </div>
-                                <p style={{ fontSize: '13px', color: '#57534e', lineHeight: 1.6, margin: '0 0 16px 0' }}>
-                                    {service.description}
-                                </p>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px solid #f5f5f4' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <span style={{ fontSize: '12px', color: '#78716c' }}>~{service.expectedDuration} min</span>
-                                    <span style={{
-                                        padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
-                                        background: service.priorityLevel === 'high' ? '#fef2f2' : '#f0fdf4',
-                                        color: service.priorityLevel === 'high' ? '#dc2626' : '#16a34a',
-                                    }}>
-                                        {service.priorityLevel}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                                    <span className="tc-stat-eyebrow" style={{ margin: 0 }}>{service.category}</span>
+                                    <span className="tc-pill tc-pill-success">
+                                        <span className="tc-pulse-dot" /> OPEN
                                     </span>
                                 </div>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#16a34a', fontWeight: 600 }}>
-                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
-                                    Open
+                                <p style={{ fontSize: 16, fontWeight: 600, color: '#1c1917', margin: '0 0 6px 0', letterSpacing: '-0.005em' }}>
+                                    {service.name}
+                                </p>
+                                <p style={{ fontSize: 13, color: '#78716c', lineHeight: 1.55, margin: 0 }}>{service.description}</p>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 14, borderTop: '1px dashed #e7e5e4' }}>
+                                <span className="tc-mono" style={{ fontSize: 11, color: '#78716c', letterSpacing: '0.1em', fontWeight: 600 }}>
+                                    ~{service.expectedDuration}M SESSION
+                                </span>
+                                <span style={{ fontSize: 11, fontWeight: 600, color: '#1c1917', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                    Join
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                        <polyline points="12 5 19 12 12 19" />
+                                    </svg>
                                 </span>
                             </div>
                         </Link>
                     ))}
                 </div>
-            </div>
+            </section>
 
-            {/* ── Recent Activity ────────────────────────────── */}
+            {/* ── Recent activity ───────────────────────────────────── */}
             {history.length > 0 && (
-                <div style={sectionGap}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
-                        <h2 style={heading}>Recent Activity</h2>
-                        <Link to="/history" style={linkStyle}>Full history →</Link>
+                <section style={{ marginBottom: 36 }}>
+                    <div className="tc-section-head">
+                        <div>
+                            <span className="tc-page-eyebrow">Receipts</span>
+                            <h2 className="tc-section-title">Recent activity</h2>
+                        </div>
+                        <Link to="/history" className="tc-link">
+                            Full history
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                                <polyline points="12 5 19 12 12 19" />
+                            </svg>
+                        </Link>
                     </div>
-                    <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
-                        {history.slice(0, 4).map((h, i) => (
-                            <div key={h.id} style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px',
-                                padding: '16px 24px',
-                                borderBottom: i < Math.min(history.length, 4) - 1 ? '1px solid #f5f5f4' : 'none',
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                    <div style={{
-                                        width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700,
-                                        background: h.outcome === 'served' ? '#f0fdf4' : h.outcome === 'cancelled' ? '#f5f5f4' : '#fef2f2',
-                                        color: h.outcome === 'served' ? '#16a34a' : h.outcome === 'cancelled' ? '#78716c' : '#dc2626',
-                                    }}>
-                                        {h.outcome === 'served' ? '✓' : h.outcome === 'cancelled' ? '—' : '!'}
+                    <div className="tc-card-flush">
+                        {history.slice(0, 5).map((h, i) => {
+                            const pillClass =
+                                h.outcome === 'served' ? 'tc-pill-success' :
+                                h.outcome === 'cancelled' ? 'tc-pill-neutral' : 'tc-pill-danger';
+                            const pillLabel = h.outcome === 'served' ? 'SERVED' : h.outcome === 'cancelled' ? 'CANCELLED' : 'NO SHOW';
+                            return (
+                                <div
+                                    key={h.id}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        flexWrap: 'wrap',
+                                        gap: 12,
+                                        padding: '18px 24px',
+                                        borderBottom: i < Math.min(history.length, 5) - 1 ? '1px dashed #ece9e2' : 'none',
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 0, flex: '1 1 200px' }}>
+                                        <span
+                                            className="tc-mono"
+                                            style={{ fontSize: 11, color: '#a8a29e', letterSpacing: '0.12em', minWidth: 90, textTransform: 'uppercase', fontWeight: 600 }}
+                                        >
+                                            {h.date}
+                                        </span>
+                                        <div style={{ minWidth: 0 }}>
+                                            <p style={{ fontWeight: 600, color: '#1c1917', margin: 0, fontSize: 14 }}>{h.serviceName}</p>
+                                            <p className="tc-mono" style={{ fontSize: 11, color: '#a8a29e', margin: '4px 0 0 0', letterSpacing: '0.06em' }}>
+                                                {h.joinedAt}{h.servedAt ? ` → ${h.servedAt}` : ''}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p style={{ fontWeight: 600, color: '#1c1917', margin: 0, fontSize: '14px' }}>{h.serviceName}</p>
-                                        <p style={{ fontSize: '12px', color: '#a8a29e', margin: '2px 0 0 0' }}>{h.date} at {h.joinedAt}</p>
+                                    <div className="dashboard-activity-meta" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                                        {h.waitTime != null && (
+                                            <span className="tc-mono" style={{ fontSize: 12, color: '#78716c', letterSpacing: '0.06em', fontWeight: 600 }}>
+                                                {h.waitTime}m wait
+                                            </span>
+                                        )}
+                                        <span className={`tc-pill ${pillClass}`}>{pillLabel}</span>
                                     </div>
                                 </div>
-                                <div style={{ textAlign: 'right' }} className="dashboard-activity-meta">
-                                    <span style={{
-                                        display: 'inline-block', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600,
-                                        background: h.outcome === 'served' ? '#f0fdf4' : h.outcome === 'cancelled' ? '#f5f5f4' : '#fef2f2',
-                                        color: h.outcome === 'served' ? '#16a34a' : h.outcome === 'cancelled' ? '#78716c' : '#dc2626',
-                                    }}>
-                                        {h.outcome === 'served' ? 'Served' : h.outcome === 'cancelled' ? 'Cancelled' : 'No Show'}
-                                    </span>
-                                    {h.waitTime && <p style={{ fontSize: '11px', color: '#a8a29e', margin: '4px 0 0 0' }}>{h.waitTime} min wait</p>}
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
-                </div>
+                </section>
             )}
 
-            {/* ── Tips ───────────────────────────────────────── */}
-            <div style={{
-                borderRadius: '16px', border: '1px solid #fecaca', background: '#fffbeb', padding: '28px',
-            }}>
-                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '28px', flexShrink: 0 }}>💡</span>
-                    <div>
-                        <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: '#78350f', margin: '0 0 10px 0', fontSize: '15px' }}>Tutoring Tips</h3>
-                        <ul style={{ margin: 0, padding: 0, listStyle: 'none', fontSize: '13px', color: '#92400e', lineHeight: 1.7 }}>
-                            <li style={{ marginBottom: '6px' }}>• <strong>Come prepared</strong> — bring your notes and specific questions for a more productive session.</li>
-                            <li style={{ marginBottom: '6px' }}>• <strong>Watch notifications</strong> — we alert you 2 spots before your turn so you don't miss it.</li>
-                            <li>• <strong>Peak hours</strong> are 2–4 PM on weekdays. Morning visits often have shorter waits.</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+            {/* ── Tips ──────────────────────────────────────────────── */}
+            <section className="tc-tip">
+                <span className="tc-page-eyebrow">Pro Tips</span>
+                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 700, color: '#1c1917', margin: '12px 0 14px 0', letterSpacing: '-0.012em' }}>
+                    Make the most of your visit
+                </h3>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                    {[
+                        ['Come prepared', 'Bring your notes and specific questions for a more productive session.'],
+                        ['Watch notifications', "We alert you 2 spots before your turn so you don't miss it."],
+                        ['Pick off-peak hours', 'Mornings and late afternoons usually have the shortest waits.'],
+                    ].map(([title, body], i) => (
+                        <li
+                            key={title}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: 14,
+                                padding: '10px 0',
+                                borderBottom: i < 2 ? '1px dashed #ece9e2' : 'none',
+                            }}
+                        >
+                            <span className="tc-mono" style={{ fontSize: 11, color: '#C8102E', fontWeight: 700, paddingTop: 3, minWidth: 22 }}>
+                                0{i + 1}
+                            </span>
+                            <span style={{ fontSize: 13, color: '#44403c', lineHeight: 1.55 }}>
+                                <strong style={{ color: '#1c1917' }}>{title}.</strong> {body}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+            </section>
         </div>
     );
 }

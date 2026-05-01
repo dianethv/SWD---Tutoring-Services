@@ -821,3 +821,261 @@ textarea:focus {
     padding: 36px 20px;
   }
 }
+
+/* ── Shared editorial UI (dashboards & beyond) ─────── */
+.tc-page-hero {
+  position: relative;
+  background: #FAF7F2;
+  background-image: radial-gradient(circle at 1px 1px, rgba(28, 25, 23, 0.07) 1px, transparent 0);
+  background-size: 22px 22px;
+  border: 1px solid #ece9e2;
+  border-radius: 22px;
+  padding: 40px 40px 36px 40px;
+  overflow: hidden;
+  margin-bottom: 36px;
+}
+
+.tc-page-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 40px;
+  width: 2px;
+  height: 56px;
+  background: #C8102E;
+}
+
+.tc-page-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #78716c;
+}
+
+.tc-page-eyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #C8102E;
+  box-shadow: 0 0 0 4px rgba(200, 16, 46, 0.12);
+}
+
+.tc-page-headline {
+  font-family: 'Outfit', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1c1917;
+  letter-spacing: -0.022em;
+  line-height: 1.1;
+  margin: 14px 0 0 0;
+}
+
+.tc-page-headline .tc-dot {
+  color: #C8102E;
+}
+
+.tc-page-sub {
+  font-size: 14px;
+  color: #57534e;
+  line-height: 1.55;
+  margin: 12px 0 0 0;
+  max-width: 560px;
+}
+
+.tc-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tc-section-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1c1917;
+  letter-spacing: -0.012em;
+  margin: 6px 0 0 0;
+}
+
+.tc-section-sub {
+  font-size: 13px;
+  color: #78716c;
+  margin: 4px 0 0 0;
+}
+
+.tc-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1c1917;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: gap 0.18s ease, color 0.18s ease;
+}
+
+.tc-link:hover {
+  color: #C8102E;
+  gap: 10px;
+}
+
+/* Stat cards — same visual language as the auth ticket */
+.tc-stat {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-top: 3px solid #C8102E;
+  border-radius: 14px;
+  padding: 22px;
+  transition: transform 0.18s ease, box-shadow 0.2s ease;
+}
+
+.tc-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px -18px rgba(28, 25, 23, 0.2);
+}
+
+.tc-stat-eyebrow {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #78716c;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tc-stat-value {
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 36px;
+  font-weight: 700;
+  color: #1c1917;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  margin: 0;
+}
+
+.tc-stat-meta {
+  font-size: 12px;
+  color: #a8a29e;
+  margin: 10px 0 0 0;
+  letter-spacing: 0.02em;
+}
+
+/* Generic card */
+.tc-card {
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.tc-card-flush {
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Pills */
+.tc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+.tc-pill-success { background: #f0fdf4; color: #16a34a; }
+.tc-pill-danger  { background: #fef2f2; color: #dc2626; }
+.tc-pill-warning { background: #fffbeb; color: #d97706; }
+.tc-pill-neutral { background: #fafaf9; color: #78716c; border: 1px solid #f5f5f4; }
+.tc-pill-brand   { background: #fef2f2; color: #C8102E; }
+
+.tc-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Tip card — consistent cream + red accent */
+.tc-tip {
+  position: relative;
+  background: #FAF7F2;
+  background-image: radial-gradient(circle at 1px 1px, rgba(28, 25, 23, 0.06) 1px, transparent 0);
+  background-size: 22px 22px;
+  border: 1px solid #ece9e2;
+  border-top: 3px solid #C8102E;
+  border-radius: 16px;
+  padding: 26px 28px;
+}
+
+/* Dashed divider — receipt-style */
+.tc-divider-dashed {
+  border-top: 1px dashed #d6d3d1;
+  margin: 14px 0;
+}
+
+/* Slim progress bar */
+.tc-bar-track {
+  height: 6px;
+  background: #f5f5f4;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.tc-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #C8102E, #E8384F);
+  transition: width 0.7s ease;
+}
+
+.tc-bar-fill.tc-bar-fill-muted {
+  background: #d6d3d1;
+}
+
+/* Hover lift for clickable cards */
+.tc-lift {
+  transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.tc-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px -18px rgba(28, 25, 23, 0.18);
+  border-color: #d6d3d1;
+}
+
+@media (max-width: 880px) {
+  .dashboard-hero-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .dashboard-hero-ticket {
+    max-width: 420px;
+  }
+}
+
+@media (max-width: 640px) {
+  .tc-page-hero { padding: 30px 24px 26px 24px; }
+  .tc-page-hero::before { left: 24px; height: 48px; }
+  .tc-page-headline { font-size: 26px; }
+  .tc-stat-value { font-size: 30px; }
+}
