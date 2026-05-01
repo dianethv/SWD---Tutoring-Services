@@ -109,6 +109,17 @@ export default function AdminDashboard() {
                         >
                             Edit Services
                         </Link>
+                        <Link to="/admin/reports" style={{
+                            padding: '12px 22px', borderRadius: '12px',
+                            background: 'rgba(255,255,255,0.18)', color: '#fff', fontSize: '14px', fontWeight: 600,
+                            textDecoration: 'none', backdropFilter: 'blur(6px)',
+                            border: '1px solid rgba(255,255,255,0.25)', transition: 'all 0.2s ease',
+                        }}
+                            onMouseEnter={(e) => (e.target.style.background = 'rgba(255,255,255,0.28)')}
+                            onMouseLeave={(e) => (e.target.style.background = 'rgba(255,255,255,0.18)')}
+                        >
+                            View Reports
+                        </Link>
                     </div>
                 </div>
 

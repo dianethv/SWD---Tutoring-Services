@@ -427,3 +427,44 @@ textarea:focus {
     min-width: 560px !important;
   }
 }
+
+/* ── Print styles for PDF export ───────────────────── */
+@media print {
+  body {
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  nav,
+  .app-sidebar,
+  .app-sidebar ~ div,
+  #export-csv-btn,
+  #export-pdf-btn {
+    display: none !important;
+  }
+
+  .app-main {
+    margin-left: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .reports-page {
+    padding: 0 !important;
+  }
+
+  .reports-page table {
+    font-size: 11px;
+  }
+
+  .glow-orb {
+    display: none !important;
+  }
+}
+
+/* ── Reports page responsive ───────────────────────── */
+@media (max-width: 640px) {
+  .reports-page h1 {
+    font-size: 22px !important;
+  }
+}

@@ -15,6 +15,7 @@ const queueRouter = require('./routes/queue');
 const historyRouter = require('./routes/history');
 const notificationsRouter = require('./routes/notifications');
 const usersRouter = require('./routes/users');
+const reportsRouter = require('./routes/Reports');
 
 // ── Mount Routers ───────────────────────────────────
 app.use('/api/auth', authRouter);
@@ -23,6 +24,7 @@ app.use('/api/queue', queueRouter);
 app.use('/api/history', historyRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/reports', reportsRouter);
 
 // Root endpoint
 app.get("/", (req, res) => {

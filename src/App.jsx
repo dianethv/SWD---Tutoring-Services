@@ -10,6 +10,7 @@ import History from './pages/user/History'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ServiceManagement from './pages/admin/ServiceManagement'
 import QueueManagement from './pages/admin/QueueManagement'
+import Reports from './pages/admin/Reports'
 
 function ProtectedRoute({ children, allowedRole }) {
   const { currentUser } = useApp()
@@ -57,6 +58,7 @@ function AppRoutes() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/services" element={<ServiceManagement />} />
         <Route path="/admin/queues" element={<QueueManagement />} />
+        <Route path="/admin/reports" element={<Reports />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
