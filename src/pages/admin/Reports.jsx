@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '../../config/api';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export default function Reports() {
     const [activeTab, setActiveTab] = useState('users');
@@ -69,7 +71,260 @@ export default function Reports() {
         URL.revokeObjectURL(link.href);
     };
 
-    const exportPDF = () => window.print();
+    // ── PDF Export ───────────────────────────────────
+    const exportPDF = () => {
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const brandColor = [200, 16, 46];
+        const darkText = [28, 25, 23];
+        const mutedText = [120, 113, 108];
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        let y = 0;
+
+        // ── Helper: check if we need a new page ─────
+        const checkPage = (needed = 30) => {
+            if (y + needed > doc.internal.pageSize.getHeight() - 20) {
+                doc.addPage();
+                y = 20;
+            }
+        };
+
+        // ── Helper: section header ──────────────────
+        const sectionHeader = (title, subtitle) => {
+            checkPage(30);
+            doc.setFillColor(...brandColor);
+            doc.rect(0, y, pageWidth, 14, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(13);
+            doc.setTextColor(255, 255, 255);
+            doc.text(title, 14, y + 9);
+            y += 14;
+            if (subtitle) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.setTextColor(...mutedText);
+                doc.text(subtitle, 14, y + 6);
+                y += 10;
+            }
+            y += 4;
+        };
+
+        // ══════════════════════════════════════════════
+        // TITLE / COVER HEADER
+        // ══════════════════════════════════════════════
+        doc.setFillColor(...brandColor);
+        doc.rect(0, 0, pageWidth, 48, 'F');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(22);
+        doc.setTextColor(255, 255, 255);
+        doc.text('TutorCoogs — Reports', 14, 22);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(254, 226, 226);
+        doc.text(`Generated on ${dateStr} at ${timeStr}`, 14, 32);
+        doc.text('Comprehensive Queue & Service Analytics', 14, 40);
+
+        y = 58;
+
+        // ── Quick summary line ──────────────────────
+        if (queueStats) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(...mutedText);
+            doc.text(
+                `Total Users: ${queueStats.totalUsers}  |  Total Services: ${queueStats.totalServices}  |  ` +
+                `Total Served: ${queueStats.totalUsersServed}  |  Avg Wait: ${queueStats.avgWaitTime} min  |  ` +
+                `Currently In Queue: ${queueStats.currentlyInQueue}`,
+                14, y
+            );
+            y += 10;
+        }
+
+        // ══════════════════════════════════════════════
+        // SECTION 1 — Users & Queue Participation History
+        // ══════════════════════════════════════════════
+        sectionHeader(
+            'Section 1: Users & Queue Participation History',
+            `${usersReport.length} users — complete queue participation breakdown`
+        );
+
+        if (usersReport.length > 0) {
+            doc.autoTable({
+                startY: y,
+                head: [['Name', 'Email', 'Role', 'Total Visits', 'Served', 'Cancelled', 'No-Shows', 'Avg Wait']],
+                body: usersReport.map(u => [
+                    u.name, u.email, u.role,
+                    u.totalVisits, u.timesServed, u.timesCancelled, u.timesNoShow,
+                    `${u.avgWaitTime} min`
+                ]),
+                styles: { fontSize: 8, cellPadding: 3 },
+                headStyles: { fillColor: brandColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+                alternateRowStyles: { fillColor: [250, 250, 249] },
+                margin: { left: 14, right: 14 },
+                tableWidth: 'auto',
+            });
+            y = doc.lastAutoTable.finalY + 10;
+
+            // Per-user detailed history
+            usersReport.forEach(u => {
+                if (!u.history || u.history.length === 0) return;
+                checkPage(25);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.setTextColor(...darkText);
+                doc.text(`Queue History — ${u.name} (${u.email})`, 14, y);
+                y += 2;
+
+                doc.autoTable({
+                    startY: y,
+                    head: [['Date', 'Service', 'Joined At', 'Served At', 'Wait (min)', 'Outcome']],
+                    body: u.history.map(h => [
+                        h.date || '—',
+                        h.serviceName || '—',
+                        h.joinedAt || '—',
+                        h.servedAt || '—',
+                        h.waitTime != null ? h.waitTime : '—',
+                        h.outcome || '—',
+                    ]),
+                    styles: { fontSize: 7, cellPadding: 2 },
+                    headStyles: { fillColor: [68, 64, 60], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7 },
+                    alternateRowStyles: { fillColor: [250, 250, 249] },
+                    margin: { left: 18, right: 14 },
+                    tableWidth: 'auto',
+                });
+                y = doc.lastAutoTable.finalY + 8;
+            });
+        } else {
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(9);
+            doc.setTextColor(...mutedText);
+            doc.text('No user data available.', 14, y);
+            y += 10;
+        }
+
+        // ══════════════════════════════════════════════
+        // SECTION 2 — Service Details & Queue Activity
+        // ══════════════════════════════════════════════
+        sectionHeader(
+            'Section 2: Service Details & Queue Activity',
+            `${servicesReport.length} services — activity and performance per service`
+        );
+
+        if (servicesReport.length > 0) {
+            doc.autoTable({
+                startY: y,
+                head: [['Service', 'Category', 'Duration', 'Status', 'Served', 'Cancelled', 'No-Shows', 'Avg Wait', 'In Queue']],
+                body: servicesReport.map(s => [
+                    s.name, s.category, `${s.expectedDuration} min`,
+                    s.isOpen ? 'Open' : 'Closed',
+                    s.totalServed, s.totalCancelled, s.totalNoShows,
+                    `${s.avgWaitTime} min`, s.currentInQueue
+                ]),
+                styles: { fontSize: 8, cellPadding: 3 },
+                headStyles: { fillColor: brandColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+                alternateRowStyles: { fillColor: [250, 250, 249] },
+                margin: { left: 14, right: 14 },
+                tableWidth: 'auto',
+            });
+            y = doc.lastAutoTable.finalY + 10;
+        } else {
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(9);
+            doc.setTextColor(...mutedText);
+            doc.text('No service data available.', 14, y);
+            y += 10;
+        }
+
+        // ══════════════════════════════════════════════
+        // SECTION 3 — Queue Usage Statistics
+        // ══════════════════════════════════════════════
+        sectionHeader(
+            'Section 3: Queue Usage Statistics',
+            'Aggregate metrics and per-service performance breakdown'
+        );
+
+        if (queueStats) {
+            // Key metrics summary box
+            const noShowRate = queueStats.totalActivity > 0
+                ? `${Math.round((queueStats.totalNoShows / queueStats.totalActivity) * 100)}%`
+                : '0%';
+
+            doc.autoTable({
+                startY: y,
+                head: [['Metric', 'Value']],
+                body: [
+                    ['Total Users Served', String(queueStats.totalUsersServed)],
+                    ['Total No-Shows', String(queueStats.totalNoShows)],
+                    ['Total Cancelled', String(queueStats.totalCancelled)],
+                    ['Total Activity (all outcomes)', String(queueStats.totalActivity)],
+                    ['No-Show Rate', noShowRate],
+                    ['Average Wait Time', `${queueStats.avgWaitTime} min`],
+                    ['Currently In Queue', String(queueStats.currentlyInQueue)],
+                    ['Total Registered Users', String(queueStats.totalUsers)],
+                    ['Total Configured Services', String(queueStats.totalServices)],
+                ],
+                styles: { fontSize: 9, cellPadding: 4 },
+                headStyles: { fillColor: brandColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+                alternateRowStyles: { fillColor: [250, 250, 249] },
+                margin: { left: 14, right: 14 },
+                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 80 } },
+                tableWidth: 'auto',
+            });
+            y = doc.lastAutoTable.finalY + 10;
+
+            // Per-service breakdown
+            if (queueStats.serviceBreakdown && queueStats.serviceBreakdown.length > 0) {
+                checkPage(20);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.setTextColor(...darkText);
+                doc.text('Per-Service Breakdown', 14, y);
+                y += 4;
+
+                doc.autoTable({
+                    startY: y,
+                    head: [['Service', 'Served', 'No-Shows', 'Total Activity', 'Avg Wait', 'In Queue Now']],
+                    body: queueStats.serviceBreakdown.map(sb => [
+                        sb.serviceName, sb.totalServed, sb.totalNoShows,
+                        sb.totalActivity, `${sb.avgWaitTime} min`, sb.currentInQueue
+                    ]),
+                    styles: { fontSize: 8, cellPadding: 3 },
+                    headStyles: { fillColor: [68, 64, 60], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+                    alternateRowStyles: { fillColor: [250, 250, 249] },
+                    margin: { left: 14, right: 14 },
+                    tableWidth: 'auto',
+                });
+                y = doc.lastAutoTable.finalY + 10;
+            }
+        } else {
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(9);
+            doc.setTextColor(...mutedText);
+            doc.text('No queue statistics available.', 14, y);
+            y += 10;
+        }
+
+        // ── Footer on every page ────────────────────
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            const ph = doc.internal.pageSize.getHeight();
+            doc.setDrawColor(200, 16, 46);
+            doc.setLineWidth(0.5);
+            doc.line(14, ph - 14, pageWidth - 14, ph - 14);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(...mutedText);
+            doc.text('TutorCoogs — Confidential Report', 14, ph - 9);
+            doc.text(`Page ${i} of ${totalPages}`, pageWidth - 14, ph - 9, { align: 'right' });
+        }
+
+        doc.save(`TutorCoogs_Report_${now.toISOString().split('T')[0]}.pdf`);
+    };
 
     // ── Styles ──────────────────────────────────────
     const card = { background: '#fff', border: '1px solid #e7e5e4', borderRadius: '16px', padding: '24px' };
