@@ -538,25 +538,52 @@ export default function Reports() {
         doc.save(`TutorCoogs_Report_${now.toISOString().split('T')[0]}.pdf`);
     };
 
-    // ── Styles ──────────────────────────────────────
-    const card = { background: '#fff', border: '1px solid #e7e5e4', borderRadius: '16px', padding: '24px' };
-    const heading = { fontFamily: "'Outfit', sans-serif", fontSize: '18px', fontWeight: 700, color: '#1c1917', margin: 0 };
-    const subtext = { fontSize: '13px', color: '#78716c', marginTop: '4px' };
-    const thStyle = { textAlign: 'left', padding: '14px 20px', fontSize: '11px', fontWeight: 600, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' };
-    const tdStyle = { padding: '14px 20px', fontSize: '13px', color: '#44403c', borderBottom: '1px solid #f5f5f4' };
+    // ── Editorial table styles (tc-* design language) ─
+    const thStyle = {
+        textAlign: 'left',
+        padding: '14px 24px',
+        fontSize: 10.5,
+        fontWeight: 700,
+        color: '#78716c',
+        textTransform: 'uppercase',
+        letterSpacing: '0.12em',
+        whiteSpace: 'nowrap',
+        fontFamily: 'JetBrains Mono, monospace',
+    };
+    const tdStyle = {
+        padding: '16px 24px',
+        fontSize: 13,
+        color: '#44403c',
+        borderBottom: '1px dashed #ece9e2',
+    };
 
     const tabs = [
-        { id: 'users', label: 'Users & History', icon: '👥' },
-        { id: 'services', label: 'Service Activity', icon: '📋' },
-        { id: 'stats', label: 'Queue Statistics', icon: '📊' },
+        { id: 'users', label: 'Users & history' },
+        { id: 'services', label: 'Service activity' },
+        { id: 'stats', label: 'Queue statistics' },
     ];
 
     if (loading) {
         return (
-            <div className="reports-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+            <div
+                className="reports-page"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}
+            >
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{ width: '48px', height: '48px', border: '4px solid #e7e5e4', borderTopColor: '#C8102E', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
-                    <p style={{ color: '#78716c', fontSize: '14px' }}>Loading reports…</p>
+                    <div
+                        style={{
+                            width: 44,
+                            height: 44,
+                            border: '3px solid #ece9e2',
+                            borderTopColor: '#C8102E',
+                            borderRadius: '50%',
+                            animation: 'spin 0.8s linear infinite',
+                            margin: '0 auto 16px',
+                        }}
+                    />
+                    <span className="tc-mono" style={{ fontSize: 11, color: '#78716c', letterSpacing: '0.16em', fontWeight: 700 }}>
+                        LOADING REPORTS…
+                    </span>
                     <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </div>
             </div>
@@ -565,274 +592,502 @@ export default function Reports() {
 
     return (
         <div className="reports-page">
-            {/* ── Hero Banner ─────────────────────────────── */}
-            <div style={{
-                borderRadius: '20px', padding: '48px 40px',
-                background: 'linear-gradient(135deg, #C8102E 0%, #A60F26 50%, #7A0B1C 100%)',
-                position: 'relative', overflow: 'hidden', marginBottom: '32px',
-            }}>
-                <div className="glow-orb" style={{ position: 'absolute', top: '-80px', right: '-80px', width: '260px', height: '260px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
-                <div className="glow-orb" style={{ position: 'absolute', bottom: '-60px', left: '30%', width: '180px', height: '180px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', animationDelay: '2s' }} />
-                <div style={{ position: 'relative', zIndex: 1 }}>
-                    <div className="fade-up" style={{ marginBottom: '14px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#fecdd3' }}>
-                            Admin Reports • Analytics Center
-                        </span>
-                    </div>
-                    <h1 className="fade-up" style={{ fontFamily: "'Outfit', sans-serif", fontSize: '32px', fontWeight: 700, color: '#fff', margin: '0 0 12px 0', lineHeight: 1.25 }}>
-                        Reports & Analytics 📊
-                    </h1>
-                    <p className="fade-up-delay" style={{ fontSize: '15px', color: '#fee2e2', lineHeight: 1.6, margin: 0, maxWidth: '600px' }}>
-                        Generate detailed reports on user activity, service performance, and queue usage statistics. Export data as CSV or PDF.
-                    </p>
-                </div>
-                <div style={{ position: 'absolute', top: '20px', right: '28px', fontSize: '48px', opacity: 0.15, userSelect: 'none' }}>📈</div>
-            </div>
-
-            {/* ── Tab Bar + Export ─────────────────────────── */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
-                <div style={{ display: 'flex', gap: '6px', background: '#fff', borderRadius: '14px', padding: '4px', border: '1px solid #e7e5e4' }}>
-                    {tabs.map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} id={`report-tab-${tab.id}`}
-                            style={{
-                                padding: '10px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                                fontSize: '13px', fontWeight: 600, transition: 'all 0.2s',
-                                background: activeTab === tab.id ? '#C8102E' : 'transparent',
-                                color: activeTab === tab.id ? '#fff' : '#57534e',
-                            }}>
-                            {tab.icon} {tab.label}
-                        </button>
-                    ))}
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={exportCSV} id="export-csv-btn" style={{
-                        padding: '10px 20px', borderRadius: '10px', border: '1px solid #e7e5e4', background: '#fff',
-                        cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#44403c', transition: 'all 0.2s',
-                    }}>📥 Export CSV</button>
-                    <button onClick={() => {
-                        try {
-                            exportPDF();
-                        } catch (error) {
-                            console.error('Failed to export PDF:', error);
-                            setExportError('PDF export failed. Please refresh and try again.');
-                        }
-                    }} id="export-pdf-btn" style={{
-                        padding: '10px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                        fontSize: '13px', fontWeight: 600, color: '#fff', transition: 'all 0.2s',
-                        background: 'linear-gradient(135deg, #C8102E, #E8384F)',
-                    }}>🖨️ Export PDF</button>
-                </div>
-            </div>
-
-            {/* ── Tab Content ─────────────────────────────── */}
-            {exportError && (
-                <p style={{ margin: '-12px 0 20px 0', color: '#dc2626', fontSize: '13px', fontWeight: 600 }}>
-                    {exportError}
+            {/* ── Hero ────────────────────────────────────────────── */}
+            <section className="tc-page-hero">
+                <span className="tc-page-eyebrow">Admin Reports · Analytics Center</span>
+                <h1 className="tc-page-headline" style={{ marginTop: 16 }}>
+                    Reports &amp; analytics<span className="tc-dot">.</span>
+                </h1>
+                <p className="tc-page-sub">
+                    Detailed reports on user activity, service performance, and queue
+                    usage. Switch tabs below and export the active view as CSV or PDF.
                 </p>
-            )}
+            </section>
+
+            {/* ── Tab bar + export buttons ────────────────────────── */}
+            <section style={{ marginBottom: 28 }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: 12,
+                    }}
+                >
+                    {/* Tab pill row */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {tabs.map((tab) => {
+                            const isActive = activeTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    id={`report-tab-${tab.id}`}
+                                    style={{
+                                        padding: '9px 16px',
+                                        borderRadius: 999,
+                                        fontSize: 13,
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        background: isActive ? '#1c1917' : '#fff',
+                                        color: isActive ? '#fff' : '#44403c',
+                                        border: `1px solid ${isActive ? '#1c1917' : '#e7e5e4'}`,
+                                        transition: 'all 0.15s',
+                                        fontFamily: 'inherit',
+                                    }}
+                                >
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    {/* Export buttons */}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button
+                            onClick={exportCSV}
+                            id="export-csv-btn"
+                            style={{
+                                padding: '11px 18px',
+                                borderRadius: 10,
+                                border: '1px solid #e7e5e4',
+                                background: '#fff',
+                                cursor: 'pointer',
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: '#1c1917',
+                                transition: 'all 0.15s',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                fontFamily: 'inherit',
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = '#fafaf9'; e.currentTarget.style.borderColor = '#1c1917'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e7e5e4'; }}
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Export CSV
+                        </button>
+                        <button
+                            onClick={() => {
+                                try {
+                                    exportPDF();
+                                } catch (error) {
+                                    console.error('Failed to export PDF:', error);
+                                    setExportError('PDF export failed. Please refresh and try again.');
+                                }
+                            }}
+                            id="export-pdf-btn"
+                            style={{
+                                padding: '11px 18px',
+                                borderRadius: 10,
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: '#fff',
+                                background: '#C8102E',
+                                boxShadow: '0 4px 14px -6px rgba(200, 16, 46, 0.45)',
+                                transition: 'background 0.2s',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                fontFamily: 'inherit',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = '#960C22')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = '#C8102E')}
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 6 2 18 2 18 9" />
+                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                <rect x="6" y="14" width="12" height="8" />
+                            </svg>
+                            Export PDF
+                        </button>
+                    </div>
+                </div>
+                {exportError && (
+                    <p
+                        className="tc-mono"
+                        style={{
+                            margin: '14px 0 0 0',
+                            color: '#dc2626',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            letterSpacing: '0.12em',
+                            textTransform: 'uppercase',
+                        }}
+                    >
+                        {exportError}
+                    </p>
+                )}
+            </section>
+
+            {/* ── Users & History ─────────────────────────────────── */}
             {activeTab === 'users' && (
-                <div className="animate-fade-in-up">
-                    <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
-                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #e7e5e4' }}>
-                            <h2 style={heading}>Users & Queue Participation History</h2>
-                            <p style={subtext}>{usersReport.length} users found • Showing complete queue history per user</p>
+                <section className="animate-fade-in-up" style={{ marginBottom: 36 }}>
+                    <div className="tc-section-head">
+                        <div>
+                            <span className="tc-page-eyebrow">{usersReport.length} users</span>
+                            <h2 className="tc-section-title">Users &amp; queue participation</h2>
+                            <p className="tc-section-sub">Complete queue history per user</p>
                         </div>
+                    </div>
+                    <div className="tc-card-flush">
                         <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
-                                    <tr style={{ background: '#fafaf9', borderBottom: '1px solid #e7e5e4' }}>
+                                    <tr style={{ background: '#FAF7F2', borderBottom: '1px solid #ece9e2' }}>
                                         <th style={thStyle}>User</th>
                                         <th style={thStyle}>Role</th>
-                                        <th style={{ ...thStyle, textAlign: 'center' }}>Total Visits</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>Visits</th>
                                         <th style={{ ...thStyle, textAlign: 'center' }}>Served</th>
                                         <th style={{ ...thStyle, textAlign: 'center' }}>Cancelled</th>
-                                        <th style={{ ...thStyle, textAlign: 'center' }}>No-Shows</th>
-                                        <th style={{ ...thStyle, textAlign: 'center' }}>Avg Wait</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>No-shows</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>Avg wait</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {usersReport.map(u => (
-                                        <tr key={u.id} style={{ transition: 'background 0.15s' }}
-                                            onMouseEnter={e => e.currentTarget.style.background = '#fafaf9'}
-                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    {usersReport.map((u) => (
+                                        <tr
+                                            key={u.id}
+                                            style={{ transition: 'background 0.15s' }}
+                                            onMouseEnter={(e) => (e.currentTarget.style.background = '#fafaf9')}
+                                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                                        >
                                             <td style={tdStyle}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                    <div style={{
-                                                        width: '36px', height: '36px', borderRadius: '10px', display: 'flex',
-                                                        alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '12px', fontWeight: 700,
-                                                        background: u.role === 'admin' ? 'linear-gradient(135deg, #960C22, #C8102E)' : 'linear-gradient(135deg, #C8102E, #E8384F)',
-                                                    }}>
-                                                        {u.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                                    <div
+                                                        className="tc-mono"
+                                                        style={{
+                                                            width: 36,
+                                                            height: 36,
+                                                            borderRadius: 8,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            color: '#fff',
+                                                            fontSize: 11,
+                                                            fontWeight: 700,
+                                                            background: u.role === 'admin' ? '#1c1917' : '#C8102E',
+                                                            letterSpacing: 0,
+                                                        }}
+                                                    >
+                                                        {u.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
                                                     </div>
                                                     <div>
-                                                        <p style={{ fontWeight: 600, color: '#1c1917', margin: 0, fontSize: '13px' }}>{u.name}</p>
-                                                        <p style={{ fontSize: '12px', color: '#78716c', margin: '2px 0 0 0' }}>{u.email}</p>
+                                                        <p
+                                                            style={{
+                                                                fontFamily: 'Outfit, sans-serif',
+                                                                fontWeight: 600,
+                                                                color: '#1c1917',
+                                                                margin: 0,
+                                                                fontSize: 13.5,
+                                                                letterSpacing: '-0.005em',
+                                                            }}
+                                                        >
+                                                            {u.name}
+                                                        </p>
+                                                        <p
+                                                            className="tc-mono"
+                                                            style={{ fontSize: 11, color: '#a8a29e', margin: '4px 0 0 0', letterSpacing: '0.04em' }}
+                                                        >
+                                                            {u.email}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td style={tdStyle}>
-                                                <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, textTransform: 'capitalize', background: u.role === 'admin' ? '#fef2f2' : '#f0fdf4', color: u.role === 'admin' ? '#C8102E' : '#16a34a' }}>
-                                                    {u.role}
+                                                <span className={`tc-pill ${u.role === 'admin' ? 'tc-pill-brand' : 'tc-pill-success'}`}>
+                                                    {u.role.toUpperCase()}
                                                 </span>
                                             </td>
-                                            <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700 }}>{u.totalVisits}</td>
-                                            <td style={{ ...tdStyle, textAlign: 'center' }}>
-                                                <span style={{ color: '#16a34a', fontWeight: 600 }}>{u.timesServed}</span>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#1c1917' }}>
+                                                {u.totalVisits}
                                             </td>
-                                            <td style={{ ...tdStyle, textAlign: 'center' }}>
-                                                <span style={{ color: '#d97706', fontWeight: 600 }}>{u.timesCancelled}</span>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', color: '#16a34a', fontWeight: 600 }}>
+                                                {u.timesServed}
                                             </td>
-                                            <td style={{ ...tdStyle, textAlign: 'center' }}>
-                                                <span style={{ color: '#dc2626', fontWeight: 600 }}>{u.timesNoShow}</span>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', color: '#78716c', fontWeight: 600 }}>
+                                                {u.timesCancelled}
                                             </td>
-                                            <td style={{ ...tdStyle, textAlign: 'center' }}>{toWholeMinutes(u.avgWaitTime)}m</td>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', color: '#dc2626', fontWeight: 600 }}>
+                                                {u.timesNoShow}
+                                            </td>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', color: '#1c1917', fontWeight: 600 }}>
+                                                {toWholeMinutes(u.avgWaitTime)}m
+                                            </td>
                                         </tr>
                                     ))}
                                     {usersReport.length === 0 && (
-                                        <tr><td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#a8a29e', fontSize: '14px' }}>No user data available</td></tr>
+                                        <tr>
+                                            <td
+                                                colSpan={7}
+                                                className="tc-mono"
+                                                style={{ padding: 40, textAlign: 'center', color: '#a8a29e', fontSize: 11, letterSpacing: '0.16em', fontWeight: 700 }}
+                                            >
+                                                NO USER DATA
+                                            </td>
+                                        </tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                </div>
+                </section>
             )}
 
+            {/* ── Service Activity ───────────────────────────────── */}
             {activeTab === 'services' && (
-                <div className="animate-fade-in-up">
-                    <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
-                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #e7e5e4' }}>
-                            <h2 style={heading}>Service Details & Queue Activity</h2>
-                            <p style={subtext}>{servicesReport.length} services • Activity and performance per service</p>
+                <section className="animate-fade-in-up" style={{ marginBottom: 36 }}>
+                    <div className="tc-section-head">
+                        <div>
+                            <span className="tc-page-eyebrow">{servicesReport.length} services</span>
+                            <h2 className="tc-section-title">Service details &amp; activity</h2>
+                            <p className="tc-section-sub">Performance and queue activity per service</p>
                         </div>
+                    </div>
+                    <div className="tc-card-flush">
                         <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
-                                    <tr style={{ background: '#fafaf9', borderBottom: '1px solid #e7e5e4' }}>
+                                    <tr style={{ background: '#FAF7F2', borderBottom: '1px solid #ece9e2' }}>
                                         <th style={thStyle}>Service</th>
                                         <th style={thStyle}>Category</th>
                                         <th style={{ ...thStyle, textAlign: 'center' }}>Status</th>
-                                        <th style={{ ...thStyle, textAlign: 'center' }}>Total Served</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>Served</th>
                                         <th style={{ ...thStyle, textAlign: 'center' }}>Cancelled</th>
-                                        <th style={{ ...thStyle, textAlign: 'center' }}>No-Shows</th>
-                                        <th style={{ ...thStyle, textAlign: 'center' }}>Avg Wait</th>
-                                        <th style={{ ...thStyle, textAlign: 'center' }}>In Queue</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>No-shows</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>Avg wait</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>In queue</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {servicesReport.map(s => (
-                                        <tr key={s.id} style={{ transition: 'background 0.15s' }}
-                                            onMouseEnter={e => e.currentTarget.style.background = '#fafaf9'}
-                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    {servicesReport.map((s) => (
+                                        <tr
+                                            key={s.id}
+                                            style={{ transition: 'background 0.15s' }}
+                                            onMouseEnter={(e) => (e.currentTarget.style.background = '#fafaf9')}
+                                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                                        >
                                             <td style={tdStyle}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafaf9', fontSize: '20px' }}>{s.icon}</div>
-                                                    <div>
-                                                        <p style={{ fontWeight: 600, color: '#1c1917', margin: 0, fontSize: '13px' }}>{s.name}</p>
-                                                        <p style={{ fontSize: '11px', color: '#78716c', margin: '2px 0 0 0', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.description}</p>
-                                                    </div>
-                                                </div>
+                                                <p
+                                                    style={{
+                                                        fontFamily: 'Outfit, sans-serif',
+                                                        fontWeight: 600,
+                                                        color: '#1c1917',
+                                                        margin: 0,
+                                                        fontSize: 14,
+                                                        letterSpacing: '-0.005em',
+                                                    }}
+                                                >
+                                                    {s.name}
+                                                </p>
+                                                <p
+                                                    style={{
+                                                        fontSize: 12,
+                                                        color: '#78716c',
+                                                        margin: '4px 0 0 0',
+                                                        maxWidth: 280,
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
+                                                    }}
+                                                >
+                                                    {s.description}
+                                                </p>
                                             </td>
                                             <td style={tdStyle}>{s.category}</td>
                                             <td style={{ ...tdStyle, textAlign: 'center' }}>
-                                                <span style={{
-                                                    display: 'inline-flex', alignItems: 'center', gap: '6px',
-                                                    padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
-                                                    background: s.isOpen ? '#f0fdf4' : '#f5f5f4',
-                                                    color: s.isOpen ? '#16a34a' : '#78716c',
-                                                }}>
-                                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.isOpen ? '#16a34a' : '#a8a29e' }} />
-                                                    {s.isOpen ? 'Open' : 'Closed'}
+                                                <span className={`tc-pill ${s.isOpen ? 'tc-pill-success' : 'tc-pill-neutral'}`}>
+                                                    {s.isOpen ? <><span className="tc-pulse-dot" /> OPEN</> : 'CLOSED'}
                                                 </span>
                                             </td>
-                                            <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#16a34a' }}>{s.totalServed}</td>
-                                            <td style={{ ...tdStyle, textAlign: 'center', color: '#d97706', fontWeight: 600 }}>{s.totalCancelled}</td>
-                                            <td style={{ ...tdStyle, textAlign: 'center', color: '#dc2626', fontWeight: 600 }}>{s.totalNoShows}</td>
-                                            <td style={{ ...tdStyle, textAlign: 'center' }}>{toWholeMinutes(s.avgWaitTime)}m</td>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#16a34a' }}>
+                                                {s.totalServed}
+                                            </td>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', fontWeight: 600, color: '#78716c' }}>
+                                                {s.totalCancelled}
+                                            </td>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', fontWeight: 600, color: '#dc2626' }}>
+                                                {s.totalNoShows}
+                                            </td>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', color: '#1c1917', fontWeight: 600 }}>
+                                                {toWholeMinutes(s.avgWaitTime)}m
+                                            </td>
                                             <td style={{ ...tdStyle, textAlign: 'center' }}>
-                                                <span style={{
-                                                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                                    width: '32px', height: '32px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
-                                                    background: s.currentInQueue > 0 ? '#fef2f2' : '#fafaf9',
-                                                    color: s.currentInQueue > 0 ? '#C8102E' : '#a8a29e',
-                                                }}>{s.currentInQueue}</span>
+                                                <span
+                                                    className="tc-mono"
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        minWidth: 36,
+                                                        height: 30,
+                                                        padding: '0 10px',
+                                                        borderRadius: 8,
+                                                        fontSize: 13,
+                                                        fontWeight: 700,
+                                                        background: s.currentInQueue > 0 ? '#fef2f2' : '#fafaf9',
+                                                        color: s.currentInQueue > 0 ? '#C8102E' : '#a8a29e',
+                                                        letterSpacing: '-0.01em',
+                                                    }}
+                                                >
+                                                    {s.currentInQueue}
+                                                </span>
                                             </td>
                                         </tr>
                                     ))}
                                     {servicesReport.length === 0 && (
-                                        <tr><td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#a8a29e', fontSize: '14px' }}>No service data available</td></tr>
+                                        <tr>
+                                            <td
+                                                colSpan={8}
+                                                className="tc-mono"
+                                                style={{ padding: 40, textAlign: 'center', color: '#a8a29e', fontSize: 11, letterSpacing: '0.16em', fontWeight: 700 }}
+                                            >
+                                                NO SERVICE DATA
+                                            </td>
+                                        </tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                </div>
+                </section>
             )}
 
+            {/* ── Queue Statistics ───────────────────────────────── */}
             {activeTab === 'stats' && queueStats && (
-                <div className="animate-fade-in-up">
-                    {/* Summary Cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                <section className="animate-fade-in-up" style={{ marginBottom: 36 }}>
+                    <div className="tc-section-head">
+                        <div>
+                            <span className="tc-page-eyebrow">Aggregate Metrics</span>
+                            <h2 className="tc-section-title">Queue statistics</h2>
+                            <p className="tc-section-sub">Center-wide totals and per-service breakdown</p>
+                        </div>
+                    </div>
+
+                    {/* Stat cards */}
+                    <div
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                            gap: 16,
+                            marginBottom: 28,
+                        }}
+                    >
                         {[
-                            { label: 'Total Served', value: queueStats.totalUsersServed, bg: '#d1fae5', ic: '#059669', icon: <>
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></> },
-                            { label: 'Avg Wait Time', value: `${toWholeMinutes(queueStats.avgWaitTime)}m`, bg: '#fef3c7', ic: '#d97706', icon: <>
-                                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></> },
-                            { label: 'No-Show Rate', value: queueStats.totalActivity > 0 ? `${Math.round((queueStats.totalNoShows / queueStats.totalActivity) * 100)}%` : '0%', bg: '#fce7f3', ic: '#db2777', icon: <>
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></> },
-                            { label: 'Currently in Queue', value: queueStats.currentlyInQueue, bg: '#dbeafe', ic: '#3b82f6', icon: <>
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></> },
-                        ].map(stat => (
-                            <div key={stat.label} style={card}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: stat.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stat.ic} strokeWidth="2">{stat.icon}</svg>
-                                </div>
-                                <p style={{ fontSize: '28px', fontWeight: 700, color: '#1c1917', margin: '0 0 2px 0', lineHeight: 1 }}>{stat.value}</p>
-                                <p style={{ fontSize: '13px', color: '#78716c', margin: 0 }}>{stat.label}</p>
+                            {
+                                label: 'Total Served',
+                                value: queueStats.totalUsersServed,
+                                meta: 'sessions completed across all services',
+                            },
+                            {
+                                label: 'Avg Wait Time',
+                                value: `${toWholeMinutes(queueStats.avgWaitTime)}m`,
+                                meta: 'across all served sessions',
+                            },
+                            {
+                                label: 'No-Show Rate',
+                                value:
+                                    queueStats.totalActivity > 0
+                                        ? `${Math.round((queueStats.totalNoShows / queueStats.totalActivity) * 100)}%`
+                                        : '0%',
+                                meta: `${queueStats.totalNoShows} of ${queueStats.totalActivity} total`,
+                            },
+                            {
+                                label: 'Currently In Queue',
+                                value: queueStats.currentlyInQueue,
+                                meta: `${queueStats.totalUsers} total users · ${queueStats.totalServices} services`,
+                            },
+                        ].map((stat) => (
+                            <div key={stat.label} className="tc-stat">
+                                <p className="tc-stat-eyebrow">
+                                    <span>{stat.label}</span>
+                                </p>
+                                <p className="tc-stat-value">{stat.value}</p>
+                                <p className="tc-stat-meta">{stat.meta}</p>
                             </div>
                         ))}
                     </div>
 
-                    {/* Service Breakdown Table */}
-                    <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
-                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #e7e5e4' }}>
-                            <h2 style={heading}>Queue Usage by Service</h2>
-                            <p style={subtext}>Breakdown of queue activity per service</p>
+                    {/* Per-service breakdown table */}
+                    <div className="tc-section-head">
+                        <div>
+                            <span className="tc-page-eyebrow">Per-Service Breakdown</span>
+                            <h3 className="tc-section-title">Queue usage by service</h3>
                         </div>
+                    </div>
+                    <div className="tc-card-flush">
                         <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
-                                    <tr style={{ background: '#fafaf9', borderBottom: '1px solid #e7e5e4' }}>
+                                    <tr style={{ background: '#FAF7F2', borderBottom: '1px solid #ece9e2' }}>
                                         <th style={thStyle}>Service</th>
                                         <th style={{ ...thStyle, textAlign: 'center' }}>Served</th>
-                                        <th style={{ ...thStyle, textAlign: 'center' }}>No-Shows</th>
-                                        <th style={{ ...thStyle, textAlign: 'center' }}>Total Activity</th>
-                                        <th style={{ ...thStyle, textAlign: 'center' }}>Avg Wait</th>
-                                        <th style={{ ...thStyle, textAlign: 'center' }}>In Queue Now</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>No-shows</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>Total activity</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>Avg wait</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>In queue</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {(queueStats.serviceBreakdown || []).map(sb => (
-                                        <tr key={sb.serviceId} style={{ transition: 'background 0.15s' }}
-                                            onMouseEnter={e => e.currentTarget.style.background = '#fafaf9'}
-                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    {(queueStats.serviceBreakdown || []).map((sb) => (
+                                        <tr
+                                            key={sb.serviceId}
+                                            style={{ transition: 'background 0.15s' }}
+                                            onMouseEnter={(e) => (e.currentTarget.style.background = '#fafaf9')}
+                                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                                        >
                                             <td style={tdStyle}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <span style={{ fontSize: '18px' }}>{sb.icon}</span>
-                                                    <span style={{ fontWeight: 600, fontSize: '13px', color: '#1c1917' }}>{sb.serviceName}</span>
-                                                </div>
+                                                <span
+                                                    style={{
+                                                        fontFamily: 'Outfit, sans-serif',
+                                                        fontWeight: 600,
+                                                        fontSize: 14,
+                                                        color: '#1c1917',
+                                                        letterSpacing: '-0.005em',
+                                                    }}
+                                                >
+                                                    {sb.serviceName}
+                                                </span>
                                             </td>
-                                            <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#16a34a' }}>{sb.totalServed}</td>
-                                            <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 600, color: '#dc2626' }}>{sb.totalNoShows}</td>
-                                            <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700 }}>{sb.totalActivity}</td>
-                                            <td style={{ ...tdStyle, textAlign: 'center' }}>{toWholeMinutes(sb.avgWaitTime)}m</td>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#16a34a' }}>
+                                                {sb.totalServed}
+                                            </td>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', fontWeight: 600, color: '#dc2626' }}>
+                                                {sb.totalNoShows}
+                                            </td>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#1c1917' }}>
+                                                {sb.totalActivity}
+                                            </td>
+                                            <td className="tc-mono" style={{ ...tdStyle, textAlign: 'center', color: '#1c1917', fontWeight: 600 }}>
+                                                {toWholeMinutes(sb.avgWaitTime)}m
+                                            </td>
                                             <td style={{ ...tdStyle, textAlign: 'center' }}>
-                                                <span style={{
-                                                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                                    width: '32px', height: '32px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
-                                                    background: sb.currentInQueue > 0 ? '#fef2f2' : '#fafaf9',
-                                                    color: sb.currentInQueue > 0 ? '#C8102E' : '#a8a29e',
-                                                }}>{sb.currentInQueue}</span>
+                                                <span
+                                                    className="tc-mono"
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        minWidth: 36,
+                                                        height: 30,
+                                                        padding: '0 10px',
+                                                        borderRadius: 8,
+                                                        fontSize: 13,
+                                                        fontWeight: 700,
+                                                        background: sb.currentInQueue > 0 ? '#fef2f2' : '#fafaf9',
+                                                        color: sb.currentInQueue > 0 ? '#C8102E' : '#a8a29e',
+                                                        letterSpacing: '-0.01em',
+                                                    }}
+                                                >
+                                                    {sb.currentInQueue}
+                                                </span>
                                             </td>
                                         </tr>
                                     ))}
@@ -840,7 +1095,7 @@ export default function Reports() {
                             </table>
                         </div>
                     </div>
-                </div>
+                </section>
             )}
         </div>
     );
