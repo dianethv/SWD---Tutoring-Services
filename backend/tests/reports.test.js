@@ -84,6 +84,18 @@ describe('Reports Module', () => {
             assert.strictEqual(user.timesServed, 2);
         });
 
+        it('should round average wait time to a whole-minute integer', async () => {
+            history.push(
+                { id: 'h_t3', userId: 'u1', serviceId: 's1', serviceName: 'Calculus Help', date: '2024-01-03', joinedAt: '09:00 AM', servedAt: '09:12 AM', waitTime: 12.2, outcome: 'served' },
+                { id: 'h_t4', userId: 'u1', serviceId: 's1', serviceName: 'Calculus Help', date: '2024-01-04', joinedAt: '10:00 AM', servedAt: '10:17 AM', waitTime: '16.6', outcome: 'served' }
+            );
+
+            const res = await request(app).get('/api/reports/users');
+            const user = res.body.find(u => u.id === 'u1');
+            assert.strictEqual(user.avgWaitTime, 14);
+            assert.strictEqual(Number.isInteger(user.avgWaitTime), true);
+        });
+
         it('should handle multiple users with different activity levels', async () => {
             await request(app).post('/api/queue/join').send({ userId: 'u1', serviceId: 's1' });
             await request(app).post('/api/queue/join').send({ userId: 'u2', serviceId: 's2' });

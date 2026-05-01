@@ -2,6 +2,27 @@ const express = require('express');
 const router = express.Router();
 const store = require('../data/store');
 
+function normalizeWaitMinutes(waitTime) {
+    const minutes = Number(waitTime);
+    if (!Number.isFinite(minutes) || minutes < 0) {
+        return null;
+    }
+    return minutes;
+}
+
+function getAverageWaitMinutes(historyItems) {
+    const waitTimes = historyItems
+        .map(item => normalizeWaitMinutes(item.waitTime))
+        .filter(minutes => minutes != null);
+
+    if (waitTimes.length === 0) {
+        return 0;
+    }
+
+    const total = waitTimes.reduce((sum, minutes) => sum + minutes, 0);
+    return Math.round(total / waitTimes.length);
+}
+
 // ── GET /api/reports/users ──────────────────────────
 // Returns all users with their full queue participation history.
 router.get('/users', async (req, res) => {
@@ -14,10 +35,6 @@ router.get('/users', async (req, res) => {
             const served = userHistory.filter(h => h.outcome === 'served');
             const cancelled = userHistory.filter(h => h.outcome === 'cancelled');
             const noShows = userHistory.filter(h => h.outcome === 'no-show');
-            const avgWait = served.length > 0
-                ? Math.round(served.reduce((sum, h) => sum + (h.waitTime || 0), 0) / served.length)
-                : 0;
-
             return {
                 id: user.id,
                 name: user.name,
@@ -28,7 +45,7 @@ router.get('/users', async (req, res) => {
                 timesServed: served.length,
                 timesCancelled: cancelled.length,
                 timesNoShow: noShows.length,
-                avgWaitTime: avgWait,
+                avgWaitTime: getAverageWaitMinutes(served),
                 history: userHistory,
             };
         });
@@ -53,9 +70,6 @@ router.get('/services', async (req, res) => {
             const served = serviceHistory.filter(h => h.outcome === 'served');
             const cancelled = serviceHistory.filter(h => h.outcome === 'cancelled');
             const noShows = serviceHistory.filter(h => h.outcome === 'no-show');
-            const avgWait = served.length > 0
-                ? Math.round(served.reduce((sum, h) => sum + (h.waitTime || 0), 0) / served.length)
-                : 0;
             const currentInQueue = allEntries.filter(e => e.serviceId === service.id).length;
 
             return {
@@ -70,7 +84,7 @@ router.get('/services', async (req, res) => {
                 totalCancelled: cancelled.length,
                 totalNoShows: noShows.length,
                 totalActivity: serviceHistory.length,
-                avgWaitTime: avgWait,
+                avgWaitTime: getAverageWaitMinutes(served),
                 currentInQueue,
             };
         });
@@ -95,18 +109,11 @@ router.get('/queue-stats', async (req, res) => {
         const noShows = allHistory.filter(h => h.outcome === 'no-show');
         const cancelled = allHistory.filter(h => h.outcome === 'cancelled');
 
-        const avgWait = served.length > 0
-            ? Math.round(served.reduce((sum, h) => sum + (h.waitTime || 0), 0) / served.length)
-            : 0;
-
         // Per-service breakdown
         const serviceBreakdown = services.map(service => {
             const sHistory = allHistory.filter(h => h.serviceId === service.id);
             const sServed = sHistory.filter(h => h.outcome === 'served');
             const sNoShows = sHistory.filter(h => h.outcome === 'no-show');
-            const sAvgWait = sServed.length > 0
-                ? Math.round(sServed.reduce((sum, h) => sum + (h.waitTime || 0), 0) / sServed.length)
-                : 0;
             const currentInQueue = allEntries.filter(e => e.serviceId === service.id).length;
 
             return {
@@ -116,7 +123,7 @@ router.get('/queue-stats', async (req, res) => {
                 totalServed: sServed.length,
                 totalNoShows: sNoShows.length,
                 totalActivity: sHistory.length,
-                avgWaitTime: sAvgWait,
+                avgWaitTime: getAverageWaitMinutes(sServed),
                 currentInQueue,
             };
         });
@@ -136,7 +143,7 @@ router.get('/queue-stats', async (req, res) => {
             totalNoShows: noShows.length,
             totalCancelled: cancelled.length,
             totalActivity: allHistory.length,
-            avgWaitTime: avgWait,
+            avgWaitTime: getAverageWaitMinutes(served),
             currentlyInQueue: allEntries.length,
             totalUsers: users.length,
             totalServices: services.length,
