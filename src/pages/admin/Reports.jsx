@@ -1,7 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../config/api';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import { autoTable } from 'jspdf-autotable';
+
+function toWholeMinutes(value) {
+    const minutes = Number(value);
+    if (!Number.isFinite(minutes)) {
+        return 0;
+    }
+    return Math.max(0, Math.round(minutes));
+}
 
 export default function Reports() {
     const [activeTab, setActiveTab] = useState('users');
@@ -9,7 +17,7 @@ export default function Reports() {
     const [servicesReport, setServicesReport] = useState([]);
     const [queueStats, setQueueStats] = useState(null);
     const [loading, setLoading] = useState(true);
-    const printRef = useRef(null);
+    const [exportError, setExportError] = useState('');
 
     useEffect(() => {
         async function fetchReports() {
@@ -37,13 +45,13 @@ export default function Reports() {
         if (activeTab === 'users') {
             csv = 'Name,Email,Role,Total Visits,Served,Cancelled,No-Shows,Avg Wait (min)\n';
             usersReport.forEach(u => {
-                csv += `"${u.name}","${u.email}","${u.role}",${u.totalVisits},${u.timesServed},${u.timesCancelled},${u.timesNoShow},${u.avgWaitTime}\n`;
+                csv += `"${u.name}","${u.email}","${u.role}",${u.totalVisits},${u.timesServed},${u.timesCancelled},${u.timesNoShow},${toWholeMinutes(u.avgWaitTime)}\n`;
             });
             filename = 'users_report.csv';
         } else if (activeTab === 'services') {
             csv = 'Service,Category,Status,Total Served,Cancelled,No-Shows,Avg Wait (min),Currently In Queue\n';
             servicesReport.forEach(s => {
-                csv += `"${s.name}","${s.category}","${s.isOpen ? 'Open' : 'Closed'}",${s.totalServed},${s.totalCancelled},${s.totalNoShows},${s.avgWaitTime},${s.currentInQueue}\n`;
+                csv += `"${s.name}","${s.category}","${s.isOpen ? 'Open' : 'Closed'}",${s.totalServed},${s.totalCancelled},${s.totalNoShows},${toWholeMinutes(s.avgWaitTime)},${s.currentInQueue}\n`;
             });
             filename = 'services_report.csv';
         } else {
@@ -52,13 +60,13 @@ export default function Reports() {
                 csv += `Total Users Served,${queueStats.totalUsersServed}\n`;
                 csv += `Total No-Shows,${queueStats.totalNoShows}\n`;
                 csv += `Total Cancelled,${queueStats.totalCancelled}\n`;
-                csv += `Avg Wait Time (min),${queueStats.avgWaitTime}\n`;
+                csv += `Avg Wait Time (min),${toWholeMinutes(queueStats.avgWaitTime)}\n`;
                 csv += `Currently In Queue,${queueStats.currentlyInQueue}\n`;
                 csv += `Total Users,${queueStats.totalUsers}\n`;
                 csv += `Total Services,${queueStats.totalServices}\n`;
                 csv += '\nService,Served,No-Shows,Avg Wait (min)\n';
                 (queueStats.serviceBreakdown || []).forEach(sb => {
-                    csv += `"${sb.serviceName}",${sb.totalServed},${sb.totalNoShows},${sb.avgWaitTime}\n`;
+                    csv += `"${sb.serviceName}",${sb.totalServed},${sb.totalNoShows},${toWholeMinutes(sb.avgWaitTime)}\n`;
                 });
             }
             filename = 'queue_stats_report.csv';
@@ -73,6 +81,7 @@ export default function Reports() {
 
     // ── PDF Export ───────────────────────────────────
     const exportPDF = () => {
+        setExportError('');
         const doc = new jsPDF('p', 'mm', 'a4');
         const pageWidth = doc.internal.pageSize.getWidth();
         const brandColor = [200, 16, 46];
@@ -137,7 +146,7 @@ export default function Reports() {
             doc.setTextColor(...mutedText);
             doc.text(
                 `Total Users: ${queueStats.totalUsers}  |  Total Services: ${queueStats.totalServices}  |  ` +
-                `Total Served: ${queueStats.totalUsersServed}  |  Avg Wait: ${queueStats.avgWaitTime} min  |  ` +
+                `Total Served: ${queueStats.totalUsersServed}  |  Avg Wait: ${toWholeMinutes(queueStats.avgWaitTime)} min  |  ` +
                 `Currently In Queue: ${queueStats.currentlyInQueue}`,
                 14, y
             );
@@ -153,13 +162,13 @@ export default function Reports() {
         );
 
         if (usersReport.length > 0) {
-            doc.autoTable({
+            autoTable(doc, {
                 startY: y,
                 head: [['Name', 'Email', 'Role', 'Total Visits', 'Served', 'Cancelled', 'No-Shows', 'Avg Wait']],
                 body: usersReport.map(u => [
                     u.name, u.email, u.role,
                     u.totalVisits, u.timesServed, u.timesCancelled, u.timesNoShow,
-                    `${u.avgWaitTime} min`
+                    `${toWholeMinutes(u.avgWaitTime)} min`
                 ]),
                 styles: { fontSize: 8, cellPadding: 3 },
                 headStyles: { fillColor: brandColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
@@ -179,7 +188,7 @@ export default function Reports() {
                 doc.text(`Queue History — ${u.name} (${u.email})`, 14, y);
                 y += 2;
 
-                doc.autoTable({
+                autoTable(doc, {
                     startY: y,
                     head: [['Date', 'Service', 'Joined At', 'Served At', 'Wait (min)', 'Outcome']],
                     body: u.history.map(h => [
@@ -215,14 +224,14 @@ export default function Reports() {
         );
 
         if (servicesReport.length > 0) {
-            doc.autoTable({
+            autoTable(doc, {
                 startY: y,
                 head: [['Service', 'Category', 'Duration', 'Status', 'Served', 'Cancelled', 'No-Shows', 'Avg Wait', 'In Queue']],
                 body: servicesReport.map(s => [
                     s.name, s.category, `${s.expectedDuration} min`,
                     s.isOpen ? 'Open' : 'Closed',
                     s.totalServed, s.totalCancelled, s.totalNoShows,
-                    `${s.avgWaitTime} min`, s.currentInQueue
+                    `${toWholeMinutes(s.avgWaitTime)} min`, s.currentInQueue
                 ]),
                 styles: { fontSize: 8, cellPadding: 3 },
                 headStyles: { fillColor: brandColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
@@ -253,7 +262,7 @@ export default function Reports() {
                 ? `${Math.round((queueStats.totalNoShows / queueStats.totalActivity) * 100)}%`
                 : '0%';
 
-            doc.autoTable({
+            autoTable(doc, {
                 startY: y,
                 head: [['Metric', 'Value']],
                 body: [
@@ -262,7 +271,7 @@ export default function Reports() {
                     ['Total Cancelled', String(queueStats.totalCancelled)],
                     ['Total Activity (all outcomes)', String(queueStats.totalActivity)],
                     ['No-Show Rate', noShowRate],
-                    ['Average Wait Time', `${queueStats.avgWaitTime} min`],
+                    ['Average Wait Time', `${toWholeMinutes(queueStats.avgWaitTime)} min`],
                     ['Currently In Queue', String(queueStats.currentlyInQueue)],
                     ['Total Registered Users', String(queueStats.totalUsers)],
                     ['Total Configured Services', String(queueStats.totalServices)],
@@ -285,12 +294,12 @@ export default function Reports() {
                 doc.text('Per-Service Breakdown', 14, y);
                 y += 4;
 
-                doc.autoTable({
+                autoTable(doc, {
                     startY: y,
                     head: [['Service', 'Served', 'No-Shows', 'Total Activity', 'Avg Wait', 'In Queue Now']],
                     body: queueStats.serviceBreakdown.map(sb => [
                         sb.serviceName, sb.totalServed, sb.totalNoShows,
-                        sb.totalActivity, `${sb.avgWaitTime} min`, sb.currentInQueue
+                        sb.totalActivity, `${toWholeMinutes(sb.avgWaitTime)} min`, sb.currentInQueue
                     ]),
                     styles: { fontSize: 8, cellPadding: 3 },
                     headStyles: { fillColor: [68, 64, 60], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
@@ -397,7 +406,14 @@ export default function Reports() {
                         padding: '10px 20px', borderRadius: '10px', border: '1px solid #e7e5e4', background: '#fff',
                         cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#44403c', transition: 'all 0.2s',
                     }}>📥 Export CSV</button>
-                    <button onClick={exportPDF} id="export-pdf-btn" style={{
+                    <button onClick={() => {
+                        try {
+                            exportPDF();
+                        } catch (error) {
+                            console.error('Failed to export PDF:', error);
+                            setExportError('PDF export failed. Please refresh and try again.');
+                        }
+                    }} id="export-pdf-btn" style={{
                         padding: '10px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer',
                         fontSize: '13px', fontWeight: 600, color: '#fff', transition: 'all 0.2s',
                         background: 'linear-gradient(135deg, #C8102E, #E8384F)',
@@ -406,6 +422,11 @@ export default function Reports() {
             </div>
 
             {/* ── Tab Content ─────────────────────────────── */}
+            {exportError && (
+                <p style={{ margin: '-12px 0 20px 0', color: '#dc2626', fontSize: '13px', fontWeight: 600 }}>
+                    {exportError}
+                </p>
+            )}
             {activeTab === 'users' && (
                 <div className="animate-fade-in-up">
                     <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
@@ -461,7 +482,7 @@ export default function Reports() {
                                             <td style={{ ...tdStyle, textAlign: 'center' }}>
                                                 <span style={{ color: '#dc2626', fontWeight: 600 }}>{u.timesNoShow}</span>
                                             </td>
-                                            <td style={{ ...tdStyle, textAlign: 'center' }}>{u.avgWaitTime}m</td>
+                                            <td style={{ ...tdStyle, textAlign: 'center' }}>{toWholeMinutes(u.avgWaitTime)}m</td>
                                         </tr>
                                     ))}
                                     {usersReport.length === 0 && (
@@ -524,7 +545,7 @@ export default function Reports() {
                                             <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#16a34a' }}>{s.totalServed}</td>
                                             <td style={{ ...tdStyle, textAlign: 'center', color: '#d97706', fontWeight: 600 }}>{s.totalCancelled}</td>
                                             <td style={{ ...tdStyle, textAlign: 'center', color: '#dc2626', fontWeight: 600 }}>{s.totalNoShows}</td>
-                                            <td style={{ ...tdStyle, textAlign: 'center' }}>{s.avgWaitTime}m</td>
+                                            <td style={{ ...tdStyle, textAlign: 'center' }}>{toWholeMinutes(s.avgWaitTime)}m</td>
                                             <td style={{ ...tdStyle, textAlign: 'center' }}>
                                                 <span style={{
                                                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -552,7 +573,7 @@ export default function Reports() {
                         {[
                             { label: 'Total Served', value: queueStats.totalUsersServed, bg: '#d1fae5', ic: '#059669', icon: <>
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></> },
-                            { label: 'Avg Wait Time', value: `${queueStats.avgWaitTime}m`, bg: '#fef3c7', ic: '#d97706', icon: <>
+                            { label: 'Avg Wait Time', value: `${toWholeMinutes(queueStats.avgWaitTime)}m`, bg: '#fef3c7', ic: '#d97706', icon: <>
                                 <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></> },
                             { label: 'No-Show Rate', value: queueStats.totalActivity > 0 ? `${Math.round((queueStats.totalNoShows / queueStats.totalActivity) * 100)}%` : '0%', bg: '#fce7f3', ic: '#db2777', icon: <>
                                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></> },
@@ -601,7 +622,7 @@ export default function Reports() {
                                             <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#16a34a' }}>{sb.totalServed}</td>
                                             <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 600, color: '#dc2626' }}>{sb.totalNoShows}</td>
                                             <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700 }}>{sb.totalActivity}</td>
-                                            <td style={{ ...tdStyle, textAlign: 'center' }}>{sb.avgWaitTime}m</td>
+                                            <td style={{ ...tdStyle, textAlign: 'center' }}>{toWholeMinutes(sb.avgWaitTime)}m</td>
                                             <td style={{ ...tdStyle, textAlign: 'center' }}>
                                                 <span style={{
                                                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
