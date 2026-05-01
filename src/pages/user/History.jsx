@@ -1,8 +1,13 @@
 import { useApp } from '../../context/AppContext';
+import { formatWait, averageWaitMinutes } from '../../utils/formatWait';
 
 export default function History() {
   const { getUserHistory } = useApp();
   const history = getUserHistory();
+  // Outlier-safe average — caps each sample so a 1289-min entry can't dominate.
+  const avgWaitDisplay = formatWait(
+    averageWaitMinutes(history.filter((h) => h.waitTime).map((h) => h.waitTime))
+  );
 
   const outcomeMeta = (outcome) => {
     switch (outcome) {
@@ -47,9 +52,7 @@ export default function History() {
           </div>
           <div style={card}>
             <p style={{ fontSize: '28px', fontWeight: 700, color: '#C8102E', margin: 0, lineHeight: 1 }}>
-              {history.filter((h) => h.waitTime).reduce((sum, h) => sum + h.waitTime, 0) > 0
-                ? `${Math.round(history.filter((h) => h.waitTime).reduce((sum, h) => sum + h.waitTime, 0) / history.filter((h) => h.waitTime).length)}m`
-                : '—'}
+              {avgWaitDisplay}
             </p>
             <p style={{ fontSize: '13px', color: '#78716c', margin: '6px 0 0 0' }}>Avg Wait Time</p>
           </div>
@@ -128,7 +131,7 @@ export default function History() {
                   </div>
                   <div>
                     <p style={{ fontSize: '11px', fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Wait Time</p>
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', margin: '4px 0 0 0' }}>{h.waitTime ? `${h.waitTime} min` : '—'}</p>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', margin: '4px 0 0 0' }}>{formatWait(h.waitTime)}</p>
                   </div>
                 </div>
               </div>

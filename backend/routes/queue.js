@@ -11,16 +11,16 @@ const store = require('../data/store');
 // driftFactor = avgHistoricalWait / (assumedAvgPositionsWaited × expectedDuration)
 //   - assumedAvgPositionsWaited = 2  (an average past student waited from
 //     about the middle of a typical small queue)
-//   - clamped to [0.5, 2.0] so a single outlier can't blow up the estimate
-//   - engages as soon as ANY served history row exists (this is a class-project
-//     demo, not a production service — we want every interaction to visibly
-//     move the estimate)
-const MIN_SAMPLE_FOR_BLEND = 1;
+//   - clamped to [0.5, 2.0] so a single outlier (high or low) can't blow up
+//     the estimate or collapse it to zero
+//   - requires at least MIN_SAMPLE_FOR_BLEND served rows before blending,
+//     so one fast/slow sample doesn't sink an otherwise-busy queue
+const MIN_SAMPLE_FOR_BLEND = 3;
 const ASSUMED_AVG_POSITIONS_WAITED = 2;
-// Floor at 0 so the estimate honestly reflects the data: if past students were
-// served instantly, predict an instant serve. We still cap the upside at 2× to
-// stop a single 4-hour outlier from blowing up future estimates.
-const DRIFT_LOWER_BOUND = 0;
+// Floor the drift at 0.5 so a fast historical run can shave at most half off
+// the static estimate. This prevents the bug where a single 2-minute past
+// serve made a service with real students waiting show "~1 min" wait.
+const DRIFT_LOWER_BOUND = 0.5;
 const DRIFT_UPPER_BOUND = 2.0;
 // Smaller window = each new serve has visible weight in the rolling average,
 // which is what makes the demo feel responsive.

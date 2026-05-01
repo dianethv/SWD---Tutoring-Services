@@ -185,14 +185,18 @@ describe('Queue Module', () => {
             assert.strictEqual(res.body.smartEstimate, res.body.staticEstimate);
         });
 
-        it('engages with even a single served session (demo responsiveness)', async () => {
-            seedSlowHistory('s1', 1, 80);
+        it('stays static when only one or two served sessions exist (below MIN_SAMPLE)', async () => {
+            // A single fast/slow sample shouldn't be allowed to dominate the
+            // estimate — that produced bogus "~1 min" readings on services
+            // with real students waiting. Need ≥ 3 samples before blending.
+            seedSlowHistory('s1', 2, 80);
             const res = await request(app).get('/api/queue/wait-time/s1/4');
-            assert.strictEqual(res.body.basis, 'blended');
-            assert.strictEqual(res.body.sampleSize, 1);
+            assert.strictEqual(res.body.basis, 'static');
+            assert.strictEqual(res.body.sampleSize, 2);
+            assert.strictEqual(res.body.smartEstimate, res.body.staticEstimate);
         });
 
-        it('blends with historical average when multiple samples exist', async () => {
+        it('blends with historical average once at least 3 samples exist', async () => {
             seedSlowHistory('s1', 6, 80);
             const res = await request(app).get('/api/queue/wait-time/s1/4');
             assert.strictEqual(res.status, 200);
@@ -212,17 +216,20 @@ describe('Queue Module', () => {
             assert.strictEqual(res.body.smartEstimate, 50);
         });
 
-        it('returns 0 when every served wait_time is 0 (instant serves)', async () => {
-            // The estimator should honestly reflect the data: if the service
-            // historically serves instantly, predict an instant serve.
+        it('clamps drift to lower bound (0.5) when historical waits are unrealistically fast', async () => {
+            // Even if every recent serve was instant (0 min wait), a newcomer
+            // joining behind 2 real waiting students should still see at least
+            // half the static estimate — not "~0 min". This was the bug behind
+            // services like Algorithms / Data Structures showing "~1 min"
+            // wait when the static formula said ~25–90 min.
             seedSlowHistory('s1', 6, 0);
             const res = await request(app).get('/api/queue/wait-time/s1/3');
             assert.strictEqual(res.body.basis, 'blended');
             assert.strictEqual(res.body.sampleSize, 6);
             assert.strictEqual(res.body.historicalAvgWait, 0);
-            assert.strictEqual(res.body.driftFactor, 0);
-            assert.strictEqual(res.body.smartEstimate, 0);
-            // The static formula is still reported alongside for transparency.
+            assert.strictEqual(res.body.driftFactor, 0.5);
+            // position 3 → (3-1) * 25 * 0.5 = 25 min (floor — never below half static)
+            assert.strictEqual(res.body.smartEstimate, 25);
             assert.strictEqual(res.body.staticEstimate, 50);
         });
 

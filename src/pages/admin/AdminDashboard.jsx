@@ -1,5 +1,6 @@
 import { useApp } from '../../context/AppContext';
 import { Link } from 'react-router-dom';
+import { formatWait } from '../../utils/formatWait';
 
 export default function AdminDashboard() {
     const { currentUser, services, queueEntries: queue, toggleService, stats } = useApp();
@@ -198,7 +199,7 @@ export default function AdminDashboard() {
                         },
                         {
                             label: 'Avg Wait',
-                            value: `${stats?.avgWaitTime ?? 14}m`,
+                            value: formatWait(stats?.avgWaitTime ?? 14, { fallback: '—' }),
                             meta: 'peak 2–4 PM',
                         },
                         {

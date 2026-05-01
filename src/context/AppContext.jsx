@@ -362,12 +362,18 @@ export function AppProvider({ children }) {
 
     // ── Smart Wait-Time Estimator (client mirror) ───
     // Mirrors backend/routes/queue.js so render-time calls stay synchronous.
-    // Engages as soon as a single served session exists; falls back to the
-    // static formula only when there's no history at all.
-    const SMART_MIN_SAMPLE = 1;
+    //
+    // Trade-off: we want the demo to *feel* responsive (estimates shift as
+    // serves happen) but not so jumpy that a single fast/slow sample produces
+    // a nonsensical estimate. So we require a small minimum sample size
+    // before blending, and clamp drift between 0.5× and 2× of static.
+    const SMART_MIN_SAMPLE = 3;
     const SMART_ASSUMED_POSITIONS = 2;
-    // Floor at 0 — if past students waited 0 min, we predict 0 min.
-    const SMART_DRIFT_LOWER = 0;
+    // Floor at 0.5 — even if recent serves were near-instant, a newcomer in
+    // line behind real waiting students should never see "~1 min" when the
+    // static formula would say ~25 min. Capping the lower bound at half the
+    // static estimate keeps things honest.
+    const SMART_DRIFT_LOWER = 0.5;
     const SMART_DRIFT_UPPER = 2.0;
 
     const getEstimatedWait = useCallback(

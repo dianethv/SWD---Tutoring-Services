@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { formatWait } from '../../utils/formatWait';
 
 export default function JoinQueue() {
     const {
@@ -146,7 +147,7 @@ export default function JoinQueue() {
                             }}>
                                 <span style={{ fontSize: '12px', color: '#78716c', fontWeight: 500 }}>Estimated wait</span>
                                 <span style={{ fontSize: '15px', fontWeight: 700, color: eta > 0 ? '#C8102E' : '#16a34a' }}>
-                                    {eta > 0 ? `~${eta} min` : 'No wait!'}
+                                    {eta > 0 ? formatWait(eta, { prefix: '~' }) : 'No wait!'}
                                 </span>
                             </div>
 
@@ -167,8 +168,8 @@ export default function JoinQueue() {
                                 >
                                     <strong style={{ color: '#92400e' }}>💡 Tip:</strong>{' '}
                                     <strong>{recommendation.serviceName}</strong> ({recommendation.category}) is open
-                                    with a ~{recommendation.smartEstimate} min wait — about{' '}
-                                    <strong>{recommendation.minutesSaved} min</strong> shorter than this one.
+                                    with a {formatWait(recommendation.smartEstimate, { prefix: '~' })} wait — about{' '}
+                                    <strong>{formatWait(recommendation.minutesSaved)}</strong> shorter than this one.
                                 </div>
                             )}
 

@@ -1,5 +1,6 @@
 import { useApp } from '../../context/AppContext';
 import { Link } from 'react-router-dom';
+import { formatWait } from '../../utils/formatWait';
 
 export default function QueueStatus() {
   const { services, getUserActiveQueues, getEstimatedWait, leaveQueue } = useApp();
@@ -159,9 +160,11 @@ export default function QueueStatus() {
                       Est. Wait
                     </p>
                     <p style={{ fontSize: '36px', fontWeight: 800, color: '#1c1917', margin: 0, lineHeight: 1, fontFamily: "'Outfit', sans-serif" }}>
-                      {eta > 0 ? eta : '<1'}
+                      {eta > 0 ? formatWait(eta) : '<1m'}
                     </p>
-                    <p style={{ fontSize: '11px', color: '#78716c', margin: '6px 0 0 0' }}>minutes</p>
+                    <p style={{ fontSize: '11px', color: '#78716c', margin: '6px 0 0 0' }}>
+                      {eta >= 60 ? 'hours : minutes' : 'minutes'}
+                    </p>
                   </div>
 
                   {/* Joined */}

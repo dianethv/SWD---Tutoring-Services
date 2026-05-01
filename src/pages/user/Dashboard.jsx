@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { formatWait, averageWaitMinutes } from '../../utils/formatWait';
 
 export default function Dashboard() {
     const { currentUser, services, getUserActiveQueues, getEstimatedWait, getUserNotifications, getUserHistory } = useApp();
@@ -19,10 +20,10 @@ export default function Dashboard() {
     const servedHistory = history.filter((h) => h.outcome === 'served');
     const waitedHistory = history.filter((h) => h.waitTime);
     const servedCount = servedHistory.length;
-    const avgWait =
-        waitedHistory.length > 0
-            ? Math.round(waitedHistory.reduce((s, h) => s + h.waitTime, 0) / waitedHistory.length)
-            : 0;
+    // averageWaitMinutes caps each sample so a single 1289-min outlier
+    // (e.g. someone joined yesterday and was served today) can't dominate.
+    const avgWaitRaw = averageWaitMinutes(waitedHistory.map((h) => h.waitTime));
+    const avgWaitDisplay = formatWait(avgWaitRaw);
 
     // Hero "my queue" ticket — features the user's first active queue.
     const heroQueue = activeQueues[0];
@@ -130,7 +131,7 @@ export default function Dashboard() {
 
                                     <p style={{ fontSize: 14, fontWeight: 600, color: '#1c1917', marginTop: 14 }}>{heroService.name}</p>
                                     <p style={{ fontSize: 12, color: '#78716c', marginTop: 2 }}>
-                                        {heroService.category} · ~{heroEta > 0 ? heroEta : '<1'} min wait
+                                        {heroService.category} · {heroEta > 0 ? formatWait(heroEta, { prefix: '~' }) : '<1m'} wait
                                     </p>
 
                                     <div className="tc-ticket-divider" />
@@ -200,7 +201,7 @@ export default function Dashboard() {
                         { label: 'Active Queues', value: activeQueues.length, meta: activeQueues.length > 0 ? `next: ${services.find((s) => s.id === activeQueues[0].serviceId)?.name || '—'}` : 'not in any queue' },
                         { label: 'Sessions Done', value: servedCount, meta: servedCount > 0 ? `${servedHistory[0]?.serviceName || ''} most recent` : 'no sessions yet' },
                         { label: 'Unread Alerts', value: recentNotifs.length, meta: recentNotifs.length > 0 ? 'check the bell' : 'all caught up' },
-                        { label: 'Avg Wait', value: avgWait > 0 ? `${avgWait}m` : '—', meta: waitedHistory.length > 0 ? `across ${waitedHistory.length} sessions` : 'first time soon' },
+                        { label: 'Avg Wait', value: avgWaitDisplay, meta: waitedHistory.length > 0 ? `across ${waitedHistory.length} sessions` : 'first time soon' },
                     ].map((stat) => (
                         <div key={stat.label} className="tc-stat">
                             <p className="tc-stat-eyebrow">
@@ -274,7 +275,7 @@ export default function Dashboard() {
 
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11 }}>
                                         <span className="tc-mono" style={{ color: '#78716c', letterSpacing: '0.1em', fontWeight: 600 }}>
-                                            ETA <span style={{ color: '#1c1917' }}>~{eta > 0 ? eta : '<1'}M</span>
+                                            ETA <span style={{ color: '#1c1917' }}>{eta > 0 ? formatWait(eta, { prefix: '~' }).toUpperCase() : '<1M'}</span>
                                         </span>
                                         <span className="tc-mono" style={{ color: '#a8a29e', letterSpacing: '0.12em', fontWeight: 600 }}>
                                             VIEW →
@@ -406,9 +407,9 @@ export default function Dashboard() {
                                         </div>
                                     </div>
                                     <div className="dashboard-activity-meta" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                                        {h.waitTime != null && (
+                                        {h.waitTime != null && h.waitTime > 0 && (
                                             <span className="tc-mono" style={{ fontSize: 12, color: '#78716c', letterSpacing: '0.06em', fontWeight: 600 }}>
-                                                {h.waitTime}m wait
+                                                {formatWait(h.waitTime)} wait
                                             </span>
                                         )}
                                         <span className={`tc-pill ${pillClass}`}>{pillLabel}</span>
