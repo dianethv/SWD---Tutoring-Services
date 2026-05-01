@@ -361,7 +361,7 @@ export default function Reports() {
     }
 
     return (
-        <div className="reports-page" ref={printRef}>
+        <div className="reports-page">
             {/* ── Hero Banner ─────────────────────────────── */}
             <div style={{
                 borderRadius: '20px', padding: '48px 40px',
