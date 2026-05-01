@@ -1,144 +1,255 @@
+import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { formatWait, averageWaitMinutes } from '../../utils/formatWait';
 
 export default function History() {
-  const { getUserHistory } = useApp();
-  const history = getUserHistory();
-  // Outlier-safe average — caps each sample so a 1289-min entry can't dominate.
-  const avgWaitDisplay = formatWait(
-    averageWaitMinutes(history.filter((h) => h.waitTime).map((h) => h.waitTime))
-  );
+    const { getUserHistory } = useApp();
+    const history = getUserHistory();
 
-  const outcomeMeta = (outcome) => {
-    switch (outcome) {
-      case 'served':
-        return { label: 'Completed', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0', icon: '✅' };
-      case 'cancelled':
-        return { label: 'Cancelled', color: '#78716c', bg: '#fafaf9', border: '#e7e5e4', icon: '🚫' };
-      case 'no-show':
-        return { label: 'No Show', color: '#dc2626', bg: '#fef2f2', border: '#fecaca', icon: '⚠️' };
-      default:
-        return { label: '—', color: '#a8a29e', bg: '#fafaf9', border: '#e7e5e4', icon: '❔' };
-    }
-  };
+    const servedHistory = history.filter((h) => h.outcome === 'served');
+    const waitedHistory = history.filter((h) => h.waitTime);
+    // Outlier-safe average — caps each sample so a 1289-min entry can't dominate.
+    const avgWaitDisplay = formatWait(
+        averageWaitMinutes(waitedHistory.map((h) => h.waitTime))
+    );
 
-  // Accent icons for cards — rotated in top-right corner
-  const cardIcons = ['📖', '🎓', '📐', '🧮', '💡', '🔬', '📝', '🖥️'];
+    const outcomeMeta = (outcome) => {
+        switch (outcome) {
+            case 'served':
+                return { label: 'SERVED', pill: 'tc-pill-success' };
+            case 'cancelled':
+                return { label: 'CANCELLED', pill: 'tc-pill-neutral' };
+            case 'no-show':
+                return { label: 'NO SHOW', pill: 'tc-pill-danger' };
+            default:
+                return { label: '—', pill: 'tc-pill-neutral' };
+        }
+    };
 
-  const card = { background: '#fff', border: '1px solid #e7e5e4', borderRadius: '16px', padding: '24px' };
+    /* ── Empty state ─────────────────────────────────────── */
+    if (history.length === 0) {
+        return (
+            <div className="history-page">
+                <section className="tc-page-hero">
+                    <span className="tc-page-eyebrow">Receipts · Past Visits</span>
+                    <h1 className="tc-page-headline" style={{ marginTop: 16 }}>
+                        Session history<span className="tc-dot">.</span>
+                    </h1>
+                    <p className="tc-page-sub">
+                        Every tutoring session you complete shows up here as a receipt — wait
+                        times, outcomes, and timestamps.
+                    </p>
+                    <div style={{ marginTop: 24, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                        <Link
+                            to="/join-queue"
+                            style={{
+                                padding: '12px 22px',
+                                borderRadius: 12,
+                                background: '#C8102E',
+                                color: '#fff',
+                                fontSize: 13,
+                                fontWeight: 600,
+                                textDecoration: 'none',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                boxShadow: '0 4px 14px -6px rgba(200, 16, 46, 0.45)',
+                                transition: 'background 0.2s, transform 0.2s',
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = '#960C22'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = '#C8102E'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                        >
+                            Join your first queue
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                                <polyline points="12 5 19 12 12 19" />
+                            </svg>
+                        </Link>
+                    </div>
+                </section>
 
-  return (
-    <div className="history-page">
-      {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '24px', fontWeight: 700, color: '#1c1917', margin: '0 0 6px 0' }}>
-          Session History
-        </h1>
-        <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>A record of your tutoring activity.</p>
-      </div>
-
-      {/* Summary Stats */}
-      {history.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-          <div style={card}>
-            <p style={{ fontSize: '28px', fontWeight: 700, color: '#1c1917', margin: 0, lineHeight: 1 }}>{history.length}</p>
-            <p style={{ fontSize: '13px', color: '#78716c', margin: '6px 0 0 0' }}>Total Sessions</p>
-          </div>
-          <div style={card}>
-            <p style={{ fontSize: '28px', fontWeight: 700, color: '#16a34a', margin: 0, lineHeight: 1 }}>
-              {history.filter((h) => h.outcome === 'served').length}
-            </p>
-            <p style={{ fontSize: '13px', color: '#78716c', margin: '6px 0 0 0' }}>Completed</p>
-          </div>
-          <div style={card}>
-            <p style={{ fontSize: '28px', fontWeight: 700, color: '#C8102E', margin: 0, lineHeight: 1 }}>
-              {avgWaitDisplay}
-            </p>
-            <p style={{ fontSize: '13px', color: '#78716c', margin: '6px 0 0 0' }}>Avg Wait Time</p>
-          </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {history.length === 0 ? (
-        <div style={{
-          textAlign: 'center', padding: '80px 24px',
-          border: '2px dashed #d6d3d1', borderRadius: '16px', background: '#fafaf9',
-        }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.6 }}>📚</div>
-          <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>Your completed sessions will appear here.</p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {history.map((h, i) => {
-            const meta = outcomeMeta(h.outcome);
-            const accent = cardIcons[i % cardIcons.length];
-
-            return (
-              <div key={h.id} style={{
-                ...card,
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'box-shadow 0.2s, transform 0.2s',
-              }}
-                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
-              >
-                {/* Corner decorative icon */}
-                <div style={{
-                  position: 'absolute', top: '-6px', right: '-6px',
-                  width: '56px', height: '56px',
-                  borderRadius: '0 16px 0 20px',
-                  background: meta.bg, border: `1px solid ${meta.border}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '22px',
+                <section style={{
+                    background: '#FAF7F2',
+                    backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(28, 25, 23, 0.06) 1px, transparent 0)',
+                    backgroundSize: '22px 22px',
+                    border: '1px solid #ece9e2',
+                    borderRadius: 16,
+                    padding: '40px 24px',
+                    textAlign: 'center',
                 }}>
-                  {accent}
-                </div>
+                    <span className="tc-mono" style={{
+                        fontSize: 11,
+                        color: '#a8a29e',
+                        letterSpacing: '0.16em',
+                        fontWeight: 700,
+                    }}>
+                        NO RECEIPTS YET
+                    </span>
+                    <p style={{
+                        fontSize: 14,
+                        color: '#78716c',
+                        margin: '12px 0 0 0',
+                        maxWidth: 380,
+                        marginLeft: 'auto',
+                        marginRight: 'auto',
+                        lineHeight: 1.55,
+                    }}>
+                        Join a queue and complete a session — your receipt will land here when
+                        you're done.
+                    </p>
+                </section>
+            </div>
+        );
+    }
 
-                {/* Service name + date */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '16px', paddingRight: '60px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1c1917', margin: 0 }}>{h.serviceName}</h3>
-                    <p style={{ fontSize: '13px', color: '#78716c', margin: '4px 0 0 0' }}>{h.date}</p>
-                  </div>
-                </div>
+    /* ── Active state ────────────────────────────────────── */
+    return (
+        <div className="history-page">
+            {/* ── Hero ──────────────────────────────────────────── */}
+            <section className="tc-page-hero">
+                <span className="tc-page-eyebrow">Receipts · {history.length} past {history.length === 1 ? 'visit' : 'visits'}</span>
+                <h1 className="tc-page-headline" style={{ marginTop: 16 }}>
+                    Session history<span className="tc-dot">.</span>
+                </h1>
+                <p className="tc-page-sub">
+                    A clean record of every tutoring session you've started or completed.
+                    Use it to see your patterns and remember what worked.
+                </p>
+            </section>
 
-                {/* Outcome badge */}
-                <div style={{ marginBottom: '16px' }}>
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '6px',
-                    padding: '5px 14px', borderRadius: '20px',
-                    fontSize: '12px', fontWeight: 600,
-                    background: meta.bg, color: meta.color, border: `1px solid ${meta.border}`,
-                  }}>
-                    {meta.icon} {meta.label}
-                  </span>
+            {/* ── Stats row ─────────────────────────────────────── */}
+            <section style={{ marginBottom: 36 }}>
+                <div className="tc-section-head">
+                    <div>
+                        <span className="tc-page-eyebrow">Your Numbers</span>
+                        <h2 className="tc-section-title">At a glance</h2>
+                    </div>
                 </div>
-
-                {/* Divider */}
-                <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, #e7e5e4, transparent)', margin: '0 0 16px 0' }} />
-
-                {/* Stats row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '16px' }}>
-                  <div>
-                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Joined</p>
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', margin: '4px 0 0 0' }}>{h.joinedAt}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Served</p>
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', margin: '4px 0 0 0' }}>{h.servedAt || '—'}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Wait Time</p>
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', margin: '4px 0 0 0' }}>{formatWait(h.waitTime)}</p>
-                  </div>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 16,
+                }}>
+                    <div className="tc-stat">
+                        <p className="tc-stat-eyebrow"><span>Total Sessions</span></p>
+                        <p className="tc-stat-value">{history.length}</p>
+                        <p className="tc-stat-meta">
+                            {history.length === 1 ? 'first visit logged' : 'across your account'}
+                        </p>
+                    </div>
+                    <div className="tc-stat">
+                        <p className="tc-stat-eyebrow"><span>Completed</span></p>
+                        <p className="tc-stat-value">{servedHistory.length}</p>
+                        <p className="tc-stat-meta">
+                            {history.length > 0
+                                ? `${Math.round((servedHistory.length / history.length) * 100)}% completion rate`
+                                : 'no sessions yet'}
+                        </p>
+                    </div>
+                    <div className="tc-stat">
+                        <p className="tc-stat-eyebrow"><span>Avg Wait</span></p>
+                        <p className="tc-stat-value">{avgWaitDisplay}</p>
+                        <p className="tc-stat-meta">
+                            {waitedHistory.length > 0
+                                ? `across ${waitedHistory.length} ${waitedHistory.length === 1 ? 'session' : 'sessions'}`
+                                : 'no wait data'}
+                        </p>
+                    </div>
                 </div>
-              </div>
-            );
-          })}
+            </section>
+
+            {/* ── Receipt-style list ───────────────────────────── */}
+            <section style={{ marginBottom: 36 }}>
+                <div className="tc-section-head">
+                    <div>
+                        <span className="tc-page-eyebrow">Receipts · Newest First</span>
+                        <h2 className="tc-section-title">Every visit</h2>
+                    </div>
+                </div>
+                <div className="tc-card-flush">
+                    {history.map((h, i) => {
+                        const meta = outcomeMeta(h.outcome);
+                        const isLast = i === history.length - 1;
+                        return (
+                            <div
+                                key={h.id}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    flexWrap: 'wrap',
+                                    gap: 14,
+                                    padding: '20px 26px',
+                                    borderBottom: isLast ? 'none' : '1px dashed #ece9e2',
+                                    transition: 'background 0.15s',
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.background = '#fafaf9')}
+                                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                            >
+                                {/* Left: date + service info */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 18, minWidth: 0, flex: '1 1 240px' }}>
+                                    <span
+                                        className="tc-mono"
+                                        style={{
+                                            fontSize: 11,
+                                            color: '#a8a29e',
+                                            letterSpacing: '0.12em',
+                                            minWidth: 96,
+                                            textTransform: 'uppercase',
+                                            fontWeight: 600,
+                                            flexShrink: 0,
+                                        }}
+                                    >
+                                        {h.date}
+                                    </span>
+                                    <div style={{ minWidth: 0 }}>
+                                        <p style={{
+                                            fontFamily: 'Outfit, sans-serif',
+                                            fontWeight: 600,
+                                            color: '#1c1917',
+                                            margin: 0,
+                                            fontSize: 15,
+                                            letterSpacing: '-0.005em',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                        }}>
+                                            {h.serviceName}
+                                        </p>
+                                        <p
+                                            className="tc-mono"
+                                            style={{
+                                                fontSize: 11,
+                                                color: '#a8a29e',
+                                                margin: '4px 0 0 0',
+                                                letterSpacing: '0.06em',
+                                            }}
+                                        >
+                                            {h.joinedAt}
+                                            {h.servedAt ? ` → ${h.servedAt}` : ''}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Right: wait time + outcome pill */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+                                    {h.waitTime != null && h.waitTime > 0 && (
+                                        <span className="tc-mono" style={{
+                                            fontSize: 12,
+                                            color: '#78716c',
+                                            letterSpacing: '0.06em',
+                                            fontWeight: 600,
+                                        }}>
+                                            {formatWait(h.waitTime)} wait
+                                        </span>
+                                    )}
+                                    <span className={`tc-pill ${meta.pill}`}>{meta.label}</span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </section>
         </div>
-      )}
-    </div>
-  );
+    );
 }

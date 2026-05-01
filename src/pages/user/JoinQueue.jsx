@@ -25,6 +25,7 @@ export default function JoinQueue() {
             setJoinSuccess(serviceId);
             setNotes('');
             setPriority('normal');
+            setSelectedService(null);
             setTimeout(() => setJoinSuccess(null), 3000);
         } else if (result) {
             setJoinError(result.error);
@@ -37,241 +38,395 @@ export default function JoinQueue() {
         if (entry) leaveQueue(entry.id);
     };
 
-    // Shared tokens
-    const card = { background: '#fff', border: '1px solid #e7e5e4', borderRadius: '16px', padding: '24px' };
-    const heading = { fontFamily: "'Outfit', sans-serif", fontSize: '18px', fontWeight: 700, color: '#1c1917', margin: 0 };
+    const openServices = services.filter((s) => s.isOpen);
+    const totalInLine = services.reduce(
+        (sum, s) => sum + getQueueForService(s.id).length,
+        0
+    );
 
     return (
         <div className="join-queue-page">
-            {/* Header */}
-            <div style={{ marginBottom: '32px' }}>
-                <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '24px', fontWeight: 700, color: '#1c1917', margin: '0 0 6px 0' }}>
-                    Join a Queue
+            {/* ── Hero ────────────────────────────────────────────────── */}
+            <section className="tc-page-hero">
+                <span className="tc-page-eyebrow">
+                    {openServices.length > 0
+                        ? `Open Now · ${openServices.length} ${openServices.length === 1 ? 'service' : 'services'}`
+                        : 'Tutoring Center · Closed'}
+                </span>
+                <h1 className="tc-page-headline" style={{ marginTop: 16 }}>
+                    Pick a service<span className="tc-dot">.</span>
                 </h1>
-                <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>Select a tutoring service below to get in line.</p>
-            </div>
+                <p className="tc-page-sub">
+                    Browse the live tutoring services below and grab a ticket.
+                    {totalInLine > 0
+                        ? ` ${totalInLine} ${totalInLine === 1 ? 'student is' : 'students are'} already in line.`
+                        : ' No one is waiting right now — perfect time to hop in.'}
+                </p>
+            </section>
 
-            {/* Toast Notifications */}
+            {/* ── Toast Notifications ────────────────────────────────── */}
             {joinSuccess && (
                 <div className="app-toast" style={{
                     position: 'fixed', top: '80px', right: '16px', zIndex: 50,
-                    padding: '14px 20px', borderRadius: '14px',
-                    background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534',
-                    fontSize: '13px', fontWeight: 500, boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-                    display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '14px 20px', borderRadius: 14,
+                    background: '#fff', border: '1px solid #bbf7d0',
+                    color: '#166534', fontSize: 13, fontWeight: 500,
+                    boxShadow: '0 14px 40px -16px rgba(22, 163, 74, 0.35)',
+                    display: 'flex', alignItems: 'center', gap: 10,
                 }}>
-                    ✅ Successfully joined the queue!
+                    <span className="tc-pulse-dot" />
+                    Successfully joined the queue.
                 </div>
             )}
             {joinError && (
                 <div className="app-toast" style={{
                     position: 'fixed', top: '80px', right: '16px', zIndex: 50,
-                    padding: '14px 20px', borderRadius: '14px',
-                    background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b',
-                    fontSize: '13px', fontWeight: 500, boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-                    display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '14px 20px', borderRadius: 14,
+                    background: '#fff', border: '1px solid #fecaca',
+                    color: '#991b1b', fontSize: 13, fontWeight: 500,
+                    boxShadow: '0 14px 40px -16px rgba(220, 38, 38, 0.35)',
+                    display: 'flex', alignItems: 'center', gap: 10,
                 }}>
-                    ❌ {joinError}
+                    <span style={{ width: 8, height: 8, borderRadius: 999, background: '#dc2626', display: 'inline-block' }} />
+                    {joinError}
                 </div>
             )}
 
-            {/* Services Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
-                {services.map((service) => {
-                    const queueLength = getQueueForService(service.id).length;
-                    const userEntry = getUserQueueEntry(service.id);
-                    const isInQueue = !!userEntry;
-                    const eta = getEstimatedWait(service.id, queueLength + 1);
-                    const recommendation = getRecommendedAlternative(service.id);
-                    const isSelected = selectedService === service.id;
+            {/* ── Services Section ───────────────────────────────────── */}
+            <section style={{ marginBottom: 36 }}>
+                <div className="tc-section-head">
+                    <div>
+                        <span className="tc-page-eyebrow">All Services</span>
+                        <h2 className="tc-section-title">Available now</h2>
+                    </div>
+                </div>
 
-                    return (
-                        <div key={service.id} style={{
-                            ...card,
-                            opacity: service.isOpen ? 1 : 0.55,
-                            border: isSelected ? '2px solid #C8102E' : '1px solid #e7e5e4',
-                            boxShadow: isSelected ? '0 0 0 3px rgba(200,16,46,0.1)' : 'none',
-                            transition: 'all 0.2s ease',
-                            position: 'relative',
-                            overflow: 'hidden',
-                        }}>
-                            {/* Service Header */}
-                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                    <div style={{
-                                        width: '48px', height: '48px', borderRadius: '12px',
-                                        background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '24px', flexShrink: 0,
-                                    }}>
-                                        {service.icon}
-                                    </div>
-                                    <div>
-                                        <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#1c1917', margin: 0 }}>{service.name}</h3>
-                                        <p style={{ fontSize: '12px', color: '#78716c', margin: '3px 0 0 0' }}>{service.category}</p>
-                                    </div>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                    gap: 16,
+                }}>
+                    {services.map((service) => {
+                        const queueLength = getQueueForService(service.id).length;
+                        const userEntry = getUserQueueEntry(service.id);
+                        const isInQueue = !!userEntry;
+                        const eta = getEstimatedWait(service.id, queueLength + 1);
+                        const recommendation = getRecommendedAlternative(service.id);
+                        const isSelected = selectedService === service.id;
+                        const accent = !service.isOpen
+                            ? '#d6d3d1'
+                            : isInQueue
+                                ? '#16a34a'
+                                : isSelected
+                                    ? '#C8102E'
+                                    : '#e7e5e4';
+
+                        return (
+                            <div
+                                key={service.id}
+                                className={service.isOpen ? 'tc-lift' : ''}
+                                style={{
+                                    background: '#ffffff',
+                                    border: `1px solid ${isSelected ? '#C8102E' : '#e7e5e4'}`,
+                                    borderTop: `3px solid ${accent}`,
+                                    borderRadius: 14,
+                                    padding: 22,
+                                    opacity: service.isOpen ? 1 : 0.6,
+                                    boxShadow: isSelected ? '0 0 0 3px rgba(200,16,46,0.08)' : 'none',
+                                    transition: 'all 0.2s ease',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                }}
+                            >
+                                {/* Top row: category + status pill */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                                    <span className="tc-stat-eyebrow" style={{ margin: 0 }}>
+                                        {service.category}
+                                    </span>
+                                    {service.isOpen ? (
+                                        isInQueue ? (
+                                            <span className="tc-pill tc-pill-success">
+                                                <span className="tc-pulse-dot" /> IN LINE · #{userEntry.position}
+                                            </span>
+                                        ) : (
+                                            <span className="tc-pill tc-pill-success">
+                                                <span className="tc-pulse-dot" /> OPEN
+                                            </span>
+                                        )
+                                    ) : (
+                                        <span className="tc-pill tc-pill-neutral">CLOSED</span>
+                                    )}
                                 </div>
-                                <span style={{
-                                    padding: '4px 10px', borderRadius: '8px',
-                                    fontSize: '11px', fontWeight: 600,
-                                    background: service.isOpen ? '#f0fdf4' : '#f5f5f4',
-                                    color: service.isOpen ? '#16a34a' : '#78716c',
-                                    border: service.isOpen ? '1px solid #bbf7d0' : '1px solid #e7e5e4',
-                                    whiteSpace: 'nowrap',
+
+                                {/* Service name */}
+                                <p style={{
+                                    fontFamily: 'Outfit, sans-serif',
+                                    fontSize: 18,
+                                    fontWeight: 700,
+                                    color: '#1c1917',
+                                    margin: '0 0 6px 0',
+                                    letterSpacing: '-0.012em',
+                                    lineHeight: 1.2,
                                 }}>
-                                    {service.isOpen ? '● Open' : '● Closed'}
-                                </span>
-                            </div>
+                                    {service.name}
+                                </p>
 
-                            {/* Description */}
-                            <p style={{ fontSize: '13px', color: '#57534e', lineHeight: 1.6, margin: '0 0 16px 0' }}>
-                                {service.description}
-                            </p>
+                                {/* Description */}
+                                <p style={{
+                                    fontSize: 13,
+                                    color: '#78716c',
+                                    lineHeight: 1.55,
+                                    margin: '0 0 18px 0',
+                                    flex: 1,
+                                }}>
+                                    {service.description}
+                                </p>
 
-                            {/* Meta row */}
-                            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '16px', fontSize: '12px', color: '#78716c' }}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    🕐 ~{service.expectedDuration} min
-                                </span>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    👥 {queueLength} in queue
-                                </span>
-                            </div>
-
-                            {/* Estimated Wait Bar */}
-                            <div style={{
-                                padding: '14px 16px', borderRadius: '12px',
-                                background: 'linear-gradient(135deg, #fafaf9, #f5f5f4)',
-                                border: '1px solid #e7e5e4',
-                                marginBottom: '16px',
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            }}>
-                                <span style={{ fontSize: '12px', color: '#78716c', fontWeight: 500 }}>Estimated wait</span>
-                                <span style={{ fontSize: '15px', fontWeight: 700, color: eta > 0 ? '#C8102E' : '#16a34a' }}>
-                                    {eta > 0 ? formatWait(eta, { prefix: '~' }) : 'No wait!'}
-                                </span>
-                            </div>
-
-                            {/* Smart-feature: alternate-service recommendation */}
-                            {recommendation && service.isOpen && !isInQueue && (
-                                <div
-                                    className="smart-recommendation"
-                                    style={{
-                                        padding: '12px 14px',
-                                        borderRadius: '12px',
-                                        marginBottom: '16px',
-                                        background: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
-                                        border: '1px solid #fde68a',
-                                        fontSize: '12px',
-                                        color: '#78350f',
-                                        lineHeight: 1.5,
-                                    }}
-                                >
-                                    <strong style={{ color: '#92400e' }}>💡 Tip:</strong>{' '}
-                                    <strong>{recommendation.serviceName}</strong> ({recommendation.category}) is open
-                                    with a {formatWait(recommendation.smartEstimate, { prefix: '~' })} wait — about{' '}
-                                    <strong>{formatWait(recommendation.minutesSaved)}</strong> shorter than this one.
+                                {/* Mono meta row */}
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    paddingTop: 14,
+                                    borderTop: '1px dashed #e7e5e4',
+                                    marginBottom: 14,
+                                }}>
+                                    <span className="tc-mono" style={{ fontSize: 11, color: '#78716c', letterSpacing: '0.1em', fontWeight: 600 }}>
+                                        ~{service.expectedDuration}M SESSION
+                                    </span>
+                                    <span className="tc-mono" style={{ fontSize: 11, color: '#78716c', letterSpacing: '0.1em', fontWeight: 600 }}>
+                                        {queueLength} IN QUEUE
+                                    </span>
                                 </div>
-                            )}
 
-                            {/* Expand: notes + priority */}
-                            {isSelected && !isInQueue && service.isOpen && (
-                                <div style={{ marginBottom: '16px', padding: '16px', borderRadius: '12px', background: '#fafaf9', border: '1px solid #f0eeee' }}>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#44403c', marginBottom: '8px' }}>
-                                        What do you need help with? (optional)
-                                    </label>
-                                    <textarea
-                                        value={notes}
-                                        onChange={(e) => setNotes(e.target.value)}
-                                        placeholder="e.g., Integration by parts, Chapter 5 problems..."
-                                        rows={2}
+                                {/* Estimated wait — receipt-style numbers */}
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'baseline',
+                                    justifyContent: 'space-between',
+                                    paddingBottom: 14,
+                                    marginBottom: 14,
+                                    borderBottom: '1px dashed #e7e5e4',
+                                }}>
+                                    <span className="tc-mono" style={{ fontSize: 11, color: '#78716c', letterSpacing: '0.1em', fontWeight: 600 }}>
+                                        ESTIMATED WAIT
+                                    </span>
+                                    <span className="tc-mono" style={{
+                                        fontSize: 22,
+                                        fontWeight: 700,
+                                        color: eta > 0 ? '#1c1917' : '#16a34a',
+                                        letterSpacing: '-0.025em',
+                                        lineHeight: 1,
+                                    }}>
+                                        {eta > 0 ? formatWait(eta, { prefix: '~' }) : 'No wait'}
+                                    </span>
+                                </div>
+
+                                {/* Recommendation tip */}
+                                {recommendation && service.isOpen && !isInQueue && (
+                                    <div
+                                        className="smart-recommendation"
                                         style={{
-                                            width: '100%', padding: '10px 14px', borderRadius: '10px',
-                                            border: '1px solid #d6d3d1', fontSize: '13px', resize: 'none',
-                                            background: '#fff', boxSizing: 'border-box',
-                                            outline: 'none', fontFamily: 'inherit',
+                                            position: 'relative',
+                                            background: '#FAF7F2',
+                                            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(28, 25, 23, 0.06) 1px, transparent 0)',
+                                            backgroundSize: '14px 14px',
+                                            border: '1px solid #ece9e2',
+                                            borderTop: '2px solid #C8102E',
+                                            borderRadius: 10,
+                                            padding: '12px 14px',
+                                            marginBottom: 14,
+                                            fontSize: 12,
+                                            color: '#44403c',
+                                            lineHeight: 1.55,
                                         }}
-                                    />
-                                    <div style={{ marginTop: '12px' }}>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#44403c', marginBottom: '8px' }}>Priority</label>
-                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                            {['normal', 'high'].map((p) => (
+                                    >
+                                        <span className="tc-mono" style={{ fontSize: 10, color: '#C8102E', fontWeight: 700, letterSpacing: '0.12em', display: 'block', marginBottom: 4 }}>
+                                            FASTER OPTION
+                                        </span>
+                                        <strong style={{ color: '#1c1917' }}>{recommendation.serviceName}</strong>{' '}
+                                        is open with a {formatWait(recommendation.smartEstimate, { prefix: '~' })} wait — saves about{' '}
+                                        <strong style={{ color: '#C8102E' }}>{formatWait(recommendation.minutesSaved)}</strong>.
+                                    </div>
+                                )}
+
+                                {/* Expanded form: notes + priority */}
+                                {isSelected && !isInQueue && service.isOpen && (
+                                    <div style={{
+                                        background: '#fafaf9',
+                                        border: '1px solid #f0eeee',
+                                        borderRadius: 10,
+                                        padding: 14,
+                                        marginBottom: 14,
+                                    }}>
+                                        <span className="tc-mono" style={{
+                                            fontSize: 10,
+                                            fontWeight: 700,
+                                            color: '#78716c',
+                                            letterSpacing: '0.12em',
+                                            display: 'block',
+                                            marginBottom: 8,
+                                        }}>
+                                            WHAT DO YOU NEED HELP WITH?
+                                        </span>
+                                        <textarea
+                                            value={notes}
+                                            onChange={(e) => setNotes(e.target.value)}
+                                            placeholder="e.g., Integration by parts, Chapter 5 problems..."
+                                            rows={2}
+                                            style={{
+                                                width: '100%',
+                                                padding: '8px 12px',
+                                                borderRadius: 8,
+                                                border: '1px solid #e7e5e4',
+                                                fontSize: 13,
+                                                resize: 'none',
+                                                background: '#fff',
+                                                boxSizing: 'border-box',
+                                                outline: 'none',
+                                                fontFamily: 'inherit',
+                                                color: '#1c1917',
+                                                minHeight: 'unset',
+                                                lineHeight: 1.5,
+                                            }}
+                                        />
+                                        <span className="tc-mono" style={{
+                                            fontSize: 10,
+                                            fontWeight: 700,
+                                            color: '#78716c',
+                                            letterSpacing: '0.12em',
+                                            display: 'block',
+                                            margin: '12px 0 8px 0',
+                                        }}>
+                                            PRIORITY
+                                        </span>
+                                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                            {[
+                                                { id: 'normal', label: 'Normal' },
+                                                { id: 'high', label: 'Urgent' },
+                                            ].map((p) => (
                                                 <button
-                                                    key={p}
+                                                    key={p.id}
                                                     type="button"
-                                                    onClick={() => setPriority(p)}
+                                                    onClick={() => setPriority(p.id)}
+                                                    className="tc-mono"
                                                     style={{
-                                                        padding: '6px 14px', borderRadius: '8px',
-                                                        fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                                                        border: priority === p ? '1px solid #C8102E' : '1px solid #d6d3d1',
-                                                        background: priority === p ? '#fef2f2' : '#fff',
-                                                        color: priority === p ? '#C8102E' : '#57534e',
+                                                        padding: '6px 14px',
+                                                        borderRadius: 999,
+                                                        fontSize: 11,
+                                                        fontWeight: 700,
+                                                        cursor: 'pointer',
+                                                        border: priority === p.id ? '1px solid #C8102E' : '1px solid #e7e5e4',
+                                                        background: priority === p.id ? '#fef2f2' : '#fff',
+                                                        color: priority === p.id ? '#C8102E' : '#78716c',
+                                                        letterSpacing: '0.08em',
+                                                        textTransform: 'uppercase',
                                                         transition: 'all 0.15s',
                                                     }}
                                                 >
-                                                    {p === 'high' ? '🔥 Urgent' : '📝 Normal'}
+                                                    {p.label}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {/* Action Button */}
-                            {service.isOpen ? (
-                                isInQueue ? (
-                                    <button
-                                        onClick={() => handleLeave(service.id)}
-                                        style={{
-                                            width: '100%', padding: '12px', borderRadius: '12px',
-                                            border: '2px solid #fecaca', background: '#fef2f2', color: '#991b1b',
-                                            fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
-                                        }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = '#fee2e2'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = '#fef2f2'}
-                                    >
-                                        Leave Queue
-                                    </button>
-                                ) : isSelected ? (
-                                    <button
-                                        onClick={() => handleJoin(service.id)}
-                                        style={{
-                                            width: '100%', padding: '12px', borderRadius: '12px',
-                                            border: 'none', background: 'linear-gradient(135deg, #C8102E, #E8384F)',
-                                            color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-                                            transition: 'all 0.15s', boxShadow: '0 4px 12px rgba(200,16,46,0.25)',
-                                        }}
-                                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                                    >
-                                        Join Queue →
-                                    </button>
+                                {/* Action button */}
+                                {service.isOpen ? (
+                                    isInQueue ? (
+                                        <button
+                                            onClick={() => handleLeave(service.id)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                borderRadius: 10,
+                                                border: '1px solid #fecaca',
+                                                background: '#fff',
+                                                color: '#991b1b',
+                                                fontSize: 13,
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s',
+                                                fontFamily: 'inherit',
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+                                            onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+                                        >
+                                            Leave queue
+                                        </button>
+                                    ) : isSelected ? (
+                                        <button
+                                            onClick={() => handleJoin(service.id)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                borderRadius: 10,
+                                                border: 'none',
+                                                background: '#C8102E',
+                                                color: '#fff',
+                                                fontSize: 13,
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s',
+                                                boxShadow: '0 4px 14px -6px rgba(200, 16, 46, 0.45)',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: 8,
+                                                fontFamily: 'inherit',
+                                            }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.background = '#960C22'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.background = '#C8102E'; }}
+                                        >
+                                            Confirm & join
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <line x1="5" y1="12" x2="19" y2="12" />
+                                                <polyline points="12 5 19 12 12 19" />
+                                            </svg>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setSelectedService(service.id)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                borderRadius: 10,
+                                                border: '1px solid #e7e5e4',
+                                                background: '#fff',
+                                                color: '#1c1917',
+                                                fontSize: 13,
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s',
+                                                fontFamily: 'inherit',
+                                            }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.background = '#fafaf9'; e.currentTarget.style.borderColor = '#1c1917'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e7e5e4'; }}
+                                        >
+                                            Select service
+                                        </button>
+                                    )
                                 ) : (
-                                    <button
-                                        onClick={() => setSelectedService(service.id)}
-                                        style={{
-                                            width: '100%', padding: '12px', borderRadius: '12px',
-                                            border: '1px solid #e7e5e4', background: '#fff', color: '#44403c',
-                                            fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
-                                        }}
-                                        onMouseEnter={(e) => { e.currentTarget.style.background = '#fafaf9'; e.currentTarget.style.borderColor = '#C8102E'; }}
-                                        onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e7e5e4'; }}
-                                    >
-                                        Select Service
+                                    <button disabled style={{
+                                        width: '100%',
+                                        padding: '12px 16px',
+                                        borderRadius: 10,
+                                        border: '1px solid #e7e5e4',
+                                        background: '#fafaf9',
+                                        color: '#a8a29e',
+                                        fontSize: 13,
+                                        fontWeight: 600,
+                                        cursor: 'not-allowed',
+                                        fontFamily: 'inherit',
+                                    }}>
+                                        Currently closed
                                     </button>
-                                )
-                            ) : (
-                                <button disabled style={{
-                                    width: '100%', padding: '12px', borderRadius: '12px',
-                                    border: 'none', background: '#f5f5f4', color: '#a8a29e',
-                                    fontSize: '13px', fontWeight: 600, cursor: 'not-allowed',
-                                }}>
-                                    Currently Closed
-                                </button>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </section>
         </div>
     );
 }
