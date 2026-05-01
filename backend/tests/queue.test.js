@@ -156,13 +156,14 @@ describe('Queue Module', () => {
 
     // ── Smart Wait-Time Feature ─────────────────────
     describe('Smart wait-time estimator', () => {
-        // Seed enough served history rows to cross MIN_SAMPLE_FOR_BLEND (5).
-        // Each entry waited 80 min on a service whose expectedDuration is 25 min →
-        // raw drift = 80 / (2 * 25) = 1.6, smart slot = 25 * 1.6 = 40 min.
+        // Seed served history rows newest-first to match production order
+        // (memoryStore.createHistory uses unshift). Each entry waited
+        // `perEntryWait` minutes on a service whose expectedDuration is 25 min (s1).
+        let seedCounter = 0;
         function seedSlowHistory(serviceId, count, perEntryWait) {
             for (let i = 0; i < count; i++) {
-                history.push({
-                    id: `h_seed_${serviceId}_${i}`,
+                history.unshift({
+                    id: `h_seed_${serviceId}_${seedCounter++}`,
                     userId: 'u1',
                     serviceId,
                     serviceName: 'Calculus Help',
@@ -175,15 +176,23 @@ describe('Queue Module', () => {
             }
         }
 
-        it('falls back to static when sample size is below threshold', async () => {
-            seedSlowHistory('s1', 3, 80); // only 3 records → fewer than 5 needed
+        it('falls back to static when there is no served history at all', async () => {
+            // resetData() clears history; no seed → cold-start path.
             const res = await request(app).get('/api/queue/wait-time/s1/4');
             assert.strictEqual(res.status, 200);
             assert.strictEqual(res.body.basis, 'static');
+            assert.strictEqual(res.body.sampleSize, 0);
             assert.strictEqual(res.body.smartEstimate, res.body.staticEstimate);
         });
 
-        it('blends with historical average when enough samples exist', async () => {
+        it('engages with even a single served session (demo responsiveness)', async () => {
+            seedSlowHistory('s1', 1, 80);
+            const res = await request(app).get('/api/queue/wait-time/s1/4');
+            assert.strictEqual(res.body.basis, 'blended');
+            assert.strictEqual(res.body.sampleSize, 1);
+        });
+
+        it('blends with historical average when multiple samples exist', async () => {
             seedSlowHistory('s1', 6, 80);
             const res = await request(app).get('/api/queue/wait-time/s1/4');
             assert.strictEqual(res.status, 200);
@@ -215,6 +224,19 @@ describe('Queue Module', () => {
             // position 3 → (3-1) * 25 * 0.5 = 25 min (vs static 50 min)
             assert.strictEqual(res.body.smartEstimate, 25);
             assert.strictEqual(res.body.staticEstimate, 50);
+        });
+
+        it('caps the rolling window so old data drops out as new serves arrive', async () => {
+            // Seed 12 rows: 11 with high waitTime, 1 with low. Window is 10.
+            // listHistory returns newest-first. The OLDER rows (high wait) push
+            // out of the window once enough new (low) rows arrive.
+            seedSlowHistory('s1', 11, 200);  // older, slow
+            seedSlowHistory('s1', 9, 5);     // newer, fast
+            const res = await request(app).get('/api/queue/wait-time/s1/4');
+            assert.strictEqual(res.body.sampleSize, 10);
+            // Newest 9 are 5 min, plus the 10th newest is 200 → avg ≈ 24
+            assert.ok(res.body.historicalAvgWait < 50,
+                `expected avg < 50, got ${res.body.historicalAvgWait}`);
         });
     });
 

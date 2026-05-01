@@ -339,8 +339,9 @@ export function AppProvider({ children }) {
 
     // ── Smart Wait-Time Estimator (client mirror) ───
     // Mirrors backend/routes/queue.js so render-time calls stay synchronous.
-    // Falls back to the static formula when historical data is sparse.
-    const SMART_MIN_SAMPLE = 5;
+    // Engages as soon as a single served session exists; falls back to the
+    // static formula only when there's no history at all.
+    const SMART_MIN_SAMPLE = 1;
     const SMART_ASSUMED_POSITIONS = 2;
     const SMART_DRIFT_LOWER = 0.5;
     const SMART_DRIFT_UPPER = 2.0;

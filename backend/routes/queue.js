@@ -12,13 +12,16 @@ const store = require('../data/store');
 //   - assumedAvgPositionsWaited = 2  (an average past student waited from
 //     about the middle of a typical small queue)
 //   - clamped to [0.5, 2.0] so a single outlier can't blow up the estimate
-//   - requires ≥ MIN_SAMPLE_FOR_BLEND served rows; below that we fall back
-//     to the static formula (cold start)
-const MIN_SAMPLE_FOR_BLEND = 5;
+//   - engages as soon as ANY served history row exists (this is a class-project
+//     demo, not a production service — we want every interaction to visibly
+//     move the estimate)
+const MIN_SAMPLE_FOR_BLEND = 1;
 const ASSUMED_AVG_POSITIONS_WAITED = 2;
 const DRIFT_LOWER_BOUND = 0.5;
 const DRIFT_UPPER_BOUND = 2.0;
-const HISTORY_SAMPLE_LIMIT = 20;
+// Smaller window = each new serve has visible weight in the rolling average,
+// which is what makes the demo feel responsive.
+const HISTORY_SAMPLE_LIMIT = 10;
 // An alternate service is only suggested when its smart estimate is at most
 // this fraction of the target service's smart estimate AND saves the user a
 // meaningful amount of time.
