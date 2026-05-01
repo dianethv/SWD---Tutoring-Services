@@ -351,10 +351,12 @@ export function AppProvider({ children }) {
             if (!service) return 0;
             const insight = serviceInsights.find((i) => i.serviceId === serviceId);
             const staticEstimate = Math.max(0, (position - 1) * service.expectedDuration);
+            // historicalAvgWait can legitimately be 0 (every served session was
+            // near-instant). Only treat null/undefined as "no data".
             if (
                 !insight ||
                 insight.sampleSize < SMART_MIN_SAMPLE ||
-                !insight.historicalAvgWait
+                insight.historicalAvgWait == null
             ) {
                 return staticEstimate;
             }
@@ -375,10 +377,11 @@ export function AppProvider({ children }) {
             if (!insight) {
                 return { basis: 'static', sampleSize: 0, historicalAvgWait: null, driftFactor: null };
             }
+            const hasUsableSample =
+                insight.sampleSize >= SMART_MIN_SAMPLE &&
+                insight.historicalAvgWait != null;
             return {
-                basis: insight.sampleSize >= SMART_MIN_SAMPLE && insight.historicalAvgWait
-                    ? 'blended'
-                    : 'static',
+                basis: hasUsableSample ? 'blended' : 'static',
                 sampleSize: insight.sampleSize,
                 historicalAvgWait: insight.historicalAvgWait,
                 driftFactor: insight.driftFactor,

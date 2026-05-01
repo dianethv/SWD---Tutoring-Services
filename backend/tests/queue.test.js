@@ -202,6 +202,20 @@ describe('Queue Module', () => {
             // position 2 → (2-1) * 25 * 2.0 = 50 min
             assert.strictEqual(res.body.smartEstimate, 50);
         });
+
+        it('still blends when every served wait_time is 0 (instant serves)', async () => {
+            // Regression: a real avg of 0 is NOT the same as "no data".
+            // The blend should still engage and the drift should clamp to 0.5.
+            seedSlowHistory('s1', 6, 0);
+            const res = await request(app).get('/api/queue/wait-time/s1/3');
+            assert.strictEqual(res.body.basis, 'blended');
+            assert.strictEqual(res.body.sampleSize, 6);
+            assert.strictEqual(res.body.historicalAvgWait, 0);
+            assert.strictEqual(res.body.driftFactor, 0.5);
+            // position 3 → (3-1) * 25 * 0.5 = 25 min (vs static 50 min)
+            assert.strictEqual(res.body.smartEstimate, 25);
+            assert.strictEqual(res.body.staticEstimate, 50);
+        });
     });
 
     // ── Insights endpoint (drives the frontend cache) ──

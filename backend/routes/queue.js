@@ -28,7 +28,11 @@ const RECOMMEND_MIN_MINUTES_SAVED = 10;
 function calculateSmartEstimate({ position, expectedDuration, avgHistoricalWait, sampleSize }) {
     const staticEstimate = Math.max(0, (position - 1) * expectedDuration);
 
-    if (!avgHistoricalWait || sampleSize < MIN_SAMPLE_FOR_BLEND) {
+    // Note: avgHistoricalWait can legitimately be 0 (every served session was
+    // near-instant). That's real data and should still flow through the blend
+    // — drift will simply clamp to DRIFT_LOWER_BOUND. Only treat null as
+    // "no data" for cold-start fallback.
+    if (avgHistoricalWait == null || sampleSize < MIN_SAMPLE_FOR_BLEND) {
         return {
             staticEstimate,
             smartEstimate: staticEstimate,
