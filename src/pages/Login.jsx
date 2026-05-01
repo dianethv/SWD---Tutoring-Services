@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { Wordmark, ServiceTicket, useLiveInsights, useDerivedStats } from '../components/authShared';
 
 export default function Login() {
     const { login } = useApp();
@@ -10,6 +11,14 @@ export default function Login() {
     const [serverError, setServerError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [now, setNow] = useState(new Date());
+    const { insights, status } = useLiveInsights();
+    const stats = useDerivedStats(insights);
+
+    useEffect(() => {
+        const id = setInterval(() => setNow(new Date()), 60_000);
+        return () => clearInterval(id);
+    }, []);
 
     const validate = () => {
         const errs = {};
@@ -38,88 +47,131 @@ export default function Login() {
         }
     };
 
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
     return (
-        <div className="min-h-screen flex" style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fafaf9 50%, #fffbeb 100%)' }}>
-            {/* Left panel - branding */}
-            <div style={{
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '64px 72px',
-                position: 'relative',
-                overflow: 'hidden',
-                background: 'linear-gradient(160deg, #C8102E, #960C22 40%, #6B0A1A)',
-            }} className="hidden lg:flex lg:w-1/2">
-                <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '480px', width: '100%' }}>
-                    {/* Big logo + title */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '20px' }}>
-                        <div style={{
-                            width: '64px', height: '64px', borderRadius: '18px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px',
-                            background: 'linear-gradient(135deg, #C8102E, #E8384F)',
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                        }}>
-                            🐾
-                        </div>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '42px', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>
-                            TutorCoogs
-                        </span>
-                    </div>
+        <div className="auth-page">
+            {/* ── Aside (left) ─────────────────────────────────────────── */}
+            <aside
+                className="auth-aside hidden lg:flex lg:w-[44%] flex-col justify-between"
+                style={{ padding: '40px 56px' }}
+            >
+                <div className="auth-accent-line" />
+                <div className="auth-aside-rule" />
 
-                    {/* Tagline */}
-                    <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '26px', fontWeight: 600, color: '#fff', lineHeight: 1.3, margin: '0 0 14px 0' }}>
-                        Skip the wait, not the help.
-                    </h1>
+                {/* Wordmark */}
+                <div className="relative z-10">
+                    <Wordmark />
+                </div>
 
-                    {/* Description */}
-                    <p style={{ fontSize: '15px', color: '#fecdd3', lineHeight: 1.7, margin: '0 0 36px 0' }}>
-                        Your campus tutoring hub. Know your wait time, get notified when it's your turn, and spend less time in line.
-                    </p>
+                {/* Center: live ticket + tagline */}
+                <div className="relative z-10" style={{ maxWidth: 380 }}>
+                    <div className="auth-eyebrow" style={{ marginBottom: 18 }}>Live Queue</div>
 
-                    {/* Stats row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                    <ServiceTicket insights={insights} status={status} />
+
+                    {/* Real-data stat strip */}
+                    <div
+                        style={{
+                            marginTop: 28,
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr 1fr',
+                            borderTop: '1px solid #ece9e2',
+                            borderBottom: '1px solid #ece9e2',
+                        }}
+                    >
                         {[
-                            { label: 'Avg Wait', value: '~12 min' },
-                            { label: 'Services', value: '6 active' },
-                            { label: 'Satisfaction', value: '4.8 ★' },
-                        ].map((stat) => (
-                            <div key={stat.label} style={{
-                                background: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '14px 12px',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                            }}>
-                                <p style={{ color: '#fff', fontWeight: 700, fontSize: '18px', margin: '0 0 2px 0' }}>{stat.value}</p>
-                                <p style={{ color: '#fecdd3', fontSize: '12px', margin: 0 }}>{stat.label}</p>
+                            { v: stats.avgWait > 0 ? `~${stats.avgWait}` : '—', l: 'min avg wait' },
+                            { v: stats.openCount > 0 ? `${stats.openCount}/${stats.totalCount}` : '—', l: 'services live' },
+                            { v: String(stats.totalWaiting), l: 'in queue now' },
+                        ].map((s, i) => (
+                            <div
+                                key={s.l}
+                                style={{
+                                    padding: '14px 0',
+                                    borderRight: i < 2 ? '1px solid #ece9e2' : 'none',
+                                }}
+                            >
+                                <p className="tc-mono" style={{ fontSize: 18, fontWeight: 700, color: '#1c1917', lineHeight: 1, margin: 0 }}>
+                                    {s.v}
+                                </p>
+                                <p style={{ fontSize: 10, color: '#a8a29e', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 4 }}>
+                                    {s.l}
+                                </p>
                             </div>
                         ))}
                     </div>
+
+                    <p
+                        style={{
+                            fontFamily: 'Outfit, sans-serif',
+                            fontSize: 24,
+                            fontWeight: 600,
+                            color: '#1c1917',
+                            letterSpacing: '-0.018em',
+                            lineHeight: 1.25,
+                            margin: '30px 0 0 0',
+                        }}
+                    >
+                        Skip the wait,<br />
+                        <span style={{ color: '#C8102E' }}>not the help.</span>
+                    </p>
                 </div>
 
-                {/* Decorative circles */}
-                <div style={{ position: 'absolute', bottom: '-80px', right: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
-                <div style={{ position: 'absolute', top: '60px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
-                <div style={{ position: 'absolute', top: '-40px', left: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
-            </div>
+                {/* Footer signature */}
+                <div
+                    className="flex items-end justify-between relative z-10"
+                    style={{ fontSize: 10, color: '#a8a29e', letterSpacing: '0.18em', textTransform: 'uppercase' }}
+                >
+                    <span className="tc-mono">UH · Cougars · 2026</span>
+                    <span className="tc-mono">{dateStr.toUpperCase()} · {timeStr}</span>
+                </div>
+            </aside>
 
-            {/* Right panel - form */}
-            <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-                <div className="w-full max-w-md animate-fade-in-up">
-                    {/* Mobile logo */}
-                    <div className="lg:hidden flex items-center gap-2.5 mb-8">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
-                            style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}>
-                            🐾
-                        </div>
-                        <span className="text-lg font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>
-                            Tutor<span className="text-red-600">Coogs</span>
-                        </span>
+            {/* ── Form panel (right) ─────────────────────────────────── */}
+            <main className="auth-form-shell">
+                <div className="w-full animate-fade-in-up" style={{ maxWidth: 400 }}>
+                    {/* Mobile wordmark */}
+                    <div className="lg:hidden mb-10">
+                        <Wordmark />
                     </div>
 
-                    <h2 className="text-2xl font-bold text-stone-800 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>Welcome back</h2>
-                    <p className="text-stone-500 mb-8">Sign in to check your queue status</p>
+                    <div className="auth-eyebrow" style={{ marginBottom: 14 }}>Welcome back</div>
+                    <h1
+                        style={{
+                            fontFamily: 'Outfit, sans-serif',
+                            fontSize: 38,
+                            fontWeight: 700,
+                            color: '#1c1917',
+                            letterSpacing: '-0.025em',
+                            lineHeight: 1.05,
+                            margin: 0,
+                        }}
+                    >
+                        Sign in<span style={{ color: '#C8102E' }}>.</span>
+                    </h1>
+                    <p style={{ fontSize: 14, color: '#78716c', marginTop: 12, marginBottom: 40 }}>
+                        Pick up right where you left off in the queue.
+                    </p>
 
                     {serverError && (
-                        <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10,
+                                padding: '12px 14px',
+                                marginBottom: 24,
+                                background: '#fef2f2',
+                                border: '1px solid #fee2e2',
+                                borderRadius: 10,
+                                color: '#b91c1c',
+                                fontSize: 13,
+                                fontWeight: 500,
+                            }}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="12" cy="12" r="10" />
                                 <line x1="15" y1="9" x2="9" y2="15" />
                                 <line x1="9" y1="9" x2="15" y2="15" />
@@ -129,74 +181,90 @@ export default function Login() {
                     )}
 
                     <form onSubmit={handleSubmit} noValidate>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="login-email">
-                                Email address
-                            </label>
+                        <div className={`tc-field ${errors.email ? 'tc-error' : ''}`}>
                             <input
                                 id="login-email"
                                 type="email"
-                                placeholder="you@university.edu"
+                                placeholder=" "
+                                className="tc-input"
                                 value={formData.email}
                                 onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErrors({ ...errors, email: '' }); }}
-                                className={`w-full px-4 py-3 rounded-xl border transition-all ${errors.email ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'
-                                    }`}
-                                style={{ background: '#fafaf9' }}
                             />
-                            {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
+                            <label htmlFor="login-email" className="tc-label">Email address</label>
                         </div>
+                        {errors.email && <p className="tc-error-text">{errors.email}</p>}
 
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-stone-700 mb-1.5" htmlFor="login-password">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    id="login-password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    placeholder="••••••••"
-                                    value={formData.password}
-                                    onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setErrors({ ...errors, password: '' }); }}
-                                    className={`w-full px-4 py-3 pr-11 rounded-xl border transition-all ${errors.password ? 'input-error border-red-300' : 'border-stone-300 hover:border-stone-400'
-                                        }`}
-                                    style={{ background: '#fafaf9' }}
-                                />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors bg-transparent border-none cursor-pointer p-0">
-                                    {showPassword ? (
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-                                    ) : (
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                                    )}
-                                </button>
-                            </div>
-                            {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
+                        <div className={`tc-field ${errors.password ? 'tc-error' : ''}`} style={{ marginTop: 18 }}>
+                            <input
+                                id="login-password"
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder=" "
+                                className="tc-input"
+                                value={formData.password}
+                                onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setErrors({ ...errors, password: '' }); }}
+                            />
+                            <label htmlFor="login-password" className="tc-label">Password</label>
+                            <button
+                                type="button"
+                                className="tc-field-toggle"
+                                onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            >
+                                {showPassword ? (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                                        <line x1="1" y1="1" x2="23" y2="23" />
+                                    </svg>
+                                ) : (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                )}
+                            </button>
                         </div>
+                        {errors.password && <p className="tc-error-text">{errors.password}</p>}
 
                         <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full py-3 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-60 cursor-pointer border-none"
-                            style={{ background: 'linear-gradient(135deg, #C8102E, #E8384F)' }}
                             id="login-submit"
+                            type="submit"
+                            className="tc-cta"
+                            disabled={isLoading}
+                            style={{ marginTop: 40 }}
                         >
                             {isLoading ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                                    Signing in...
-                                </span>
-                            ) : 'Sign in'}
+                                <>
+                                    <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" opacity="0.25" />
+                                        <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
+                                    </svg>
+                                    Signing in
+                                </>
+                            ) : (
+                                <>
+                                    Sign in
+                                    <svg className="tc-cta-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                        <polyline points="12 5 19 12 12 19" />
+                                    </svg>
+                                </>
+                            )}
                         </button>
                     </form>
 
-                    <p className="mt-6 text-center text-sm text-stone-500">
-                        Don't have an account?{' '}
-                        <Link to="/register" className="text-red-600 hover:text-red-700 font-medium no-underline">
-                            Create one
+                    <div className="tc-link-row">
+                        <span>New around here?</span>
+                        <Link to="/register" className="tc-link-arrow">
+                            Create an account
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                                <polyline points="12 5 19 12 12 19" />
+                            </svg>
                         </Link>
-                    </p>
+                    </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }
