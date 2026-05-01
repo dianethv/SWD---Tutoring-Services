@@ -481,4 +481,49 @@ describe('Notifications Module', () => {
         const unread = notifs.body.filter(n => !n.read);
         assert.strictEqual(unread.length, 0);
     });
+
+    it('should delete a single notification', async () => {
+        await request(app).post('/api/queue/join').send({ userId: 'u1', serviceId: 's1' });
+        const before = await request(app).get('/api/notifications?userId=u1');
+        const target = before.body[0];
+
+        const res = await request(app).delete(`/api/notifications/${target.id}`);
+        assert.strictEqual(res.status, 200);
+
+        const after = await request(app).get('/api/notifications?userId=u1');
+        assert.ok(after.body.every(n => n.id !== target.id),
+            'deleted notification should no longer appear in list');
+    });
+
+    it('should return 404 when deleting a non-existent notification', async () => {
+        const res = await request(app).delete('/api/notifications/n_does_not_exist');
+        assert.strictEqual(res.status, 404);
+    });
+
+    it('should clear all notifications for a user', async () => {
+        await request(app).post('/api/queue/join').send({ userId: 'u1', serviceId: 's1' });
+        await request(app).post('/api/queue/join').send({ userId: 'u1', serviceId: 's2' });
+        // Sanity check: both joins generated notifications.
+        const before = await request(app).get('/api/notifications?userId=u1');
+        assert.ok(before.body.length >= 2);
+
+        const res = await request(app).delete('/api/notifications/clear-all/u1');
+        assert.strictEqual(res.status, 200);
+        assert.ok(/Cleared \d+/.test(res.body.message));
+
+        const after = await request(app).get('/api/notifications?userId=u1');
+        assert.strictEqual(after.body.length, 0);
+    });
+
+    it('clear-all only affects the requested user', async () => {
+        await request(app).post('/api/queue/join').send({ userId: 'u1', serviceId: 's1' });
+        await request(app).post('/api/queue/join').send({ userId: 'u2', serviceId: 's2' });
+
+        await request(app).delete('/api/notifications/clear-all/u1');
+
+        const u1 = await request(app).get('/api/notifications?userId=u1');
+        const u2 = await request(app).get('/api/notifications?userId=u2');
+        assert.strictEqual(u1.body.length, 0);
+        assert.ok(u2.body.length >= 1, 'other users should be untouched');
+    });
 });

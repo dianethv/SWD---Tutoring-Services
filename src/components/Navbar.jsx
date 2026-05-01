@@ -3,7 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 export default function Navbar({ onMenuToggle }) {
-    const { currentUser, logout, getUnreadCount, getUserNotifications, markNotificationRead, markAllNotificationsRead } = useApp();
+    const {
+        currentUser,
+        logout,
+        getUnreadCount,
+        getUserNotifications,
+        markNotificationRead,
+        markAllNotificationsRead,
+        clearNotification,
+        clearAllNotifications,
+    } = useApp();
     const [showNotifs, setShowNotifs] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
     const notifRef = useRef(null);
@@ -109,19 +118,29 @@ export default function Navbar({ onMenuToggle }) {
 
                         {showNotifs && (
                             <div className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-stone-200 animate-fade-in-up app-notif-dropdown"
-                                style={{ width: 'min(20rem, calc(100vw - 1rem))', maxHeight: '420px' }}>
-                                <div style={{ padding: '14px 20px', borderBottom: '1px solid #f5f5f4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                style={{ width: 'min(22rem, calc(100vw - 1rem))', maxHeight: '460px' }}>
+                                <div style={{ padding: '14px 20px', borderBottom: '1px solid #f5f5f4', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                                     <h3 style={{ fontWeight: 600, fontSize: '14px', color: '#1c1917', margin: 0 }}>Notifications</h3>
-                                    {unreadCount > 0 && (
-                                        <button
-                                            onClick={markAllNotificationsRead}
-                                            style={{ fontSize: '12px', fontWeight: 500, color: '#C8102E', cursor: 'pointer', border: 'none', background: 'transparent', padding: 0 }}
-                                        >
-                                            Mark all read
-                                        </button>
-                                    )}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        {unreadCount > 0 && (
+                                            <button
+                                                onClick={markAllNotificationsRead}
+                                                style={{ fontSize: '12px', fontWeight: 500, color: '#78716c', cursor: 'pointer', border: 'none', background: 'transparent', padding: 0 }}
+                                            >
+                                                Mark all read
+                                            </button>
+                                        )}
+                                        {notifications.length > 0 && (
+                                            <button
+                                                onClick={clearAllNotifications}
+                                                style={{ fontSize: '12px', fontWeight: 500, color: '#C8102E', cursor: 'pointer', border: 'none', background: 'transparent', padding: 0 }}
+                                            >
+                                                Clear all
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div style={{ overflowY: 'auto', maxHeight: '340px' }}>
+                                <div style={{ overflowY: 'auto', maxHeight: '380px' }}>
                                     {notifications.length === 0 ? (
                                         <div style={{ padding: '32px 20px', textAlign: 'center', color: '#a8a29e', fontSize: '13px' }}>
                                             No notifications yet
@@ -137,6 +156,7 @@ export default function Navbar({ onMenuToggle }) {
                                                     cursor: 'pointer',
                                                     display: 'flex',
                                                     gap: '12px',
+                                                    alignItems: 'flex-start',
                                                     background: !n.read ? 'rgba(254,242,242,0.4)' : 'transparent',
                                                     transition: 'background 0.15s',
                                                 }}
@@ -152,6 +172,40 @@ export default function Navbar({ onMenuToggle }) {
                                                     <p style={{ fontSize: '12px', color: '#78716c', margin: '3px 0 0 0' }}>{n.message}</p>
                                                     <span style={{ fontSize: '11px', color: '#a8a29e', marginTop: '4px', display: 'block' }}>{timeAgo(n.timestamp)}</span>
                                                 </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        clearNotification(n.id);
+                                                    }}
+                                                    aria-label="Dismiss notification"
+                                                    style={{
+                                                        flexShrink: 0,
+                                                        width: '24px',
+                                                        height: '24px',
+                                                        borderRadius: '6px',
+                                                        border: 'none',
+                                                        background: 'transparent',
+                                                        color: '#a8a29e',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        transition: 'all 0.15s',
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.background = '#fef2f2';
+                                                        e.currentTarget.style.color = '#C8102E';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.background = 'transparent';
+                                                        e.currentTarget.style.color = '#a8a29e';
+                                                    }}
+                                                >
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                         ))
                                     )}
