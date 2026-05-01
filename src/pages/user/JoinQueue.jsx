@@ -2,7 +2,16 @@ import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 
 export default function JoinQueue() {
-    const { services, joinQueue, getUserQueueEntry, getQueueForService, getEstimatedWait, leaveQueue } = useApp();
+    const {
+        services,
+        joinQueue,
+        getUserQueueEntry,
+        getQueueForService,
+        getEstimatedWait,
+        getEstimateMeta,
+        getRecommendedAlternative,
+        leaveQueue,
+    } = useApp();
     const [selectedService, setSelectedService] = useState(null);
     const [notes, setNotes] = useState('');
     const [priority, setPriority] = useState('normal');
@@ -73,6 +82,8 @@ export default function JoinQueue() {
                     const userEntry = getUserQueueEntry(service.id);
                     const isInQueue = !!userEntry;
                     const eta = getEstimatedWait(service.id, queueLength + 1);
+                    const meta = getEstimateMeta(service.id);
+                    const recommendation = getRecommendedAlternative(service.id);
                     const isSelected = selectedService === service.id;
 
                     return (
@@ -132,14 +143,48 @@ export default function JoinQueue() {
                                 padding: '14px 16px', borderRadius: '12px',
                                 background: 'linear-gradient(135deg, #fafaf9, #f5f5f4)',
                                 border: '1px solid #e7e5e4',
-                                marginBottom: '16px',
+                                marginBottom: meta.basis === 'blended' ? '8px' : '16px',
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                             }}>
-                                <span style={{ fontSize: '12px', color: '#78716c', fontWeight: 500 }}>Estimated wait</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <span style={{ fontSize: '12px', color: '#78716c', fontWeight: 500 }}>
+                                        {meta.basis === 'blended' ? 'Smart estimate' : 'Estimated wait'}
+                                    </span>
+                                    {meta.basis === 'blended' && (
+                                        <span style={{ fontSize: '10px', color: '#a8a29e' }}>
+                                            tuned from {meta.sampleSize} past session{meta.sampleSize === 1 ? '' : 's'}
+                                            {meta.driftFactor && meta.driftFactor !== 1
+                                                ? ` · drift ×${meta.driftFactor}`
+                                                : ''}
+                                        </span>
+                                    )}
+                                </div>
                                 <span style={{ fontSize: '15px', fontWeight: 700, color: eta > 0 ? '#C8102E' : '#16a34a' }}>
                                     {eta > 0 ? `~${eta} min` : 'No wait!'}
                                 </span>
                             </div>
+
+                            {/* Smart-feature: alternate-service recommendation */}
+                            {recommendation && service.isOpen && !isInQueue && (
+                                <div
+                                    className="smart-recommendation"
+                                    style={{
+                                        padding: '12px 14px',
+                                        borderRadius: '12px',
+                                        marginBottom: '16px',
+                                        background: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
+                                        border: '1px solid #fde68a',
+                                        fontSize: '12px',
+                                        color: '#78350f',
+                                        lineHeight: 1.5,
+                                    }}
+                                >
+                                    <strong style={{ color: '#92400e' }}>💡 Tip:</strong>{' '}
+                                    <strong>{recommendation.serviceName}</strong> ({recommendation.category}) is open
+                                    with a ~{recommendation.smartEstimate} min wait — about{' '}
+                                    <strong>{recommendation.minutesSaved} min</strong> shorter than this one.
+                                </div>
+                            )}
 
                             {/* Expand: notes + priority */}
                             {isSelected && !isInQueue && service.isOpen && (

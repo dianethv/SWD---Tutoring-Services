@@ -143,6 +143,126 @@ describe('Queue Module', () => {
             const res = await request(app).get('/api/queue/wait-time/s1/abc');
             assert.strictEqual(res.status, 400);
         });
+
+        it('should expose static and smart estimates plus sample size', async () => {
+            const res = await request(app).get('/api/queue/wait-time/s1/3');
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(res.body.staticEstimate, 50);
+            assert.strictEqual(res.body.smartEstimate, 50);
+            assert.strictEqual(res.body.sampleSize, 0);
+            assert.strictEqual(res.body.basis, 'static');
+        });
+    });
+
+    // ── Smart Wait-Time Feature ─────────────────────
+    describe('Smart wait-time estimator', () => {
+        // Seed enough served history rows to cross MIN_SAMPLE_FOR_BLEND (5).
+        // Each entry waited 80 min on a service whose expectedDuration is 25 min →
+        // raw drift = 80 / (2 * 25) = 1.6, smart slot = 25 * 1.6 = 40 min.
+        function seedSlowHistory(serviceId, count, perEntryWait) {
+            for (let i = 0; i < count; i++) {
+                history.push({
+                    id: `h_seed_${serviceId}_${i}`,
+                    userId: 'u1',
+                    serviceId,
+                    serviceName: 'Calculus Help',
+                    date: '2024-01-01',
+                    joinedAt: '10:00 AM',
+                    servedAt: '11:20 AM',
+                    waitTime: perEntryWait,
+                    outcome: 'served',
+                });
+            }
+        }
+
+        it('falls back to static when sample size is below threshold', async () => {
+            seedSlowHistory('s1', 3, 80); // only 3 records → fewer than 5 needed
+            const res = await request(app).get('/api/queue/wait-time/s1/4');
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(res.body.basis, 'static');
+            assert.strictEqual(res.body.smartEstimate, res.body.staticEstimate);
+        });
+
+        it('blends with historical average when enough samples exist', async () => {
+            seedSlowHistory('s1', 6, 80);
+            const res = await request(app).get('/api/queue/wait-time/s1/4');
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(res.body.basis, 'blended');
+            assert.strictEqual(res.body.sampleSize, 6);
+            assert.strictEqual(res.body.historicalAvgWait, 80);
+            // position 4 → (4-1) * 25 * 1.6 = 120 min
+            assert.strictEqual(res.body.smartEstimate, 120);
+            assert.strictEqual(res.body.staticEstimate, 75);
+        });
+
+        it('clamps drift factor to upper bound on extreme outliers', async () => {
+            seedSlowHistory('s1', 6, 1000); // raw drift = 1000 / 50 = 20, clamped to 2.0
+            const res = await request(app).get('/api/queue/wait-time/s1/2');
+            assert.strictEqual(res.body.driftFactor, 2);
+            // position 2 → (2-1) * 25 * 2.0 = 50 min
+            assert.strictEqual(res.body.smartEstimate, 50);
+        });
+    });
+
+    // ── Insights endpoint (drives the frontend cache) ──
+    describe('GET /api/queue/insights', () => {
+        it('returns one entry per service with required fields', async () => {
+            const res = await request(app).get('/api/queue/insights');
+            assert.strictEqual(res.status, 200);
+            assert.ok(Array.isArray(res.body));
+            assert.strictEqual(res.body.length, 3);
+            const insight = res.body.find(i => i.serviceId === 's1');
+            assert.ok(insight);
+            assert.strictEqual(typeof insight.waitingCount, 'number');
+            assert.strictEqual(typeof insight.currentSmartEstimate, 'number');
+            assert.strictEqual(typeof insight.currentStaticEstimate, 'number');
+            assert.ok(['static', 'blended'].includes(insight.basis));
+        });
+
+        it('reflects waiting count in the smart estimate', async () => {
+            await request(app).post('/api/queue/join').send({ userId: 'u1', serviceId: 's1' });
+            await request(app).post('/api/queue/join').send({ userId: 'u2', serviceId: 's1' });
+            const res = await request(app).get('/api/queue/insights');
+            const s1 = res.body.find(i => i.serviceId === 's1');
+            assert.strictEqual(s1.waitingCount, 2);
+            // newcomer would be at position 3 → static = (3-1)*25 = 50
+            assert.strictEqual(s1.currentStaticEstimate, 50);
+        });
+    });
+
+    // ── Recommendation endpoint ─────────────────────
+    describe('GET /api/queue/recommend/:serviceId', () => {
+        it('returns no recommendation when target queue is short', async () => {
+            const res = await request(app).get('/api/queue/recommend/s1');
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(res.body.recommendation, null);
+        });
+
+        it('returns 404 for non-existent service', async () => {
+            const res = await request(app).get('/api/queue/recommend/s999');
+            assert.strictEqual(res.status, 404);
+        });
+
+        it('suggests an alternate same-category service when one is much shorter', async () => {
+            // The seeded fixtures put s1 in Mathematics and s2 in Computer Science.
+            // Force them into the same category so the recommender will consider s2.
+            const { services: seedServices } = require('../data/db');
+            seedServices.find(s => s.id === 's1').category = 'Mathematics';
+            seedServices.find(s => s.id === 's2').category = 'Mathematics';
+
+            // Fill s1 with three students so a newcomer would be at position 4
+            // (static estimate = 75 min). Leave s2 empty (estimate = 0 min).
+            await request(app).post('/api/queue/join').send({ userId: 'u1', serviceId: 's1' });
+            await request(app).post('/api/queue/join').send({ userId: 'u2', serviceId: 's1' });
+            await request(app).post('/api/queue/join').send({ userId: 'u3', serviceId: 's1' });
+
+            const res = await request(app).get('/api/queue/recommend/s1');
+            assert.strictEqual(res.status, 200);
+            assert.ok(res.body.targetSmartEstimate >= 50);
+            assert.ok(res.body.recommendation, 'expected a recommendation when s2 is empty');
+            assert.strictEqual(res.body.recommendation.serviceId, 's2');
+            assert.ok(res.body.recommendation.minutesSaved >= 10);
+        });
     });
 
     // ── Leave Queue ─────────────────────────────────

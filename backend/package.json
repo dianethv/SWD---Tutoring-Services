@@ -4,8 +4,33 @@
   "main": "server.js",
   "scripts": {
     "test": "mocha tests/**/*.test.js --timeout 10000 --exit",
+    "test:coverage": "nyc --reporter=text --reporter=text-summary --reporter=html mocha tests/**/*.test.js --timeout 10000 --exit",
     "start": "node server.js",
     "test:db": "node test-db.js"
+  },
+  "nyc": {
+    "all": true,
+    "include": [
+      "routes/**/*.js",
+      "data/memoryStore.js",
+      "data/store.js",
+      "data/db.js",
+      "server.js",
+      "loadEnv.js"
+    ],
+    "exclude": [
+      "tests/**",
+      "data/database.js",
+      "data/mysqlStore.js",
+      "data/seed.js",
+      "test-db.js",
+      "vercel.js"
+    ],
+    "check-coverage": true,
+    "lines": 70,
+    "statements": 70,
+    "functions": 70,
+    "branches": 60
   },
   "keywords": [],
   "author": "",
@@ -23,6 +48,7 @@
   "devDependencies": {
     "chai": "^6.2.2",
     "mocha": "^11.7.5",
+    "nyc": "^18.0.0",
     "supertest": "^7.2.2"
   }
 }
