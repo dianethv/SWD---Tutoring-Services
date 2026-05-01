@@ -11,6 +11,41 @@ function toWholeMinutes(value) {
     return Math.max(0, Math.round(minutes));
 }
 
+// ── CSV cell escaping ────────────────────────────────
+// RFC 4180: wrap a cell in double quotes if it contains a comma, quote, or
+// newline; double-up any embedded quotes. Numbers/booleans/null pass through
+// as plain strings so spreadsheets read them as numbers.
+function csvCell(value) {
+    if (value === null || value === undefined) return '';
+    const s = String(value);
+    if (s === '') return '';
+    if (/[",\r\n]/.test(s)) {
+        return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+}
+
+function csvRow(cells) {
+    return cells.map(csvCell).join(',') + '\r\n';
+}
+
+// Builds a CSV blob string with a UTF-8 BOM so Excel opens it with the
+// correct encoding (otherwise accented characters render as garbage).
+function buildCsv(lines) {
+    return '\ufeff' + lines.join('');
+}
+
+function downloadCsv(content, filename) {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+}
+
 export default function Reports() {
     const [activeTab, setActiveTab] = useState('users');
     const [usersReport, setUsersReport] = useState([]);
@@ -40,43 +75,211 @@ export default function Reports() {
     }, []);
 
     // ── CSV Export ───────────────────────────────────
+    // Produces a structured, Excel-friendly CSV with a metadata header,
+    // labelled sections separated by blank rows, totals where it helps the
+    // reader, and proper RFC 4180 escaping. UTF-8 BOM is prepended so Excel
+    // opens it without character corruption.
     const exportCSV = () => {
-        let csv = '', filename = '';
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const isoStamp = now.toISOString().split('T')[0];
+        const blank = '\r\n';
+
+        // Standard metadata header — appears at the top of every CSV export.
+        const metadataHeader = (subtitle) => [
+            csvRow(['TutorCoogs — Tutoring Center Analytics']),
+            csvRow([subtitle]),
+            csvRow([`Generated: ${dateStr} at ${timeStr}`]),
+            blank,
+        ];
+
+        const fmtOutcome = (o) => {
+            if (!o) return '—';
+            // 'no-show' → 'No Show', 'served' → 'Served'
+            return o.replace(/\b\w/g, (c) => c.toUpperCase()).replace(/-/g, ' ');
+        };
+
+        let lines = [];
+        let filename = '';
+
         if (activeTab === 'users') {
-            csv = 'Name,Email,Role,Total Visits,Served,Cancelled,No-Shows,Avg Wait (min)\n';
-            usersReport.forEach(u => {
-                csv += `"${u.name}","${u.email}","${u.role}",${u.totalVisits},${u.timesServed},${u.timesCancelled},${u.timesNoShow},${toWholeMinutes(u.avgWaitTime)}\n`;
+            // ── USERS REPORT ──────────────────────────
+            lines.push(...metadataHeader('Users & Queue Participation Report'));
+            lines.push(csvRow([`Total Users: ${usersReport.length}`]));
+            lines.push(blank);
+
+            // Section 1: Summary table — one row per user
+            lines.push(csvRow(['== USER SUMMARY ==']));
+            lines.push(csvRow([
+                'Name', 'Email', 'Role',
+                'Total Visits', 'Served', 'Cancelled', 'No-Shows',
+                'Avg Wait (min)',
+            ]));
+            usersReport.forEach((u) => {
+                lines.push(csvRow([
+                    u.name, u.email, u.role,
+                    u.totalVisits, u.timesServed, u.timesCancelled, u.timesNoShow,
+                    toWholeMinutes(u.avgWaitTime),
+                ]));
             });
-            filename = 'users_report.csv';
-        } else if (activeTab === 'services') {
-            csv = 'Service,Category,Status,Total Served,Cancelled,No-Shows,Avg Wait (min),Currently In Queue\n';
-            servicesReport.forEach(s => {
-                csv += `"${s.name}","${s.category}","${s.isOpen ? 'Open' : 'Closed'}",${s.totalServed},${s.totalCancelled},${s.totalNoShows},${toWholeMinutes(s.avgWaitTime)},${s.currentInQueue}\n`;
-            });
-            filename = 'services_report.csv';
-        } else {
-            csv = 'Metric,Value\n';
-            if (queueStats) {
-                csv += `Total Users Served,${queueStats.totalUsersServed}\n`;
-                csv += `Total No-Shows,${queueStats.totalNoShows}\n`;
-                csv += `Total Cancelled,${queueStats.totalCancelled}\n`;
-                csv += `Avg Wait Time (min),${toWholeMinutes(queueStats.avgWaitTime)}\n`;
-                csv += `Currently In Queue,${queueStats.currentlyInQueue}\n`;
-                csv += `Total Users,${queueStats.totalUsers}\n`;
-                csv += `Total Services,${queueStats.totalServices}\n`;
-                csv += '\nService,Served,No-Shows,Avg Wait (min)\n';
-                (queueStats.serviceBreakdown || []).forEach(sb => {
-                    csv += `"${sb.serviceName}",${sb.totalServed},${sb.totalNoShows},${toWholeMinutes(sb.avgWaitTime)}\n`;
+            // Totals
+            const totals = usersReport.reduce((acc, u) => ({
+                visits: acc.visits + (u.totalVisits || 0),
+                served: acc.served + (u.timesServed || 0),
+                cancelled: acc.cancelled + (u.timesCancelled || 0),
+                noShow: acc.noShow + (u.timesNoShow || 0),
+            }), { visits: 0, served: 0, cancelled: 0, noShow: 0 });
+            lines.push(csvRow([
+                'TOTAL', '', '',
+                totals.visits, totals.served, totals.cancelled, totals.noShow,
+                '',
+            ]));
+            lines.push(blank);
+
+            // Section 2: Detailed per-user history (one row per visit)
+            const usersWithHistory = usersReport.filter((u) => u.history && u.history.length > 0);
+            if (usersWithHistory.length > 0) {
+                lines.push(csvRow(['== DETAILED QUEUE HISTORY ==']));
+                lines.push(csvRow([
+                    'User', 'Email', 'Date', 'Service',
+                    'Joined At', 'Served At', 'Wait (min)', 'Outcome',
+                ]));
+                usersWithHistory.forEach((u) => {
+                    u.history.forEach((h) => {
+                        lines.push(csvRow([
+                            u.name, u.email,
+                            h.date || '—',
+                            h.serviceName || '—',
+                            h.joinedAt || '—',
+                            h.servedAt || '—',
+                            h.waitTime != null ? h.waitTime : '',
+                            fmtOutcome(h.outcome),
+                        ]));
+                    });
                 });
+                lines.push(blank);
             }
-            filename = 'queue_stats_report.csv';
+
+            lines.push(csvRow(['== END OF REPORT ==']));
+            filename = `TutorCoogs_Users_Report_${isoStamp}.csv`;
+
+        } else if (activeTab === 'services') {
+            // ── SERVICES REPORT ───────────────────────
+            lines.push(...metadataHeader('Services & Queue Activity Report'));
+            lines.push(csvRow([`Total Services: ${servicesReport.length}`]));
+            const openCount = servicesReport.filter((s) => s.isOpen).length;
+            lines.push(csvRow([`Currently Open: ${openCount}`]));
+            lines.push(blank);
+
+            // Section 1: Service activity table
+            lines.push(csvRow(['== SERVICE ACTIVITY ==']));
+            lines.push(csvRow([
+                'Service', 'Category', 'Status', 'Duration (min)',
+                'Total Served', 'Cancelled', 'No-Shows', 'Total Activity',
+                'Avg Wait (min)', 'Currently In Queue',
+            ]));
+            servicesReport.forEach((s) => {
+                lines.push(csvRow([
+                    s.name, s.category,
+                    s.isOpen ? 'Open' : 'Closed',
+                    s.expectedDuration,
+                    s.totalServed, s.totalCancelled, s.totalNoShows,
+                    (s.totalServed || 0) + (s.totalCancelled || 0) + (s.totalNoShows || 0),
+                    toWholeMinutes(s.avgWaitTime),
+                    s.currentInQueue,
+                ]));
+            });
+            // Totals
+            const sTotals = servicesReport.reduce((acc, s) => ({
+                served: acc.served + (s.totalServed || 0),
+                cancelled: acc.cancelled + (s.totalCancelled || 0),
+                noShow: acc.noShow + (s.totalNoShows || 0),
+                inQueue: acc.inQueue + (s.currentInQueue || 0),
+            }), { served: 0, cancelled: 0, noShow: 0, inQueue: 0 });
+            lines.push(csvRow([
+                'TOTAL', '', '', '',
+                sTotals.served, sTotals.cancelled, sTotals.noShow,
+                sTotals.served + sTotals.cancelled + sTotals.noShow,
+                '', sTotals.inQueue,
+            ]));
+            lines.push(blank);
+
+            // Section 2: Service descriptions (long text on its own table)
+            lines.push(csvRow(['== SERVICE DESCRIPTIONS ==']));
+            lines.push(csvRow(['Service', 'Category', 'Description']));
+            servicesReport.forEach((s) => {
+                lines.push(csvRow([s.name, s.category, s.description || '—']));
+            });
+            lines.push(blank);
+
+            lines.push(csvRow(['== END OF REPORT ==']));
+            filename = `TutorCoogs_Services_Report_${isoStamp}.csv`;
+
+        } else {
+            // ── QUEUE STATS REPORT ────────────────────
+            lines.push(...metadataHeader('Queue Usage Statistics Report'));
+
+            if (!queueStats) {
+                lines.push(csvRow(['No queue statistics available.']));
+                lines.push(blank);
+                lines.push(csvRow(['== END OF REPORT ==']));
+                filename = `TutorCoogs_QueueStats_Report_${isoStamp}.csv`;
+            } else {
+                const noShowRate = queueStats.totalActivity > 0
+                    ? `${Math.round((queueStats.totalNoShows / queueStats.totalActivity) * 100)}%`
+                    : '0%';
+
+                // Section 1: Aggregate metrics
+                lines.push(csvRow(['== AGGREGATE METRICS ==']));
+                lines.push(csvRow(['Metric', 'Value']));
+                lines.push(csvRow(['Total Users Served', queueStats.totalUsersServed]));
+                lines.push(csvRow(['Total No-Shows', queueStats.totalNoShows]));
+                lines.push(csvRow(['Total Cancelled', queueStats.totalCancelled]));
+                lines.push(csvRow(['Total Activity (all outcomes)', queueStats.totalActivity]));
+                lines.push(csvRow(['No-Show Rate', noShowRate]));
+                lines.push(csvRow(['Average Wait Time (min)', toWholeMinutes(queueStats.avgWaitTime)]));
+                lines.push(csvRow(['Currently In Queue', queueStats.currentlyInQueue]));
+                lines.push(csvRow(['Total Registered Users', queueStats.totalUsers]));
+                lines.push(csvRow(['Total Configured Services', queueStats.totalServices]));
+                lines.push(blank);
+
+                // Section 2: Per-service breakdown
+                if (queueStats.serviceBreakdown && queueStats.serviceBreakdown.length > 0) {
+                    lines.push(csvRow(['== PER-SERVICE BREAKDOWN ==']));
+                    lines.push(csvRow([
+                        'Service', 'Total Served', 'No-Shows', 'Total Activity',
+                        'Avg Wait (min)', 'Currently In Queue',
+                    ]));
+                    queueStats.serviceBreakdown.forEach((sb) => {
+                        lines.push(csvRow([
+                            sb.serviceName,
+                            sb.totalServed,
+                            sb.totalNoShows,
+                            sb.totalActivity,
+                            toWholeMinutes(sb.avgWaitTime),
+                            sb.currentInQueue,
+                        ]));
+                    });
+                    lines.push(blank);
+                }
+
+                // Section 3: Daily volume (when present)
+                if (queueStats.dailyVolume && queueStats.dailyVolume.length > 0) {
+                    lines.push(csvRow(['== DAILY SESSION VOLUME ==']));
+                    lines.push(csvRow(['Date', 'Sessions']));
+                    queueStats.dailyVolume.forEach((d) => {
+                        lines.push(csvRow([d.date, d.count]));
+                    });
+                    lines.push(blank);
+                }
+
+                lines.push(csvRow(['== END OF REPORT ==']));
+                filename = `TutorCoogs_QueueStats_Report_${isoStamp}.csv`;
+            }
         }
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(link.href);
+
+        downloadCsv(buildCsv(lines), filename);
     };
 
     // ── PDF Export ───────────────────────────────────
